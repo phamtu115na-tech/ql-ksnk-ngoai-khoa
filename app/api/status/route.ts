@@ -1,0 +1,2 @@
+import {NextResponse} from 'next/server';import {supabaseAdmin} from '../../../lib/supabase';
+export async function GET(){const db=supabaseAdmin();if(!db)return NextResponse.json({ok:false,supabase:false,error:'Thiếu SUPABASE_SERVICE_ROLE_KEY'},{status:503});const {count,error}=await db.from('ksnk_legacy_rows').select('*',{count:'exact',head:true});return NextResponse.json({ok:!error,supabase:!error,legacyRows:count||0,error:error?.message||null})}
