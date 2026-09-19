@@ -1,0 +1,161 @@
+--- 40_BangKiem.gs
++++ 40_BangKiem.gs
+@@
++function getChecklistWriteLock_() {
++  // Web App là Apps Script độc lập; DocumentLock có thể null.
++  // ScriptLock hoạt động ổn định cho thao tác ghi toàn dự án.
++  return LockService.getScriptLock();
++}
++
+ function createChecklistFormDefinition(payload) {
+@@
+-  const lock = LockService.getDocumentLock();
++  const lock = getChecklistWriteLock_();
+@@
+ function updateChecklistFormDefinition(payload){
+   setupChecklistPercentSystem();
+   payload=payload||{};
+-  const formCode=requireText_(payload.formCode,'Mã phiếu').toUpperCase();
+-  const department=requireText_(payload.department,'Bộ phận');
+-  const formName=requireText_(payload.formName,'Tên phiếu giám sát');
++  const formCode=requireText_(payload.formCode,'Mã phiếu').trim().toUpperCase();
++  const department=requireText_(payload.department,'Bộ phận').trim();
++  const formName=requireText_(payload.formName,'Tên phiếu giám sát').trim();
+   const description=String(payload.description||'').trim();
+   const criteria=Array.isArray(payload.criteria)?payload.criteria:[];
+-  if(!criteria.length) throw new Error('Phiếu phải có ít nhất 1 tiêu chí.');
++  if(!criteria.length){
++    throw new Error('Phiếu phải có ít nhất 1 tiêu chí.');
++  }
+ 
+   const clean=criteria.map(function(item,index){
+     item=item||{};
+     const content=requireText_(item.content,'Nội dung tiêu chí số '+(index+1));
+     return {
++      id:String(item.id||'').trim(),
+       order:index+1,
+       group:String(item.group||'Chung').trim()||'Chung',
+       content:content,
+       detail:String(item.detail||content).trim()||content,
+       allowImage:normalizeChecklistKey_(item.allowImage)==='khong'?'Không':'Có'
+     };
+   });
+ 
+-  const lock=LockService.getDocumentLock();
+-  if(!lock.tryLock(20000)) throw new Error('Hệ thống đang có người khác cập nhật danh mục. Vui lòng thử lại.');
++  const lock=getChecklistWriteLock_();
++  if(!lock.tryLock(20000)){
++    throw new Error('Hệ thống đang có người khác cập nhật danh mục. Vui lòng thử lại sau vài giây.');
++  }
+ 
+   try{
+     const formSheet=getRequiredSheet_(EXT_CONFIG.SHEETS.CHECKLIST_FORMS_MASTER);
+     const criterionSheet=getRequiredSheet_(EXT_CONFIG.SHEETS.CHECKLIST_MASTER);
+     const fv=formSheet.getDataRange().getDisplayValues();
+     let formRow=-1, oldStatus='Hoạt động';
+@@
+     if(formRow<2) throw new Error('Không tìm thấy phiếu "'+formCode+'" để sửa.');
+ 
+     formSheet.getRange(formRow,1,1,6).setValues([[
+       formCode,formName,department,
+       description||('Phiếu giám sát '+formName),
+       clean.length,oldStatus
+     ]]);
+ 
++    /*
++     * Không xóa tiêu chí cũ: CT_PHIEU_GIAMSAT tham chiếu Mã tiêu chí.
++     * Còn tồn tại -> cập nhật tại chỗ và giữ ID.
++     * Bị bỏ khỏi mẫu -> Tạm ngưng.
++     * Mới -> sinh ID mới không trùng.
++     */
+     const cv=criterionSheet.getDataRange().getDisplayValues();
+-    for(let i=cv.length-1;i>=1;i--){
+-      if(normalizeChecklistKey_(cv[i][5])===normalizeChecklistKey_(formCode)){
+-        criterionSheet.deleteRow(i+1);
++    const existingById={};
++    const rowsForForm=[];
++    const usedIds={};
++
++    for(let i=1;i<cv.length;i++){
++      const row=cv[i];
++      const id=String(row[0]||'').trim();
++      if(id) usedIds[normalizeChecklistKey_(id)]=true;
++      if(normalizeChecklistKey_(row[5])===normalizeChecklistKey_(formCode)){
++        const rowInfo={row:i+1,id:id,order:Number(row[6])||0};
++        rowsForForm.push(rowInfo);
++        if(id) existingById[normalizeChecklistKey_(id)]=rowInfo;
+       }
+     }
+ 
+-    const newRows=clean.map(function(x){
+-      const id=formCode+'-'+('0'+x.order).slice(-2);
+-      return [id,department,x.group,x.content,'Hoạt động',formCode,x.order,x.detail,x.allowImage];
++    const activeExistingIds={};
++
++    function nextCriterionId_(){
++      let n=1;
++      rowsForForm.forEach(function(x){
++        const m=String(x.id||'').match(/-(\d+)$/);
++        if(m) n=Math.max(n,Number(m[1])+1);
++      });
++      while(true){
++        const id=formCode+'-'+('0'+n).slice(-2);
++        if(!usedIds[normalizeChecklistKey_(id)]){
++          usedIds[normalizeChecklistKey_(id)]=true;
++          return id;
++        }
++        n++;
++      }
++    }
++
++    clean.forEach(function(x){
++      const existing=x.id?existingById[normalizeChecklistKey_(x.id)]||null:null;
++      let criterionId;
++      if(existing){
++        criterionId=existing.id;
++        activeExistingIds[normalizeChecklistKey_(criterionId)]=true;
++        criterionSheet.getRange(existing.row,1,1,9).setValues([[
++          criterionId,department,x.group,x.content,'Hoạt động',formCode,x.order,x.detail,x.allowImage
++        ]]);
++      }else{
++        criterionId=nextCriterionId_();
++        criterionSheet.appendRow([
++          criterionId,department,x.group,x.content,'Hoạt động',formCode,x.order,x.detail,x.allowImage
++        ]);
++      }
+     });
+-    criterionSheet.getRange(criterionSheet.getLastRow()+1,1,newRows.length,9).setValues(newRows);
++
++    rowsForForm.forEach(function(x){
++      if(x.id&&!activeExistingIds[normalizeChecklistKey_(x.id)]){
++        criterionSheet.getRange(x.row,5).setValue('Tạm ngưng');
++      }
++    });
+@@
+     SpreadsheetApp.flush();
+     return {
+-      success:true,formCode:formCode,formName:formName,department:department,
+-      message:'Đã cập nhật phiếu '+formCode+' với '+newRows.length+' tiêu chí. Dữ liệu giám sát cũ được giữ nguyên.'
++      success:true,
++      formCode:formCode,
++      formName:formName,
++      department:department,
++      criterionCount:clean.length,
++      message:'Đã cập nhật phiếu '+formCode+' với '+clean.length+' tiêu chí. Dữ liệu giám sát và mã tiêu chí lịch sử được giữ nguyên.'
+     };
+   }finally{
+     lock.releaseLock();
+   }
+ }
+@@
+ function apiSetChecklistFormDefinitionStatus(
+   formCode,
+   newStatus
+ ) {
+   const lock =
+-    LockService.getDocumentLock();
++    getChecklistWriteLock_();
+@@
+ function apiLoadChecklistIntoEditorV19(formCode) {
++  setupChecklistPercentSystem();
+   const code = requireText_(formCode, 'Mã phiếu').trim().toUpperCase();
