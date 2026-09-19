@@ -1,5 +1,6 @@
 'use client';
 import {FormEvent,useCallback,useEffect,useMemo,useState} from 'react';
+import PasswordSettings from './PasswordSettings';
 
 const modules=[
  ['NHÂN SỰ','DM_NHANVIEN'],['GIAO VIỆC','GIAO VIỆC'],
@@ -62,7 +63,7 @@ export default function Home(){
   <div className={`connection ${health?.ok&&health?.supabaseServerConfigured?'connected':''}`}>{health===null?'Đang kiểm tra kết nối...':health.ok&&health.supabaseServerConfigured?'Vercel + Supabase: ĐÃ KẾT NỐI':'Thiếu cấu hình SUPABASE_SERVICE_ROLE_KEY trên Vercel'}</div>
   {active===null?<main className="content-shell"><div className="menu-grid">{modules.map((m,i)=><button className="module-card" key={m[0]} onClick={()=>selectModule(i)}><span className="module-number">{i+1}</span><h3>{m[0]}</h3></button>)}</div></main>:
    <main><div className="module-toolbar"><button className="back-btn" onClick={()=>setActive(null)}>← TRANG CHỦ</button><h2>{modules[active][0]}</h2></div><section className="content-shell">
-    {sheet==='__SETTINGS__'?<div className="panel-card"><h3>CÀI ĐẶT HỆ THỐNG</h3><div className="settings-grid"><label>Tên bệnh viện<input defaultValue="BỆNH VIỆN 115"/></label><label>Mật khẩu quản trị<input type="password" placeholder="••••••••"/></label></div></div>:
+    {sheet==='__SETTINGS__'?<div className="panel-card"><h3>CÀI ĐẶT HỆ THỐNG</h3><div className="settings-grid"><label>Tên bệnh viện<input defaultValue="BỆNH VIỆN 115"/></label></div><PasswordSettings/></div>:
     <div className="panel-card">
      <form className="data-tools" onSubmit={e=>{e.preventDefault();setPage(1);setAppliedQ(q)}}><input aria-label="Tìm kiếm" placeholder="Tìm tiêu đề, người giao việc, người thực hiện..." value={q} onChange={e=>setQ(e.target.value)}/><button type="submit">TÌM</button><button type="button" onClick={()=>void load()}>LÀM MỚI</button>{isTask&&<button type="button" className="add-btn" onClick={()=>setEditing(null)}>+ THÊM CÔNG VIỆC</button>}<b>{total} bản ghi</b></form>
      {err&&<div className="error-box">{err}</div>}
