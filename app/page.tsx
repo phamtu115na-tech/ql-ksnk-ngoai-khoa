@@ -1,2 +1,21 @@
-const modules=['NHÂN SỰ','GIAO VIỆC','LỖI ĐỘT XUẤT / VI PHẠM','BẢNG KIỂM','KẾ HOẠCH','BÁO CÁO TỔNG HỢP','KPI 100 ĐIỂM','CẢNH BÁO & LỊCH CÔNG VIỆC','CÀI ĐẶT'];
-export default function Home(){return <><header className="top"><b>QL KSNK NGOẠI KHOA</b></header><main className="wrap"><div className="notice"><b>Hệ thống Vercel + Supabase.</b> Giao việc hỗ trợ ảnh và file tài liệu minh chứng.</div><div className="grid">{modules.map((x,i)=><section className="card" key={x}><span className="badge">{i+1}</span><h3>{x}</h3><p>{i===1?'Giao việc, mô tả, ưu tiên, trạng thái, đánh giá, ảnh và tài liệu minh chứng.':i===8?'Cấu hình tên bệnh viện và mật khẩu quản trị.':'Phân hệ quản lý KSNK.'}</p></section>)}</div></main></>}
+'use client';
+import {useState} from 'react';
+const modules=[
+['NHÂN SỰ','Danh mục nhân sự chung'],
+['GIAO VIỆC','Giao việc, nhắc việc, đánh giá và minh chứng'],
+['LỖI ĐỘT XUẤT / VI PHẠM','Ghi nhận vi phạm và danh mục lỗi'],
+['BẢNG KIỂM','Phiếu giám sát và tiêu chí kiểm tra'],
+['KẾ HOẠCH','Kế hoạch tuần / tháng'],
+['BÁO CÁO TỔNG HỢP','Tổng hợp và cập nhật trực tiếp'],
+['KPI 100 ĐIỂM','Theo dõi và quy đổi KPI'],
+['CẢNH BÁO & LỊCH CÔNG VIỆC','Quá hạn, hôm nay và công việc sắp tới'],
+['CÀI ĐẶT','Tên bệnh viện và mật khẩu quản trị']
+];
+export default function Home(){
+ const [active,setActive]=useState<number|null>(null);
+ return <div className="app-shell">
+  <header className="app-header"><div className="hospital-brand"><div className="brand-logo">KSNK<br/>115</div><div><h1>HỆ THỐNG QUẢN LÝ KSNK</h1><p>Quản lý nghiệp vụ khoa Kiểm soát nhiễm khuẩn</p></div></div><div className="header-title">QUẢN LÝ <span>KSNK</span></div></header>
+  {active===null?<main className="content-shell"><div className="menu-grid">{modules.map((m,i)=><button className="module-card" key={m[0]} onClick={()=>setActive(i)}><span className="module-number">{i+1}</span><h3>{m[0]}</h3><p>{m[1]}</p></button>)}</div><div className="author-line">Hệ thống Vercel + Supabase</div></main>:
+  <main><div className="module-toolbar"><button className="back-btn" onClick={()=>setActive(null)}>← TRANG CHỦ</button><h2>{modules[active][0]}</h2></div><section className="content-shell"><div className="panel-card"><h3>{modules[active][0]}</h3><p>{modules[active][1]}</p><p className="migration-note">Phân hệ đang được chuyển nguyên logic từ Apps Script sang Supabase. Dữ liệu cũ được bảo toàn theo cấu trúc workbook.</p></div></section></main>}
+ </div>
+}
