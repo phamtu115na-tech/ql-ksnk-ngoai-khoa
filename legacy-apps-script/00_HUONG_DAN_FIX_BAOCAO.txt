@@ -1,0 +1,21 @@
+BÁO CÁO - TRẢ CẤU TRÚC CŨ MỤC BỘ PHẬN
+========================================
+1. Bộ phận:
+- Giữ nguyên select/dropdown cấu trúc cũ.
+- Danh sách được đặt trực tiếp trong BaoCao.html nên luôn hiện:
+  VỆ SINH MÔI TRƯỜNG
+  ĐỒ VẢI
+  GIÁM SÁT
+  DỤNG CỤ
+  VI PHẠM CHUNG
+- API chỉ được phép bổ sung bộ phận khác, không xóa danh sách cũ.
+
+2. Từ ngày / Đến ngày:
+- Mặc định tự động trọn tháng hiện tại.
+- Từ ngày = ngày 01 của tháng hiện tại.
+- Đến ngày = ngày cuối cùng của tháng hiện tại.
+- Người dùng vẫn bấm lịch và sửa ngày tùy ý.
+
+Nếu đang dùng bản V2 trước đó:
+CHỈ CẦN THAY BaoCao.html.
+Sau đó Save -> Deploy New version -> mở lại URL /exec và Ctrl+F5.

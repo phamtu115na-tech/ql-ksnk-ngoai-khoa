@@ -1,0 +1,36 @@
+BỘ KHÔI PHỤC CẤU TRÚC CŨ - KSNK
+=================================
+Bộ này ưu tiên KHÔI PHỤC HOẠT ĐỘNG và giữ nguyên logic trong MÔ.docx.
+Không dùng các ZIP vá trước.
+
+COPY THAY TOÀN BỘ CÁC FILE CÙNG TÊN:
+00_Config.gs
+10_NhanSu.gs
+20_GiaoViec.gs
+30_ViPham.gs
+40_BangKiem.gs
+50_KeHoach.gs
+60_BaoCao.gs
+70_KPI.gs
+Index.html
+NhanSu.html
+GiaoViec.html
+ViPham.html
+BangKiem.html
+KeHoach.html
+BaoCao.html
+KPI.html
+appsscript.json
+
+TẠO THÊM:
+99_KiemTraHeThong.gs
+
+SAU KHI DÁN:
+1) Save.
+2) Chạy KSNK_TEST_QUYEN_VA_DU_LIEU và cấp quyền Sheets + Drive.
+3) Chạy KSNK_TEST_GIAO_VIEC.
+4) Chạy KSNK_TEST_LOI_DOT_XUAT.
+5) Chỉ khi 3 hàm trên thành công mới Deploy > Manage deployments > Edit > New version.
+6) Mở lại đúng URL /exec.
+
+Nếu bước 2 báo thiếu quyền openById: đó là OAuth của tài khoản/deployment, không phải ID hay module.

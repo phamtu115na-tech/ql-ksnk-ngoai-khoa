@@ -1,0 +1,12 @@
+KIỂM TRA TỰ ĐỘNG
+================
+Lỗi cú pháp .gs: 0
+00_Config.gs: OK
+10_NhanSu.gs: OK
+20_GiaoViec.gs: OK
+30_ViPham.gs: OK
+40_BangKiem.gs: OK
+50_KeHoach.gs: OK
+60_BaoCao.gs: OK
+70_KPI.gs: OK
+99_KiemTraHeThong.gs: OK

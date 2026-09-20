@@ -1,0 +1,17 @@
+KIỂM TRA GÓI TRƯỚC KHI NÉN
+===========================
+GS syntax errors: 0
+Index include: ĐỦ 7 module
+Router Giao việc: OK
+Router Lỗi đột xuất: OK
+
+Kết quả .gs:
+- 00_Config.gs: OK
+- 10_NhanSu.gs: OK
+- 20_GiaoViec.gs: OK
+- 30_ViPham.gs: OK
+- 40_BangKiem.gs: OK
+- 50_KeHoach.gs: OK
+- 60_BaoCao.gs: OK
+- 70_KPI.gs: OK
+- 99_KiemTraHeThong.gs: OK

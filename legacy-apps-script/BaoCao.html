@@ -1,0 +1,5127 @@
+<style>
+  .bc-filter-card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 2px 12px rgba(18,59,143,.08);margin-bottom:18px}
+  .bc-report{background:#fff;border-radius:12px;padding:22px;box-shadow:0 2px 12px rgba(18,59,143,.08);font-size:15px;line-height:1.45}
+  .bc-title{text-align:center;color:#123b8f;font-weight:800;font-size:28px;line-height:1.25;margin-bottom:6px}
+  .bc-period{text-align:center;color:#6c757d;font-size:16px;margin-bottom:20px}
+  .bc-section{margin:28px 0 12px;font-weight:800;font-size:19px;line-height:1.35;color:#0c376d;border-bottom:2px solid #1677ff;padding:0 0 10px}
+  .bc-metric{border:1px solid #d8e2f0;border-radius:10px;padding:14px;background:#f8fbff;height:100%}
+  .bc-metric small{color:#6c757d;font-size:14px;font-weight:600}
+  .bc-metric strong{display:block;color:#123b8f;font-size:29px;line-height:1.2;margin-top:5px}
+  .bc-table-wrap{overflow:auto;border:1px solid #dbe3ed;border-radius:8px}
+  .bc-table{width:100%;border-collapse:collapse;font-size:15px;background:#fff}
+  .bc-table th{background:#0d407d;color:#fff;font-weight:800;text-align:center;font-size:15px;line-height:1.35;padding:12px 10px;border:1px solid #d6dfeb;white-space:nowrap}
+  .bc-table td{padding:11px 10px;border:1px solid #d6dfeb;vertical-align:middle;font-size:15px;line-height:1.45}
+  .bc-table .text-danger{color:#e52d3d!important}
+  .bc-badge-danger{display:inline-block;background:#e93648;color:#fff;padding:5px 10px;border-radius:6px;font-size:12px;font-weight:800}
+  .bc-badge-muted{display:inline-block;background:#69737e;color:#fff;padding:5px 10px;border-radius:6px;font-size:12px;font-weight:800}
+  .bc-matrix{min-width:1800px;font-size:14px}
+  .bc-matrix th:first-child,.bc-matrix td:first-child{position:sticky;left:0;z-index:2}
+  .bc-matrix td:first-child{background:#fff;min-width:430px;font-weight:600;font-size:14px;line-height:1.45}
+  .bc-matrix th:first-child{z-index:3;background:#0d407d}
+  .bc-matrix .section-row td{background:#eef4fb!important;font-weight:800;color:#0c376d}
+  .bc-matrix .fail-cell{background:#ffd4d8;color:#e32636;font-weight:800;text-align:center}
+  .bc-matrix .poor-cell{background:#f5b6bd;color:#b00020;font-weight:900;text-align:center}
+  .bc-image-btn{border:1px solid #b7c4d5;background:#fff;border-radius:5px;padding:4px 8px;cursor:pointer}
+  .bc-empty{text-align:center;color:#6c757d;padding:18px!important}
+  .bc-warning{background:#fff4f4;border:1px solid #f4c6cc;color:#b42332;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-weight:600}
+  .bc-modal{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:5000;display:none;align-items:center;justify-content:center;padding:25px}
+  .bc-modal.show{display:flex}
+  .bc-modal-card{background:#fff;border-radius:12px;max-width:1000px;max-height:92vh;padding:14px;position:relative}
+  .bc-modal-card img{max-width:92vw;max-height:82vh;display:block}
+  .bc-modal-close{position:absolute;right:8px;top:8px;border:0;background:#dc3545;color:#fff;border-radius:50%;width:34px;height:34px;font-weight:700}
+  @media print{
+    .no-print{display:none!important}
+    .bc-report{box-shadow:none;padding:0}
+    .bc-table-wrap{overflow:visible}
+    .bc-matrix{min-width:0;font-size:8px}
+    .bc-matrix td:first-child,.bc-matrix th:first-child{position:static}
+  }
+
+  .cssd-chart-card{
+    border:1px solid #dbe3ed;
+    border-radius:10px;
+    padding:14px 16px 10px;
+    background:#fff;
+    margin:12px 0 16px;
+  }
+  .cssd-chart-title{
+    text-align:center;
+    font-weight:800;
+    color:#123b8f;
+    margin-bottom:14px;
+  }
+  .cssd-bar-chart{
+    display:flex;
+    align-items:flex-end;
+    gap:14px;
+    min-height:250px;
+    padding:24px 14px 8px;
+    border-left:1px solid #d8e2f0;
+    border-bottom:1px solid #d8e2f0;
+    overflow-x:auto;
+  }
+  .cssd-bar-item{
+    min-width:72px;
+    flex:1 0 72px;
+    text-align:center;
+  }
+  .cssd-bar-value{
+    font-weight:800;
+    color:#123b8f;
+    margin-bottom:6px;
+    font-size:13px;
+  }
+  .cssd-bar-wrap{
+    height:170px;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .cssd-bar{
+    width:46px;
+    min-height:2px;
+    background:#1f6ed4;
+    border-radius:4px 4px 0 0;
+    box-shadow:0 2px 5px rgba(18,59,143,.18);
+  }
+  .cssd-bar-label{
+    font-weight:700;
+    margin-top:7px;
+    white-space:nowrap;
+  }
+  .cssd-bar-date{
+    font-size:11px;
+    color:#6c757d;
+    margin-top:2px;
+  }
+
+
+  .bc-filter-card .form-label{
+    font-size:15px;
+  }
+  .bc-filter-card .form-control,
+  .bc-filter-card .form-select,
+  .bc-filter-card .btn{
+    font-size:15px;
+    min-height:42px;
+  }
+  .bc-report .small{
+    font-size:13px!important;
+  }
+  .bc-report .badge{
+    font-size:12px;
+    padding:5px 8px;
+  }
+
+
+  .bc-analysis-box{border-left:4px solid #ff9800;background:#fff9e8;padding:12px 14px;margin:10px 0 18px;border-radius:4px}
+  .bc-analysis-box ul{margin:0;padding-left:20px}
+  .bc-analysis-box li{margin:5px 0}
+  .bc-form-card{border:1px solid #d6dfeb;border-radius:10px;margin:14px 0 24px;overflow:hidden;background:#fff}
+  .bc-form-card-head{background:#2f5fa7;color:#fff;padding:10px 14px;font-weight:800;font-size:16px}
+  .bc-form-card-body{padding:12px}
+  .bc-opinion-box{border:1px solid #d6dfeb;border-radius:8px;padding:12px;background:#fbfcff;margin-top:14px}
+  .bc-opinion-box textarea{width:100%;min-height:90px;resize:vertical;border:1px solid #c9d3e2;border-radius:7px;padding:10px;font-size:14px}
+  .bc-opinion-meta{color:#6c757d;font-size:12px;margin-top:5px}
+
+  /* ===== V11.2: Ý KIẾN GIỐNG MỤC 10/11 - LƯU/SỬA/XÓA ===== */
+  .bc-opinion-status{
+    border-radius:8px;
+    padding:9px 11px;
+    margin-bottom:9px;
+    font-size:12px;
+    line-height:1.45;
+  }
+
+  .bc-opinion-status.saved{
+    background:#e8f7ee;
+    border:1px solid #9bd5af;
+    color:#116530;
+  }
+
+  .bc-opinion-status.new{
+    background:#f7f9fc;
+    border:1px solid #d8e2f0;
+    color:#5f6b7a;
+  }
+
+  .bc-opinion-box textarea[readonly]{
+    background:#f8fafc;
+    color:#334155;
+  }
+
+  .bc-opinion-box textarea.editing{
+    background:#fff;
+    border:2px solid #1677ff;
+    box-shadow:0 0 0 3px rgba(22,119,255,.08);
+  }
+
+  .bc-opinion-actions{
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    gap:7px;
+    flex-wrap:wrap;
+  }
+
+  .bc-opinion-btn-edit{
+    border:1px solid #1677ff;
+    color:#0b5ed7;
+    background:#fff;
+  }
+
+  .bc-opinion-btn-delete{
+    border:1px solid #dc3545;
+    color:#b42332;
+    background:#fff;
+  }
+
+  .bc-opinion-btn-cancel{
+    border:1px solid #6c757d;
+    color:#495057;
+    background:#fff;
+  }
+
+  .bc-kpi-chart{border:1px solid #d6dfeb;border-radius:8px;padding:14px;margin:12px 0 18px;background:#fff}
+  .bc-kpi-chart-title{font-weight:800;text-align:center;color:#123b8f;margin-bottom:12px}
+  .bc-kpi-row{display:grid;grid-template-columns:minmax(140px,220px) 1fr 52px;gap:10px;align-items:center;margin:8px 0}
+  .bc-kpi-name{font-size:13px;text-align:right}
+  .bc-kpi-track{background:#eef2f7;height:18px;border-radius:3px;overflow:hidden}
+  .bc-kpi-bar{height:100%;background:#3d68e8;min-width:1px}
+  .bc-kpi-value{font-weight:700;font-size:12px}
+  .bc-kpi-total-grid{display:grid;grid-template-columns:repeat(5,minmax(135px,1fr));gap:10px;margin:10px 0 18px}
+  .bc-kpi-total{padding:12px;border-radius:7px;color:#fff;text-align:center;font-weight:700}
+  .bc-kpi-total strong{display:block;font-size:22px;margin-top:5px}
+  .bc-kpi-c1{background:#3b66e8}.bc-kpi-c2{background:#31a64a}.bc-kpi-c3{background:#ef6c00}.bc-kpi-c4{background:#e52d36}.bc-kpi-c5{background:#202c41}
+  .bc-rank-aplus,.bc-rank-a{color:#13a13a;font-weight:800}.bc-rank-bplus,.bc-rank-b{color:#0d6efd;font-weight:800}.bc-rank-c,.bc-rank-d{color:#dc3545;font-weight:800}
+
+
+  /* ===== KPI 100 ĐIỂM - MÀU PHÂN NHÓM ===== */
+  .bc-kpi-formula{
+    background:linear-gradient(135deg,#123b8f,#2f68b6);
+    color:#fff;
+    border-radius:10px;
+    padding:13px 16px;
+    margin:10px 0 14px;
+    font-weight:800;
+    text-align:center;
+    box-shadow:0 4px 12px rgba(18,59,143,.18);
+  }
+
+  .bc-kpi-table th.kpi-base{background:#263238!important}
+  .bc-kpi-table th.kpi-task{background:#1565c0!important}
+  .bc-kpi-table th.kpi-check{background:#00897b!important}
+  .bc-kpi-table th.kpi-violation{background:#c62828!important}
+  .bc-kpi-table th.kpi-total{background:#6a1b9a!important}
+  .bc-kpi-table th.kpi-rank{background:#ef6c00!important}
+
+  .bc-score-positive{
+    background:#e8f5e9!important;
+    color:#137333;
+    font-weight:800;
+    text-align:center;
+  }
+  .bc-score-zero{
+    background:#f5f7fa!important;
+    color:#5f6368;
+    font-weight:700;
+    text-align:center;
+  }
+  .bc-score-negative{
+    background:#ffebee!important;
+    color:#c62828;
+    font-weight:800;
+    text-align:center;
+  }
+  .bc-total-score{
+    background:#f3e5f5!important;
+    color:#6a1b9a;
+    font-size:16px!important;
+    font-weight:900;
+    text-align:center;
+  }
+
+  .bc-rank-chip{
+    display:inline-block;
+    min-width:92px;
+    padding:6px 10px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:900;
+    text-align:center;
+  }
+  .bc-rank-xs{background:#dbeafe;color:#0b4ea2;border:1px solid #7fb2ff}
+  .bc-rank-tot{background:#d1fae5;color:#087443;border:1px solid #6ad7a7}
+  .bc-rank-kha{background:#cffafe;color:#0e7490;border:1px solid #67e8f9}
+  .bc-rank-tb{background:#fff3cd;color:#8a5a00;border:1px solid #ffd166}
+  .bc-rank-cd{background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5}
+
+  .bc-kpi-summary-color{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(140px,1fr));
+    gap:10px;
+    margin:12px 0 16px;
+  }
+  .bc-kpi-sum-card{
+    border-radius:10px;
+    padding:12px;
+    color:#fff;
+    text-align:center;
+    font-weight:700;
+    box-shadow:0 4px 10px rgba(0,0,0,.10);
+  }
+  .bc-kpi-sum-card small{display:block;opacity:.92}
+  .bc-kpi-sum-card strong{display:block;font-size:24px;margin-top:4px}
+  .bc-kpi-sum-base{background:linear-gradient(135deg,#37474f,#263238)}
+  .bc-kpi-sum-task{background:linear-gradient(135deg,#1976d2,#0d47a1)}
+  .bc-kpi-sum-check{background:linear-gradient(135deg,#009688,#00695c)}
+  .bc-kpi-sum-vp{background:linear-gradient(135deg,#e53935,#b71c1c)}
+  .bc-kpi-sum-total{background:linear-gradient(135deg,#8e24aa,#4a148c)}
+
+  .bc-kpi-rank-grid{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(115px,1fr));
+    gap:8px;
+    margin:8px 0 18px;
+  }
+  .bc-kpi-rank-card{
+    border-radius:8px;
+    padding:10px;
+    text-align:center;
+    font-weight:800;
+  }
+  .bc-kpi-rank-card strong{
+    display:block;
+    font-size:21px;
+    margin-top:3px;
+  }
+  .rank-xs-card{background:#dbeafe;color:#0b4ea2}
+  .rank-tot-card{background:#d1fae5;color:#087443}
+  .rank-kha-card{background:#cffafe;color:#0e7490}
+  .rank-tb-card{background:#fff3cd;color:#8a5a00}
+  .rank-cd-card{background:#fee2e2;color:#b91c1c}
+
+  .bc-kpi-detail{
+    max-width:370px;
+    white-space:normal;
+    font-size:12px;
+    line-height:1.4;
+  }
+
+  @media(max-width:900px){
+    .bc-kpi-summary-color,
+    .bc-kpi-rank-grid{
+      grid-template-columns:1fr 1fr;
+    }
+  }
+
+
+  /* ===== V12: CHI TIẾT LỖI THEO TỪNG PHIẾU ===== */
+  .bc-form-error-title{
+    margin:18px 0 8px;
+    padding:8px 10px;
+    border-left:5px solid #123b8f;
+    color:#123b8f;
+    font-size:15px;
+    font-weight:900;
+    text-transform:uppercase;
+  }
+
+  .bc-form-error-wrap{
+    overflow:auto;
+    border:1px solid #c9d7e8;
+    border-radius:4px;
+    margin-bottom:14px;
+    background:#fff;
+  }
+
+  .bc-form-error-table{
+    width:100%;
+    min-width:900px;
+    border-collapse:collapse;
+    table-layout:fixed;
+  }
+
+  .bc-form-error-table th{
+    background:#5b9bd5;
+    color:#fff;
+    border:2px solid #fff;
+    padding:11px 10px;
+    font-size:15px;
+    font-weight:900;
+    text-align:left;
+    vertical-align:middle;
+  }
+
+  .bc-form-error-table td{
+    border:2px solid #fff;
+    background:#d9e4f3;
+    padding:10px;
+    vertical-align:middle;
+    min-height:52px;
+  }
+
+  .bc-form-error-table tbody tr:nth-child(even) td{
+    background:#e7edf6;
+  }
+
+  .bc-form-error-table .col-staff{width:20%}
+  .bc-form-error-table .col-error{width:30%}
+  .bc-form-error-table .col-image{width:25%}
+
+  .bc-error-person{
+    font-weight:800;
+    color:#123b8f;
+  }
+
+  .bc-error-content{
+    color:#c62828;
+    font-weight:700;
+    line-height:1.4;
+  }
+
+  .bc-error-sub{
+    display:block;
+    margin-top:4px;
+    color:#5f6b7a;
+    font-size:11px;
+    font-weight:400;
+  }
+
+  .bc-photo-cell{
+    text-align:center;
+  }
+
+  .bc-photo-button{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    min-width:130px;
+    padding:7px 10px;
+    border:1px solid #7aa8d8;
+    border-radius:6px;
+    background:#fff;
+    color:#123b8f;
+    font-weight:800;
+    cursor:pointer;
+  }
+
+  .bc-photo-button.fix{
+    border-color:#6fbf8c;
+    color:#087443;
+  }
+
+  .bc-photo-empty{
+    display:inline-block;
+    padding:6px 8px;
+    color:#6c757d;
+    font-style:italic;
+    font-size:12px;
+  }
+
+  .bc-error-empty-row td{
+    height:54px;
+    text-align:center;
+    color:#6c757d;
+  }
+
+  @media(max-width:900px){
+    .bc-form-error-table th{
+      font-size:13px;
+      padding:9px 7px;
+    }
+    .bc-form-error-table td{
+      padding:8px 7px;
+    }
+  }
+
+
+  .print-only{display:none}
+  @media print{
+    .print-only{display:inline!important}
+  }
+
+  /* ==========================================================
+     V13 - PHÔNG TIÊU ĐỀ BÁO CÁO GIAO BAN 4 TỔ
+     ========================================================== */
+  .bc-hero{
+    --hero-accent:#1f5fbf;
+    --hero-dark:#123b8f;
+    --hero-light:#eaf2ff;
+    position:relative;
+    overflow:hidden;
+    min-height:315px;
+    margin:-6px -6px 24px;
+    border-radius:16px;
+    border-top:9px solid var(--hero-dark);
+    border-bottom:7px solid var(--hero-accent);
+    background:
+      linear-gradient(
+        110deg,
+        #ffffff 0%,
+        #ffffff 55%,
+        var(--hero-light) 55%,
+        #ffffff 100%
+      );
+    box-shadow:0 7px 22px rgba(18,59,143,.15);
+  }
+
+  .bc-hero::before{
+    content:"";
+    position:absolute;
+    right:-110px;
+    top:-130px;
+    width:430px;
+    height:430px;
+    border-radius:50%;
+    background:
+      radial-gradient(
+        circle,
+        rgba(255,255,255,.86) 0 24%,
+        transparent 25% 34%,
+        rgba(255,255,255,.48) 35% 36%,
+        transparent 37%
+      );
+    opacity:.8;
+  }
+
+  .bc-hero::after{
+    content:"";
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    height:11px;
+    background:
+      linear-gradient(
+        90deg,
+        var(--hero-dark) 0 64%,
+        #e51c23 64% 96%,
+        #f0a078 96% 100%
+      );
+  }
+
+  .bc-hero-inner{
+    position:relative;
+    z-index:2;
+    display:grid;
+    grid-template-columns:minmax(0,1.45fr) minmax(320px,.75fr);
+    min-height:295px;
+  }
+
+  .bc-hero-main{
+    padding:24px 30px 34px;
+  }
+
+  .bc-hero-brand{
+    display:flex;
+    align-items:center;
+    gap:13px;
+    margin-bottom:24px;
+  }
+
+  .bc-hero-logo{
+    width:58px;
+    height:58px;
+    border:4px solid var(--hero-accent);
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#fff;
+    color:#e32636;
+    font-size:18px;
+    font-weight:900;
+    box-shadow:0 3px 8px rgba(0,0,0,.12);
+  }
+
+  .bc-hero-hospital{
+    font-family:Georgia,"Times New Roman",serif;
+    font-size:19px;
+    color:var(--hero-dark);
+    font-weight:800;
+    line-height:1.15;
+  }
+
+  .bc-hero-hospital small{
+    display:block;
+    margin-top:3px;
+    color:#d82828;
+    font-size:13px;
+    font-style:italic;
+    font-weight:500;
+  }
+
+  .bc-hero-unit{
+    display:inline-block;
+    margin-top:5px;
+    border-top:3px solid var(--hero-dark);
+    border-bottom:3px solid var(--hero-accent);
+    padding:3px 20px 2px;
+    font-family:Georgia,"Times New Roman",serif;
+    color:var(--hero-dark);
+    font-size:18px;
+    font-weight:900;
+  }
+
+  .bc-hero-report-title{
+    margin:6px 0 0;
+    color:var(--hero-dark);
+    font-size:38px;
+    line-height:1.02;
+    font-weight:950;
+    letter-spacing:.2px;
+    text-transform:uppercase;
+  }
+
+  .bc-hero-department{
+    margin-top:4px;
+    color:var(--hero-accent);
+    font-size:30px;
+    line-height:1.1;
+    font-weight:950;
+    text-transform:uppercase;
+  }
+
+  .bc-hero-subtitle{
+    margin-top:8px;
+    color:#343a40;
+    font-size:14px;
+    font-weight:800;
+    letter-spacing:.4px;
+  }
+
+  .bc-hero-period{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    margin-top:16px;
+    padding:9px 15px;
+    border-radius:9px;
+    background:var(--hero-dark);
+    color:#fff;
+    font-weight:900;
+    box-shadow:0 4px 10px rgba(18,59,143,.20);
+  }
+
+  .bc-hero-person{
+    margin-top:7px;
+    color:#495057;
+    font-size:13px;
+    font-weight:700;
+  }
+
+  .bc-hero-side{
+    position:relative;
+    padding:24px 22px 34px 10px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+  }
+
+  .bc-hero-visual{
+    position:relative;
+    border:3px solid #fff;
+    border-radius:34px 8px 34px 8px;
+    background:
+      linear-gradient(
+        145deg,
+        rgba(255,255,255,.95),
+        var(--hero-light)
+      );
+    box-shadow:
+      0 10px 24px rgba(0,0,0,.15),
+      inset 0 0 0 2px rgba(255,255,255,.7);
+    padding:20px 19px 17px;
+    min-height:205px;
+  }
+
+  .bc-hero-icon{
+    position:absolute;
+    right:17px;
+    top:-27px;
+    width:74px;
+    height:74px;
+    border-radius:22px;
+    background:
+      linear-gradient(
+        135deg,
+        var(--hero-accent),
+        var(--hero-dark)
+      );
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:38px;
+    font-weight:900;
+    box-shadow:0 7px 15px rgba(0,0,0,.18);
+    transform:rotate(3deg);
+  }
+
+  .bc-hero-task-title{
+    padding-right:75px;
+    color:var(--hero-dark);
+    font-size:16px;
+    font-weight:900;
+    margin-bottom:10px;
+  }
+
+  .bc-hero-task{
+    display:flex;
+    gap:8px;
+    align-items:flex-start;
+    margin:7px 0;
+    color:#23334d;
+    font-size:12.5px;
+    font-weight:650;
+    line-height:1.3;
+  }
+
+  .bc-hero-dot{
+    flex:0 0 21px;
+    width:21px;
+    height:21px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--hero-accent);
+    color:#fff;
+    font-size:10px;
+    font-weight:900;
+  }
+
+  .bc-hero-slogan{
+    margin-top:13px;
+    border-radius:10px;
+    background:rgba(255,255,255,.76);
+    border:1px solid rgba(18,59,143,.12);
+    padding:10px 12px;
+    color:var(--hero-dark);
+    font-size:13px;
+    font-weight:900;
+    text-align:center;
+  }
+
+  .bc-hero-footer{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:9px;
+    text-align:center;
+    color:#e32620;
+    font-family:Georgia,"Times New Roman",serif;
+    font-size:18px;
+    font-weight:900;
+    font-style:italic;
+    z-index:3;
+    pointer-events:none;
+  }
+
+  @media(max-width:850px){
+    .bc-hero{
+      min-height:auto;
+      margin:0 0 18px;
+    }
+
+    .bc-hero-inner{
+      grid-template-columns:1fr;
+    }
+
+    .bc-hero-main{
+      padding:18px 17px 12px;
+    }
+
+    .bc-hero-side{
+      padding:8px 17px 47px;
+    }
+
+    .bc-hero-report-title{
+      font-size:29px;
+    }
+
+    .bc-hero-department{
+      font-size:23px;
+    }
+
+    .bc-hero-hospital{
+      font-size:15px;
+    }
+
+    .bc-hero-brand{
+      margin-bottom:15px;
+    }
+
+    .bc-hero-footer{
+      font-size:14px;
+      bottom:12px;
+    }
+  }
+
+  @media print{
+    .bc-hero{
+      break-inside:avoid;
+      box-shadow:none;
+      -webkit-print-color-adjust:exact;
+      print-color-adjust:exact;
+    }
+  }
+
+
+  /* ===== V14: MÀU TRẠNG THÁI GIỐNG GIAO VIỆC ===== */
+  .bc-status{
+    display:inline-block;
+    min-width:98px;
+    padding:5px 9px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:900;
+    text-align:center;
+    white-space:nowrap;
+    border:1px solid transparent;
+  }
+  .bc-status-new{
+    background:#e9ecef;
+    color:#495057;
+    border-color:#ced4da;
+  }
+  .bc-status-doing{
+    background:#dbeafe;
+    color:#0b4ea2;
+    border-color:#93c5fd;
+  }
+  .bc-status-done{
+    background:#d1fae5;
+    color:#087443;
+    border-color:#6ee7b7;
+  }
+  .bc-status-overdue{
+    background:#fee2e2;
+    color:#b91c1c;
+    border-color:#fca5a5;
+  }
+  .bc-status-warning{
+    background:#fff3cd;
+    color:#8a5a00;
+    border-color:#ffd166;
+  }
+
+  /* ===== NHẬP NHẬT KÝ SỰ CỐ / TỒN TẠI NGAY TRONG BÁO CÁO ===== */
+  .bc-entry-box{
+    border:1px solid #cfdced;
+    border-radius:10px;
+    margin:10px 0 16px;
+    background:#f8fbff;
+    overflow:hidden;
+  }
+  .bc-entry-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:10px 13px;
+    background:#eaf2ff;
+    color:#123b8f;
+    font-weight:900;
+    cursor:pointer;
+  }
+  .bc-entry-body{
+    padding:12px;
+  }
+  .bc-entry-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(150px,1fr));
+    gap:10px;
+  }
+  .bc-entry-field label{
+    display:block;
+    font-size:11px;
+    font-weight:800;
+    color:#41546f;
+    margin-bottom:4px;
+  }
+  .bc-entry-field input,
+  .bc-entry-field select,
+  .bc-entry-field textarea{
+    width:100%;
+    border:1px solid #c9d5e5;
+    border-radius:6px;
+    padding:8px 9px;
+    background:#fff;
+    font:inherit;
+  }
+  .bc-entry-field textarea{
+    min-height:68px;
+    resize:vertical;
+  }
+  .bc-entry-span2{grid-column:span 2}
+  .bc-entry-span4{grid-column:span 4}
+  .bc-entry-actions{
+    display:flex;
+    justify-content:flex-end;
+    margin-top:10px;
+  }
+  .bc-entry-save{
+    border:0;
+    border-radius:7px;
+    padding:9px 18px;
+    color:#fff;
+    background:#198754;
+    font-weight:900;
+    cursor:pointer;
+  }
+  .bc-entry-save.incident{
+    background:#dc3545;
+  }
+
+  @media(max-width:900px){
+    .bc-entry-grid{
+      grid-template-columns:1fr 1fr;
+    }
+    .bc-entry-span4{
+      grid-column:span 2;
+    }
+  }
+  @media(max-width:560px){
+    .bc-entry-grid{
+      grid-template-columns:1fr;
+    }
+    .bc-entry-span2,
+    .bc-entry-span4{
+      grid-column:span 1;
+    }
+  }
+
+
+  /* ===== V11.3 - THÔNG BÁO LƯU THÀNH CÔNG RÕ RÀNG ===== */
+  .bc-save-feedback{
+    display:none;
+    position:sticky;
+    top:8px;
+    z-index:1200;
+    margin:0 0 14px;
+    padding:12px 14px;
+    border-radius:10px;
+    font-size:14px;
+    font-weight:800;
+    box-shadow:0 4px 18px rgba(0,0,0,.12);
+  }
+
+  .bc-save-feedback.show{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+  }
+
+  .bc-save-feedback.success{
+    background:#e7f8ed;
+    color:#116530;
+    border:1px solid #8ed2a5;
+  }
+
+  .bc-save-feedback.error{
+    background:#fff1f2;
+    color:#b42332;
+    border:1px solid #f2a5ae;
+  }
+
+  .bc-save-feedback.info{
+    background:#eef5ff;
+    color:#0b4f9c;
+    border:1px solid #9fc2ee;
+  }
+
+  .bc-save-feedback .bc-save-main{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+  }
+
+  .bc-save-feedback .bc-save-icon{
+    font-size:20px;
+    line-height:1;
+  }
+
+  .bc-save-feedback .bc-save-title{
+    display:block;
+    font-size:15px;
+    margin-bottom:3px;
+  }
+
+  .bc-save-feedback .bc-save-detail{
+    display:block;
+    font-weight:500;
+    font-size:12px;
+    line-height:1.45;
+  }
+
+  .bc-save-feedback button{
+    border:0;
+    background:transparent;
+    color:inherit;
+    font-size:18px;
+    line-height:1;
+    padding:0 2px;
+  }
+
+  .bc-entry-save.is-saved{
+    background:#198754!important;
+    border-color:#198754!important;
+    color:#fff!important;
+  }
+
+  .bc-entry-save.is-saving{
+    opacity:.72;
+    pointer-events:none;
+  }
+
+  .bc-entry-inline-status{
+    display:none;
+    margin-top:8px;
+    padding:8px 10px;
+    border-radius:7px;
+    font-size:12px;
+    font-weight:700;
+  }
+
+  .bc-entry-inline-status.show{
+    display:block;
+  }
+
+  .bc-entry-inline-status.success{
+    background:#e7f8ed;
+    color:#116530;
+    border:1px solid #9bd5af;
+  }
+
+
+  .bc-colored-select{font-weight:700!important}
+  .bc-c-red{background:#fdecec!important;color:#b42318!important;border-color:#f5b7b1!important}
+  .bc-c-green{background:#eaf8ef!important;color:#18794e!important;border-color:#a9dfbf!important}
+  .bc-c-blue{background:#eaf2ff!important;color:#175cd3!important;border-color:#b2ccff!important}
+  .bc-c-yellow{background:#fff7db!important;color:#946200!important;border-color:#f6d776!important}
+  .bc-c-gray{background:#f2f4f7!important;color:#475467!important;border-color:#d0d5dd!important}
+</style>
+
+<div class="bc-filter-card no-print">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-2">
+      <label class="form-label fw-bold">Từ ngày</label>
+      <input id="bc-from" type="date" class="form-control">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label fw-bold">Đến ngày</label>
+      <input id="bc-to" type="date" class="form-control">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label fw-bold">Bộ phận</label>
+      <select id="bc-dept" class="form-select" onchange="BaoCaoApp.departmentChanged()">
+        <option value="">-- Tất cả bộ phận --</option>
+        <option value="VỆ SINH MÔI TRƯỜNG">VỆ SINH MÔI TRƯỜNG</option>
+        <option value="ĐỒ VẢI">ĐỒ VẢI</option>
+        <option value="GIÁM SÁT">GIÁM SÁT</option>
+        <option value="DỤNG CỤ">DỤNG CỤ</option>
+        <option value="VI PHẠM CHUNG">VI PHẠM CHUNG</option>
+      </select>
+    </div>
+    <div class="col-md-3 smart-wrap">
+      <label class="form-label fw-bold">Nhân viên / Tổ trưởng</label>
+      <input id="bc-name" class="form-control" placeholder="Gõ → lọc → chọn">
+      <input id="bc-person" type="hidden">
+      <div id="bc-menu" class="smart-menu"></div>
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-primary w-100" onclick="BaoCaoApp.load()">XEM BÁO CÁO</button>
+    </div>
+  </div>
+</div>
+
+
+<div
+  id="bc-save-feedback"
+  class="bc-save-feedback no-print"
+  role="status"
+  aria-live="polite"
+>
+  <div class="bc-save-main">
+    <div class="bc-save-icon" id="bc-save-feedback-icon">✅</div>
+    <div>
+      <strong class="bc-save-title" id="bc-save-feedback-title">
+        ĐÃ LƯU THÀNH CÔNG
+      </strong>
+      <span class="bc-save-detail" id="bc-save-feedback-detail"></span>
+    </div>
+  </div>
+
+  <button
+    type="button"
+    aria-label="Đóng thông báo"
+    onclick="BaoCaoApp.hideSaveFeedback()"
+  >
+    ×
+  </button>
+</div>
+
+<div class="bc-filter-card mb-3" id="bc-section-picker">
+    <div class="fw-bold mb-2">CHỌN MỤC BÁO CÁO HIỂN THỊ</div>
+    <div id="bc-section-options" class="d-flex flex-wrap gap-2"></div>
+  </div>
+  <div id="bc-content"></div>
+
+<div class="bc-modal" id="bc-image-modal" onclick="BaoCaoApp.closeImage(event)">
+  <div class="bc-modal-card" onclick="event.stopPropagation()">
+    <button class="bc-modal-close" onclick="BaoCaoApp.closeImage()">×</button>
+    <div id="bc-image-loading" class="p-5 text-center">Đang tải ảnh...</div>
+    <img id="bc-image-view" alt="Ảnh lỗi" style="display:none">
+  </div>
+</div>
+
+<script>
+const BaoCaoApp = (() => {
+  let staff = [];
+  const BC_OLD_DEPARTMENTS = [
+    'VỆ SINH MÔI TRƯỜNG',
+    'ĐỒ VẢI',
+    'GIÁM SÁT',
+    'DỤNG CỤ',
+    'VI PHẠM CHUNG'
+  ];
+
+  function ensureDepartmentOptions(extra) {
+    const el = document.getElementById('bc-dept');
+    if (!el) return;
+
+    const current = el.value || '';
+    const existing = Array.from(el.options).map(o => String(o.value || '').trim());
+
+    (extra || []).forEach(v => {
+      v = String(v || '').trim();
+      if (!v) return;
+      if (!existing.some(x => norm(x) === norm(v))) {
+        const op = document.createElement('option');
+        op.value = v;
+        op.textContent = v;
+        el.appendChild(op);
+        existing.push(v);
+      }
+    });
+
+    if (current) {
+      const match = Array.from(el.options).find(o => norm(o.value) === norm(current));
+      if (match) el.value = match.value;
+    }
+  }
+
+  let picker = null;
+  let eventBridgeInstalled = false;
+
+  /*
+   * V11.4 - Kênh lưu riêng cho Báo cáo.
+   * Gọi thẳng google.script.run để không phụ thuộc AppUtil.server hoặc
+   * danh sách hàm cho phép được khai báo ở một file HTML dùng chung khác.
+   */
+  function saveRpcErrorMessage(error) {
+    if (!error) return 'Apps Script không trả thông tin lỗi.';
+    return String(error.message || error.toString() || error);
+  }
+
+  function parseSavePacket(raw) {
+    let packet;
+
+    try {
+      packet = typeof raw === 'string'
+        ? JSON.parse(raw)
+        : raw;
+    } catch (e) {
+      throw new Error(
+        'API lưu trả dữ liệu không hợp lệ: ' +
+        String(raw || '').slice(0, 300)
+      );
+    }
+
+    if (!packet || packet.success !== true) {
+      throw new Error(
+        packet && packet.error
+          ? packet.error
+          : 'Apps Script không xác nhận lưu thành công.'
+      );
+    }
+
+    return packet.data || {};
+  }
+
+  function runSaveRpc(invoke) {
+    return new Promise((resolve, reject) => {
+      try {
+        const runner = google.script.run
+          .withSuccessHandler(raw => {
+            try {
+              resolve(parseSavePacket(raw));
+            } catch (e) {
+              reject(e);
+            }
+          })
+          .withFailureHandler(error => {
+            reject(new Error(saveRpcErrorMessage(error)));
+          });
+
+        invoke(runner);
+      } catch (e) {
+        reject(e);
+      }
+    });
+  }
+
+  function reportDataRpc(action, payload) {
+    return runSaveRpc(runner =>
+      runner.bcReportDataV120Json({
+        action: action,
+        payload: payload || {}
+      })
+    );
+  }
+
+  function saveOpinionRpc(payload) {
+    return reportDataRpc('SAVE_OPINION', payload);
+  }
+
+  function deleteOpinionRpc(payload) {
+    return reportDataRpc('DELETE_OPINION', payload);
+  }
+
+  function saveIssueRpc(payload) {
+    return reportDataRpc('SAVE_ISSUE', payload);
+  }
+
+  function getIssueRpc(id) {
+    return reportDataRpc('GET_ISSUE', {id: id});
+  }
+
+  function pingStorageRpc() {
+    return reportDataRpc('PING', {});
+  }
+
+  function bcLastDayOfCurrentMonth() {
+    const now = new Date();
+    const d = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+
+  async function init() {
+    installEventBridge();
+    // Hiện Bộ phận ngay lập tức theo cấu trúc cũ, không phụ thuộc RPC.
+    ensureDepartmentOptions([]);
+    AppUtil.loading(true, 'Đang tải dữ liệu báo cáo...');
+    try {
+      await pingStorageRpc();
+
+      const initText = await AppUtil.server('ksReportV3InitialJson');
+      let initPacket;
+      try {
+        initPacket = JSON.parse(String(initText || ''));
+      } catch (parseError) {
+        throw new Error('API khởi tạo trả dữ liệu không hợp lệ: ' + String(initText || '').slice(0, 200));
+      }
+      if (!initPacket || !initPacket.success) {
+        throw new Error((initPacket && initPacket.error) || 'Không khởi tạo được báo cáo.');
+      }
+      const d = initPacket.data || {};
+      staff = Array.isArray(d.staff) ? d.staff : [];
+
+      document.getElementById('bc-from').value = AppUtil.firstMonth();
+      document.getElementById('bc-to').value = bcLastDayOfCurrentMonth();
+
+      const reportDepartments = Array.isArray(d.departments) ? d.departments.slice() : [];
+      staff.forEach(x => {
+        const dep = String((x && x.department) || '').trim();
+        if (dep) reportDepartments.push(dep);
+      });
+      ensureDepartmentOptions(reportDepartments);
+
+      picker = SmartSelect.bind({
+        input: 'bc-name',
+        hidden: 'bc-person',
+        menu: 'bc-menu',
+        items: staff,
+        label: x => x.name + (x.position ? ' (' + x.position + ')' : ''),
+        value: x => x.name
+      });
+
+      document.getElementById('bc-name').addEventListener('input', function() {
+        if (!String(this.value || '').trim()) {
+          document.getElementById('bc-person').value = '';
+        }
+      });
+
+      departmentChanged(false);
+    } catch (e) {
+      ensureDepartmentOptions([]);
+      alert('Lỗi tải báo cáo: ' + e.message);
+    } finally {
+      AppUtil.loading(false);
+    }
+  }
+
+  function departmentChanged(clearPerson = true) {
+    const dep = document.getElementById('bc-dept').value;
+
+    if (clearPerson) {
+      document.getElementById('bc-name').value = '';
+      document.getElementById('bc-person').value = '';
+    }
+
+    const items = dep
+      ? staff.filter(x => norm(x.department) === norm(dep))
+      : staff.slice();
+
+    if (picker && picker.setItems) picker.setItems(items);
+  }
+
+  async function load() {
+    const department = String(document.getElementById('bc-dept').value || '').trim();
+    const visibleName = String(document.getElementById('bc-name').value || '').trim();
+    let person = String(document.getElementById('bc-person').value || '').trim();
+
+    // Không chọn nhân viên => lấy toàn bộ bộ phận.
+    if (!visibleName) {
+      person = '';
+      document.getElementById('bc-person').value = '';
+    }
+
+    const filters = {
+      from: document.getElementById('bc-from').value,
+      to: document.getElementById('bc-to').value,
+      department: department,
+      person: person
+    };
+
+    AppUtil.loading(true, 'Đang tổng hợp báo cáo...');
+    try {
+      const reportText = await AppUtil.server('ksReportV3DepartmentJson', filters);
+
+      let packet;
+      try {
+        packet = JSON.parse(String(reportText || ''));
+      } catch (parseError) {
+        throw new Error(
+          'API V3 trả dữ liệu không phải JSON. Nội dung nhận được: ' +
+          String(reportText || '').slice(0, 300)
+        );
+      }
+
+      if (!packet || !packet.success) {
+        throw new Error(
+          (packet && packet.error)
+            ? packet.error
+            : 'API V3 không trả dữ liệu báo cáo.'
+        );
+      }
+
+      const r = packet.data || {};
+
+      if (!r.reportType) {
+        throw new Error('Dữ liệu báo cáo thiếu reportType.');
+      }
+
+      render(r);
+    } catch (e) {
+      document.getElementById('bc-content').innerHTML =
+        '<div class="alert alert-danger"><b>Lỗi API báo cáo:</b> ' + esc(e.message) + '</div>';
+    } finally {
+      AppUtil.loading(false);
+    }
+  }
+
+  function render(r) {
+    console.log('KS REPORT V3', r);
+    if (!r || typeof r !== 'object') {
+      document.getElementById('bc-content').innerHTML =
+        '<div class="alert alert-danger"><b>Lỗi API báo cáo:</b> Không nhận được đối tượng dữ liệu hợp lệ.</div>';
+      return;
+    }
+
+    if (r.reportType === 'SPECIAL') renderSpecial(r);
+    else renderGeneric(r);
+  }
+
+  function renderGeneric(r) {
+    const s = r.summary || {};
+
+    let h =
+      '<div class="bc-report">';
+
+    h += reportHeader(
+      'BÁO CÁO TỔNG HỢP ' +
+      (
+        r.filters.department ||
+        'CÁC BỘ PHẬN'
+      ),
+      r.filters
+    );
+
+    h += metrics([
+      [
+        'Kế hoạch tuần',
+        (s.weeklyDone || 0) +
+        '/' +
+        (s.weeklyTotal || 0)
+      ],
+      [
+        'Kế hoạch tháng',
+        (s.monthlyDone || 0) +
+        '/' +
+        (s.monthlyTotal || 0)
+      ],
+      [
+        'Giao việc hoàn thành',
+        (s.taskDone || 0) +
+        '/' +
+        (s.taskTotal || 0)
+      ],
+      [
+        'Quá hạn',
+        s.overdue || 0
+      ],
+      [
+        'Tỷ lệ bảng kiểm',
+        (s.checklistAvgRate || 0) +
+        '%'
+      ],
+      [
+        'Lỗi vi phạm',
+        s.violationCount || 0
+      ],
+      [
+        'Điểm trừ vi phạm',
+        s.violationPoints || 0
+      ],
+      [
+        'Tồn tại',
+        s.issueCount || 0
+      ]
+    ]);
+
+    h += section(
+      '1. KẾ HOẠCH TUẦN CỦA BỘ PHẬN'
+    ) +
+    basicTable(
+      [
+        'Từ ngày',
+        'Đến ngày',
+        'Nội dung',
+        'Người phụ trách',
+        'Trạng thái',
+        'Kết quả',
+        'Ghi chú'
+      ],
+      r.weekly,
+      [
+        'from',
+        'to',
+        'content',
+        'owner',
+        'status',
+        'result',
+        'note'
+      ]
+    );
+
+    h += section(
+      '2. KẾ HOẠCH THÁNG CỦA BỘ PHẬN'
+    ) +
+    basicTable(
+      [
+        'Từ ngày',
+        'Đến ngày',
+        'Nội dung',
+        'Người phụ trách',
+        'Trạng thái',
+        'Kết quả',
+        'Ghi chú'
+      ],
+      r.monthly,
+      [
+        'from',
+        'to',
+        'content',
+        'owner',
+        'status',
+        'result',
+        'note'
+      ]
+    );
+
+    h += section(
+      '3. CÔNG VIỆC TRỌNG ĐIỂM & ĐỘT XUẤT'
+    ) + taskPriorityReportTable(r.tasks);
+
+    h += section(
+      '4. PHÂN TÍCH BẢNG KIỂM'
+    ) +
+    basicTable(
+      [
+        'Ngày',
+        'Nhân viên',
+        'Phiếu',
+        'Khu vực',
+        'Tỷ lệ',
+        'Không đạt',
+        'Điểm KPI'
+      ],
+      r.checks,
+      [
+        'date',
+        'name',
+        'formName',
+        'area',
+        'rate',
+        'fail',
+        'kpi'
+      ]
+    );
+
+    h += section(
+      '5. THỐNG KÊ LỖI / VI PHẠM'
+    ) +
+    basicTable(
+      [
+        'Ngày',
+        'Nhân viên',
+        'Lỗi',
+        'Điểm trừ'
+      ],
+      r.violations,
+      [
+        'date',
+        'name',
+        'errorName',
+        'points'
+      ]
+    );
+
+    /*
+     * Để thống nhất toàn hệ thống,
+     * MỤC 10 luôn là KẾ HOẠCH TUẦN SAU.
+     */
+    h += section(
+      '10. DANH SÁCH KẾ HOẠCH TUẦN SAU'
+    );
+
+    h += nextWeekPlanBlock(
+      r.nextWeekPlan
+    );
+
+    h += section(
+      '11. TỒN TẠI / SỰ CỐ / KIẾN NGHỊ'
+    ) +
+    basicTable(
+      [
+        'Ngày',
+        'Tồn tại',
+        'Nguyên nhân',
+        'Phương án',
+        'Trạng thái'
+      ],
+      r.issues,
+      [
+        'date',
+        'issue',
+        'cause',
+        'action',
+        'status'
+      ]
+    );
+
+    h += printButton();
+    h += '</div>';
+
+    document.getElementById(
+      'bc-content'
+    ).innerHTML = h;
+  }
+
+  function renderSpecial(r) {
+    const s = r.summary || {};
+    const dep = String(r.specialDepartment || r.filters.department || '').trim();
+    const isCssd = norm(dep) === norm('DỤNG CỤ');
+
+    let h = '<div class="bc-report">';
+
+    /*
+     * Tiêu đề giao ban riêng theo từng tổ.
+     */
+    h += departmentReportHero(
+      r.reportHero || {},
+      r.filters
+    );
+
+    if ((s.warningErrors || 0) > 0) {
+      h += '<div class="bc-warning">⚠ CẢNH BÁO: Có ' +
+        esc(s.warningErrors) +
+        ' nhóm lỗi thường quy lặp lại từ 2 lần trở lên.</div>';
+    }
+
+    if (isCssd) {
+      h += section('⚙ CÔNG SUẤT HOẠT ĐỘNG CSSD');
+      h += cssdCapacityBlock(r.capacity);
+    }
+
+    h += metrics([
+      ['Phiếu giám sát', s.checklistForms || 0],
+      ['Tỷ lệ đạt TB', (s.checklistAvgRate || 0) + '%'],
+      ['Tiêu chí áp dụng', s.checklistApplied || 0],
+      ['Không đạt', s.checklistFails || 0],
+      ['Lỗi thường quy', s.errorRecords || 0],
+      ['Lỗi đột xuất', (r.violations || []).length],
+      ['Giao việc hoàn thành', (s.taskDone || 0) + '/' + (s.taskTotal || 0)],
+      ['Quá hạn', s.overdue || 0]
+    ]);
+
+    h += section('1. KẾ HOẠCH TUẦN CỦA BỘ PHẬN') +
+      basicTable(
+        ['Từ ngày','Đến ngày','Nội dung','Người phụ trách','Trạng thái','Kết quả','Ghi chú'],
+        r.weekly,
+        ['from','to','content','owner','status','result','note']
+      );
+
+    h += section('2. KẾ HOẠCH THÁNG CỦA BỘ PHẬN') +
+      basicTable(
+        ['Từ ngày','Đến ngày','Nội dung','Người phụ trách','Trạng thái','Kết quả','Ghi chú'],
+        r.monthly,
+        ['from','to','content','owner','status','result','note']
+      );
+
+    h += section('3. CÔNG VIỆC TRỌNG ĐIỂM & ĐỘT XUẤT') +
+      basicTable(
+        ['Người thực hiện','Tiêu đề','Bắt đầu','Kết thúc','Trạng thái','Đánh giá'],
+        r.tasks,
+        ['assignee','title','startDate','endDate','status','evalStatus']
+      );
+
+    h += section('4. CHỈ SỐ TỔNG QUAN');
+    h += metrics([
+      ['Kế hoạch tuần',(s.weeklyDone||0)+'/'+(s.weeklyTotal||0)],
+      ['Kế hoạch tháng',(s.monthlyDone||0)+'/'+(s.monthlyTotal||0)],
+      ['Tổng việc được giao',s.taskTotal||0],
+      ['Công việc quá hạn',s.overdue||0],
+      ['Đạt',s.checklistPass||0],
+      ['Không đạt',s.checklistFails||0],
+      ['Không áp dụng',s.checklistNa||0],
+      ['Tồn tại/kiến nghị',s.issueCount||0]
+    ]);
+
+    h += section('5. PHÂN TÍCH BẢNG KIỂM') +
+      basicTable(
+        ['Ngày','Nhân viên','Khu vực','Tên phiếu','Áp dụng','Đạt','Không đạt','N/A','Tỷ lệ','Điểm KPI'],
+        r.checks,
+        ['date','name','area','formName','applied','pass','fail','na','rate','kpi']
+      );
+
+    h += section('⚠ 6. THỐNG KÊ & PHÂN TÍCH LỖI THƯỜNG QUY');
+    h += errorStatsTable(r.errorStats || []);
+    h += analysisBox(r.routineAnalysis || []);
+
+    h += section('🚨 7. THỐNG KÊ LỖI ĐỘT XUẤT / VI PHẠM');
+    h += suddenErrorTable(r.suddenErrorStats || []);
+    h += analysisBox(r.suddenAnalysis || []);
+    h += basicTable(
+      ['Ngày','Nhân viên','Tên lỗi đột xuất','Mức độ','Điểm trừ','Người ghi nhận','Ghi chú'],
+      r.violations || [],
+      ['date','name','errorName','level','points','recorder','note']
+    );
+
+    h += section('👥 8. MA TRẬN THEO TỪNG PHIẾU GIÁM SÁT');
+    h += formMatricesBlock(r.formMatrices || [], r.filters, dep);
+
+    h += section('📊 9. KPI 100 ĐIỂM — ĐÚNG LOGIC MENU KPI');
+    h += kpiReportBlock(r.kpiReport || {});
+    h += analysisBox((r.kpiReport || {}).conclusion || []);
+    h += reportOpinionBlock(
+      r.filters,
+      '__TONG_THE__',
+      'KẾT LUẬN TỔNG THỂ',
+      r.overallOpinion || {}
+    );
+
+    h += section('📕 10. NHẬT KÝ SỰ CỐ');
+
+    h += issueEntryForm(
+      'SU_CO',
+      r.filters,
+      'NHẬP NHẬT KÝ SỰ CỐ'
+    );
+
+    h += issueTable(
+      r.incidentIssues || [],
+      true
+    );
+
+    h += section('📌 11. TỒN TẠI KHÁC & KIẾN NGHỊ');
+
+    h += issueEntryForm(
+      'TON_TAI',
+      r.filters,
+      'NHẬP TỒN TẠI / KIẾN NGHỊ'
+    );
+
+    h += issueTable(
+      r.otherIssues || [],
+      false
+    );
+
+    h += section('📅 12. DANH SÁCH KẾ HOẠCH TUẦN SAU');
+    h += nextWeekPlanBlock(r.nextWeekPlan);
+
+    h += printButton();
+    h += '</div>';
+    document.getElementById('bc-content').innerHTML = h;
+    setTimeout(refreshSectionPicker,0);
+  }
+
+  function specialTitle(dep) {
+    if (
+      norm(dep) ===
+      norm('DỤNG CỤ')
+    ) {
+      return 'BÁO CÁO TỔNG HỢP DỤNG CỤ (CSSD)';
+    }
+
+    if (
+      norm(dep) ===
+      norm('ĐỒ VẢI')
+    ) {
+      return 'BÁO CÁO TỔNG HỢP TỔ ĐỒ VẢI';
+    }
+
+    if (
+      norm(dep) ===
+      norm('GIÁM SÁT')
+    ) {
+      return 'BÁO CÁO TỔNG HỢP TỔ GIÁM SÁT';
+    }
+
+    return 'BÁO CÁO TỔNG HỢP VỆ SINH MÔI TRƯỜNG';
+  }
+
+
+  function cssdCapacityBlock(c) {
+    if (!c) {
+      return '<div class="alert alert-warning">Chưa nhận được dữ liệu công suất CSSD.</div>';
+    }
+
+    if (!c.ok) {
+      return (
+        '<div class="alert alert-danger">' +
+        '<b>Không tải được dữ liệu CSSD:</b> ' +
+        esc(c.error || 'Không xác định') +
+        '<br><small>Kiểm tra quyền truy cập Spreadsheet nguồn và bỏ @OnlyCurrentDoc nếu đang có.</small>' +
+        '</div>'
+      );
+    }
+
+    const utilText =
+      c.utilizationPct == null
+        ? 'Chưa đặt định mức'
+        : Number(c.utilizationPct || 0).toFixed(1) + '%';
+
+    let h = metrics([
+      [
+        'Tổng lượt/bộ ghi nhận',
+        c.total || 0
+      ],
+      [
+        'Bộ dụng cụ khác nhau',
+        c.uniqueSets || 0
+      ],
+      [
+        'Ngày có hoạt động',
+        c.activeDays || 0
+      ],
+      [
+        'Bình quân/ngày hoạt động',
+        c.avgPerActiveDay || 0
+      ],
+      [
+        'Bình quân/ngày lịch',
+        c.avgPerCalendarDay || 0
+      ],
+      [
+        'Cao nhất/ngày',
+        (c.peakCount || 0) +
+        (c.peakDay ? ' (' + c.peakDay + ')' : '')
+      ],
+      [
+        'Định mức/ngày',
+        c.targetPerDay || 'Chưa đặt'
+      ],
+      [
+        '% công suất theo định mức',
+        utilText
+      ]
+    ]);
+
+    h += '<div class="row g-2 mb-3">' +
+      capacityStatusCard(
+        'ĐỦ',
+        (c.statusSummary || {}).DU || 0,
+        false
+      ) +
+      capacityStatusCard(
+        'THIẾU',
+        (c.statusSummary || {}).THIEU || 0,
+        true
+      ) +
+      capacityStatusCard(
+        'HẾT HẠN',
+        (c.statusSummary || {}).HET_HAN || 0,
+        true
+      ) +
+      capacityStatusCard(
+        'TRẠNG THÁI KHÁC',
+        (c.statusSummary || {}).KHAC || 0,
+        false
+      ) +
+    '</div>';
+
+    h += cssdDailyChart(
+      c.daily || []
+    );
+
+    h += '<div class="bc-section" style="font-size:15px">BẢNG SẢN LƯỢNG THEO NGÀY</div>';
+
+    h += basicTable(
+      [
+        'Ngày',
+        'Tổng',
+        'Đủ',
+        'Thiếu',
+        'Hết hạn',
+        'Khác'
+      ],
+      c.daily || [],
+      [
+        'date',
+        'total',
+        'DU',
+        'THIEU',
+        'HET_HAN',
+        'KHAC'
+      ]
+    );
+
+    h += '<div class="bc-section" style="font-size:15px">DỤNG CỤ THIẾU</div>';
+
+    h += basicTable(
+      [
+        'Ngày',
+        'Tên bộ',
+        'Người giao',
+        'Người nhận',
+        'Ghi chú'
+      ],
+      c.thieuList || [],
+      [
+        'date',
+        'tenBo',
+        'nguoiGiao',
+        'nguoiNhan',
+        'ghiChu'
+      ]
+    );
+
+    h += '<div class="bc-section" style="font-size:15px">DỤNG CỤ HẾT HẠN</div>';
+
+    h += basicTable(
+      [
+        'Ngày',
+        'Tên bộ',
+        'Người giao',
+        'Người nhận',
+        'Ghi chú'
+      ],
+      c.hetHanList || [],
+      [
+        'date',
+        'tenBo',
+        'nguoiGiao',
+        'nguoiNhan',
+        'ghiChu'
+      ]
+    );
+
+    return h;
+  }
+
+
+
+  function cssdDailyChart(daily) {
+    daily = Array.isArray(daily)
+      ? daily
+      : [];
+
+    if (!daily.length) {
+      return (
+        '<div class="cssd-chart-card">' +
+          '<div class="cssd-chart-title">SẢN LƯỢNG XỬ LÝ DỤNG CỤ THEO NGÀY</div>' +
+          '<div class="text-center text-muted p-4">Không có dữ liệu theo ngày.</div>' +
+        '</div>'
+      );
+    }
+
+    const maxValue = Math.max(
+      1,
+      ...daily.map(
+        x => Number(x.total || 0)
+      )
+    );
+
+    const bars = daily.map(
+      x => {
+        const value =
+          Number(x.total || 0);
+
+        const height =
+          Math.max(
+            2,
+            Math.round(
+              value *
+              165 /
+              maxValue
+            )
+          );
+
+        const weekday =
+          cssdWeekdayLabel(
+            x.date
+          );
+
+        return (
+          '<div class="cssd-bar-item">' +
+            '<div class="cssd-bar-value">' +
+              esc(value) +
+            '</div>' +
+
+            '<div class="cssd-bar-wrap">' +
+              '<div class="cssd-bar" style="height:' +
+                height +
+                'px" title="' +
+                esc(weekday + ': ' + value + ' bộ') +
+              '"></div>' +
+            '</div>' +
+
+            '<div class="cssd-bar-label">' +
+              esc(weekday) +
+            '</div>' +
+
+            '<div class="cssd-bar-date">' +
+              esc(x.date || '') +
+            '</div>' +
+          '</div>'
+        );
+      }
+    ).join('');
+
+    return (
+      '<div class="cssd-chart-card">' +
+        '<div class="cssd-chart-title">' +
+          'SẢN LƯỢNG XỬ LÝ DỤNG CỤ THEO NGÀY' +
+        '</div>' +
+
+        '<div class="cssd-bar-chart">' +
+          bars +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+
+  function cssdWeekdayLabel(
+    ddmmyyyy
+  ) {
+    const p =
+      String(
+        ddmmyyyy || ''
+      ).split('/');
+
+    if (p.length !== 3) {
+      return String(
+        ddmmyyyy || ''
+      );
+    }
+
+    const d =
+      new Date(
+        Number(p[2]),
+        Number(p[1]) - 1,
+        Number(p[0])
+      );
+
+    if (
+      isNaN(
+        d.getTime()
+      )
+    ) {
+      return String(
+        ddmmyyyy || ''
+      );
+    }
+
+    const labels = [
+      'Chủ nhật',
+      'Thứ 2',
+      'Thứ 3',
+      'Thứ 4',
+      'Thứ 5',
+      'Thứ 6',
+      'Thứ 7'
+    ];
+
+    return labels[
+      d.getDay()
+    ];
+  }
+
+
+  function capacityStatusCard(
+    label,
+    value,
+    danger
+  ) {
+    return (
+      '<div class="col-xl-3 col-md-6">' +
+        '<div class="bc-metric ' +
+        (danger ? 'border-danger' : '') +
+        '">' +
+          '<small>' +
+            esc(label) +
+          '</small>' +
+          '<strong class="' +
+          (danger ? 'text-danger' : '') +
+          '">' +
+            esc(value) +
+          '</strong>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+
+
+  function analysisBox(lines) {
+    lines = Array.isArray(lines) ? lines : [];
+    if (!lines.length) return '';
+
+    return '<div class="bc-analysis-box"><b>Kết luận & phân tích:</b><ul>' +
+      lines.map(x => '<li>' + esc(x) + '</li>').join('') +
+      '</ul></div>';
+  }
+
+
+  function suddenErrorTable(rows) {
+    rows = Array.isArray(rows) ? rows : [];
+
+    if (!rows.length) {
+      return '<div class="alert alert-success">Không ghi nhận lỗi đột xuất / vi phạm trong kỳ báo cáo.</div>';
+    }
+
+    return '<div class="bc-table-wrap"><table class="bc-table">' +
+      '<thead><tr>' +
+      '<th>STT</th><th>Tên lỗi đột xuất</th><th>Số lần</th><th>Tổng điểm trừ</th>' +
+      '<th>Mức độ</th><th>Nhân viên liên quan</th><th>Cảnh báo</th>' +
+      '</tr></thead><tbody>' +
+      rows.map((x,i) =>
+        '<tr>' +
+        '<td class="text-center">' + (i+1) + '</td>' +
+        '<td>' + esc(x.errorName||'') + '</td>' +
+        '<td class="text-center fw-bold text-danger">' + esc(x.count||0) + '</td>' +
+        '<td class="text-center">' + esc(x.totalPoints||0) + '</td>' +
+        '<td>' + esc(x.levelText||'') + '</td>' +
+        '<td>' + esc(x.topStaff||'') + '</td>' +
+        '<td class="text-center">' +
+          (x.alert
+            ? '<span class="bc-badge-danger">Lặp lại</span>'
+            : '<span class="bc-badge-muted">Theo dõi</span>') +
+        '</td>' +
+        '</tr>'
+      ).join('') +
+      '</tbody></table></div>';
+  }
+
+
+  function formMatricesBlock(items, filters, department) {
+    items = Array.isArray(items) ? items : [];
+
+    if (!items.length) {
+      return '<div class="alert alert-info">Trong kỳ báo cáo chưa có loại phiếu giám sát nào được chấm cho bộ phận này.</div>';
+    }
+
+    return items.map((item,index) => {
+      let h = '<div class="bc-form-card">' +
+        '<div class="bc-form-card-head">' +
+          esc('8.' + (index+1) + ' — ' + (item.formCode||'') + ' — ' + (item.formName||'')) +
+        '</div><div class="bc-form-card-body">';
+
+      h += metrics([
+        ['Số phiếu',item.formCount||0],
+        ['Tiêu chí được đánh',item.evaluated||0],
+        ['Đạt',item.pass||0],
+        ['Không đạt/Kém',item.fail||0],
+        ['Tỷ lệ đạt',(item.passRate||0)+'%']
+      ]);
+
+      h += matrixTable(item.rows||[],item.staff||[],department);
+      h += staffSummaryTable(item.summary||[]);
+
+      /*
+       * Mỗi loại phiếu đều có bảng chi tiết lỗi & hình ảnh riêng.
+       */
+      h += formErrorDetailBlock(
+        item.errorDetails || [],
+        item.formCode || '',
+        item.formName || ''
+      );
+
+      h += analysisBox(item.conclusion||[]);
+      h += reportOpinionBlock(
+        filters,
+        item.formCode||'',
+        item.formName||'',
+        item.opinion||{}
+      );
+
+      h += '</div></div>';
+      return h;
+    }).join('');
+  }
+
+
+
+  function formErrorDetailBlock(
+    rows,
+    formCode,
+    formName
+  ) {
+    rows =
+      Array.isArray(rows)
+        ? rows
+        : [];
+
+    let body = '';
+
+    if (!rows.length) {
+      body =
+        '<tr class="bc-error-empty-row">' +
+          '<td colspan="4">' +
+            'Không ghi nhận lỗi KHÔNG ĐẠT/KÉM của phiếu này trong kỳ báo cáo.' +
+          '</td>' +
+        '</tr>';
+
+    } else {
+      body =
+        rows.map(x =>
+          '<tr>' +
+
+            '<td>' +
+              '<div class="bc-error-person">' +
+                esc(x.name || '') +
+              '</div>' +
+              (
+                x.area
+                  ? '<span class="bc-error-sub">Khu vực: ' +
+                      esc(x.area) +
+                    '</span>'
+                  : ''
+              ) +
+              (
+                x.date
+                  ? '<span class="bc-error-sub">Ngày: ' +
+                      esc(x.date) +
+                    '</span>'
+                  : ''
+              ) +
+            '</td>' +
+
+            '<td>' +
+              '<div class="bc-error-content">' +
+                esc(
+                  x.errorName ||
+                  x.note ||
+                  'Lỗi chưa có mô tả'
+                ) +
+              '</div>' +
+              (
+                x.note &&
+                x.note !== x.errorName
+                  ? '<span class="bc-error-sub">Ghi chú: ' +
+                      esc(x.note) +
+                    '</span>'
+                  : ''
+              ) +
+            '</td>' +
+
+            '<td class="bc-photo-cell">' +
+              (
+                x.imageRef
+                  ? '<button type="button" class="bc-photo-button no-print" ' +
+                    actionAttr('openImage', [String(x.imageRef || '')]) + '>' +
+                      '🖼 XEM ẢNH GHI NHẬN' +
+                    '</button>' +
+                    '<span class="print-only">Có ảnh ghi nhận</span>'
+                  : '<span class="bc-photo-empty">Chưa có ảnh ghi nhận</span>'
+              ) +
+            '</td>' +
+
+            '<td class="bc-photo-cell">' +
+              (
+                x.correctiveImageRef
+                  ? '<button type="button" class="bc-photo-button fix no-print" ' +
+                    actionAttr('openImage', [String(x.correctiveImageRef || '')]) + '>' +
+                      '✅ XEM ẢNH KHẮC PHỤC' +
+                    '</button>' +
+                    '<span class="print-only">Có ảnh khắc phục</span>'
+                  : '<span class="bc-photo-empty">Chưa có ảnh khắc phục</span>'
+              ) +
+            '</td>' +
+
+          '</tr>'
+        ).join('');
+    }
+
+    return (
+      '<div class="bc-form-error-title">' +
+        '7. CHI TIẾT LỖI & HÌNH ẢNH GHI NHẬN' +
+        (
+          formCode
+            ? ' — ' + esc(formCode)
+            : ''
+        ) +
+      '</div>' +
+
+      '<div class="bc-form-error-wrap">' +
+        '<table class="bc-form-error-table">' +
+          '<thead>' +
+            '<tr>' +
+              '<th class="col-staff">TÊN NHÂN VIÊN</th>' +
+              '<th class="col-error">NỘI DUNG LỖI</th>' +
+              '<th class="col-image">HÌNH ẢNH GHI NHẬN</th>' +
+              '<th class="col-image">HÌNH ẢNH KHẮC PHỤC</th>' +
+            '</tr>' +
+          '</thead>' +
+          '<tbody>' +
+            body +
+          '</tbody>' +
+        '</table>' +
+      '</div>'
+    );
+  }
+
+
+  function reportOpinionBlock(
+    filters,
+    formCode,
+    formName,
+    saved
+  ) {
+    saved = saved || {};
+
+    const safeId =
+      String(
+        formCode ||
+        'TONG_THE'
+      ).replace(
+        /[^a-zA-Z0-9_-]/g,
+        '_'
+      );
+
+    const textareaId =
+      'bc-opinion-' + safeId;
+
+    const statusId =
+      'bc-opinion-status-' + safeId;
+
+    const metaId =
+      'bc-opinion-meta-' + safeId;
+
+    const editBtnId =
+      'bc-opinion-edit-' + safeId;
+
+    const saveBtnId =
+      'bc-opinion-save-' + safeId;
+
+    const cancelBtnId =
+      'bc-opinion-cancel-' + safeId;
+
+    const deleteBtnId =
+      'bc-opinion-delete-' + safeId;
+
+    const hasSaved =
+      saved.exists === true &&
+      String(
+        saved.status || 'Đã lưu'
+      ).toLowerCase() !==
+        'đã xóa';
+
+    const revision =
+      Number(
+        saved.revision || 0
+      );
+
+    const meta =
+      hasSaved
+        ? (
+            'Đã lưu cho kỳ ' +
+            esc(
+              filters.from || ''
+            ) +
+            ' → ' +
+            esc(
+              filters.to || ''
+            ) +
+            '. Cập nhật gần nhất: ' +
+            esc(
+              saved.updatedAt || ''
+            ) +
+            (
+              saved.author
+                ? ' — ' +
+                  esc(
+                    saved.author
+                  )
+                : ''
+            ) +
+            (
+              revision
+                ? ' — Lần cập nhật ' +
+                  esc(revision)
+                : ''
+            )
+          )
+        : (
+            'Chưa có ý kiến đã lưu cho kỳ báo cáo ' +
+            esc(
+              filters.from || ''
+            ) +
+            ' → ' +
+            esc(
+              filters.to || ''
+            ) +
+            '.'
+          );
+
+    return (
+      '<div class="bc-opinion-box no-print">' +
+
+        '<div class="fw-bold mb-2">' +
+          '✍ Ý KIẾN KHẮC PHỤC CỦA TỔ TRƯỞNG — ' +
+          esc(
+            formName ||
+            formCode ||
+            ''
+          ) +
+        '</div>' +
+
+        '<div id="' +
+          esc(statusId) +
+          '" class="bc-opinion-status ' +
+          (
+            hasSaved
+              ? 'saved'
+              : 'new'
+          ) +
+          '">' +
+          (
+            hasSaved
+              ? '✅ Đã có nội dung lưu cho kỳ này. Bấm SỬA / BỔ SUNG để chỉnh nội dung, hoặc XÓA NỘI DUNG nếu không dùng.'
+              : '📝 Chưa có nội dung. Nhập ý kiến rồi bấm LƯU Ý KIẾN.'
+          ) +
+        '</div>' +
+
+        '<textarea ' +
+          'id="' +
+          esc(textareaId) +
+          '" ' +
+          'data-opinion-saved="' +
+          (
+            hasSaved
+              ? '1'
+              : '0'
+          ) +
+          '" ' +
+          'data-original-opinion="' +
+          esc(
+            saved.opinion || ''
+          ) +
+          '" ' +
+          (
+            hasSaved
+              ? 'readonly '
+              : ''
+          ) +
+          'placeholder="Nhập ý kiến, yêu cầu khắc phục, nội dung cần theo dõi lại...">' +
+          esc(
+            saved.opinion || ''
+          ) +
+        '</textarea>' +
+
+        '<div class="d-flex justify-content-between align-items-center gap-2 mt-2 flex-wrap">' +
+
+          '<div id="' +
+            esc(metaId) +
+            '" class="bc-opinion-meta">' +
+            meta +
+          '</div>' +
+
+          '<div class="bc-opinion-actions">' +
+
+            (
+              hasSaved
+                ? (
+                    '<button ' +
+                      'id="' +
+                      esc(editBtnId) +
+                      '" ' +
+                      'type="button" ' +
+                      'class="btn btn-sm bc-opinion-btn-edit" ' +
+                      dataActionAttr('edit-opinion', {
+                        textareaId: textareaId,
+                        editBtnId: editBtnId,
+                        saveBtnId: saveBtnId,
+                        cancelBtnId: cancelBtnId
+                      }) + '>' +
+                      '✏️ SỬA / BỔ SUNG' +
+                    '</button>'
+                  )
+                : ''
+            ) +
+
+            '<button ' +
+              'id="' +
+              esc(saveBtnId) +
+              '" ' +
+              'type="button" ' +
+              'class="btn ' +
+              (
+                hasSaved
+                  ? 'btn-success'
+                  : 'btn-primary'
+              ) +
+              ' btn-sm" ' +
+              (
+                hasSaved
+                  ? 'style="display:none" '
+                  : ''
+              ) +
+              dataActionAttr('save-opinion', {
+                formCode: String(formCode || ''),
+                formName: String(formName || ''),
+                textareaId: textareaId,
+                statusId: statusId,
+                metaId: metaId,
+                editBtnId: editBtnId,
+                saveBtnId: saveBtnId,
+                cancelBtnId: cancelBtnId,
+                deleteBtnId: deleteBtnId
+              }) + '>' +
+              (
+                hasSaved
+                  ? '💾 CẬP NHẬT Ý KIẾN'
+                  : '💾 LƯU Ý KIẾN'
+              ) +
+            '</button>' +
+
+            (
+              hasSaved
+                ? (
+                    '<button ' +
+                      'id="' +
+                      esc(cancelBtnId) +
+                      '" ' +
+                      'type="button" ' +
+                      'style="display:none" ' +
+                      'class="btn btn-sm bc-opinion-btn-cancel" ' +
+                      dataActionAttr('cancel-opinion', {
+                        textareaId: textareaId,
+                        editBtnId: editBtnId,
+                        saveBtnId: saveBtnId,
+                        cancelBtnId: cancelBtnId
+                      }) + '>' +
+                      '↶ HỦY SỬA' +
+                    '</button>' +
+
+                    '<button ' +
+                      'id="' +
+                      esc(deleteBtnId) +
+                      '" ' +
+                      'type="button" ' +
+                      'class="btn btn-sm bc-opinion-btn-delete" ' +
+                      dataActionAttr('delete-opinion', {
+                        formCode: String(formCode || ''),
+                        formName: String(formName || '')
+                      }) + '>' +
+                      '🗑 XÓA NỘI DUNG' +
+                    '</button>'
+                  )
+                : ''
+            ) +
+
+          '</div>' +
+
+        '</div>' +
+
+      '</div>'
+    );
+  }
+
+
+  function kpiReportBlock(kpi) {
+    kpi = kpi || {};
+
+    const rows =
+      Array.isArray(kpi.rows)
+        ? kpi.rows
+        : [];
+
+    let h =
+      '<div class="bc-kpi-formula">' +
+        'CÔNG THỨC KPI CHÍNH THỨC: ' +
+        esc(
+          kpi.formula ||
+          '100 + Điểm giao việc + Điểm bảng kiểm + Điểm vi phạm'
+        ) +
+      '</div>';
+
+    h +=
+      '<div class="bc-kpi-summary-color">' +
+        kpiSummaryCard(
+          'Tổng điểm gốc',
+          kpi.totalBase || 0,
+          'bc-kpi-sum-base'
+        ) +
+        kpiSummaryCard(
+          'Điểm giao việc',
+          signedNumber(
+            kpi.totalTask || 0
+          ),
+          'bc-kpi-sum-task'
+        ) +
+        kpiSummaryCard(
+          'Điểm bảng kiểm',
+          signedNumber(
+            kpi.totalChecklist || 0
+          ),
+          'bc-kpi-sum-check'
+        ) +
+        kpiSummaryCard(
+          'Điểm vi phạm',
+          signedNumber(
+            kpi.totalViolation || 0
+          ),
+          'bc-kpi-sum-vp'
+        ) +
+        kpiSummaryCard(
+          'KPI bình quân',
+          Number(
+            kpi.averageScore || 0
+          ).toFixed(1),
+          'bc-kpi-sum-total'
+        ) +
+      '</div>';
+
+    h += dynamicRankSummary(
+      kpi.rankingConfig || [],
+      kpi.rankCounts || {}
+    );
+
+    h +=
+      '<div class="bc-table-wrap">' +
+        '<table class="bc-table bc-kpi-table">' +
+          '<thead>' +
+            '<tr>' +
+              '<th>Nhân viên</th>' +
+              '<th>Chức vụ</th>' +
+              '<th class="kpi-base">Điểm gốc</th>' +
+              '<th class="kpi-task">Điểm giao việc</th>' +
+              '<th class="kpi-check">Điểm bảng kiểm</th>' +
+              '<th class="kpi-violation">Điểm vi phạm</th>' +
+              '<th class="kpi-total">Tổng điểm</th>' +
+              '<th class="kpi-rank">Xếp loại</th>' +
+              '<th>SL giao việc</th>' +
+              '<th>SL bảng kiểm</th>' +
+              '<th>SL vi phạm</th>' +
+              '<th>Chi tiết</th>' +
+            '</tr>' +
+          '</thead>' +
+          '<tbody>';
+
+    if (!rows.length) {
+      h +=
+        '<tr>' +
+          '<td colspan="12" class="text-center text-muted p-3">' +
+            'Không có dữ liệu KPI trong kỳ báo cáo.' +
+          '</td>' +
+        '</tr>';
+
+    } else {
+      h += rows.map(x =>
+        '<tr>' +
+          '<td><b>' +
+            esc(x.name || '') +
+          '</b></td>' +
+
+          '<td>' +
+            esc(x.position || '') +
+          '</td>' +
+
+          '<td class="bc-score-zero">' +
+            esc(x.base == null ? 100 : x.base) +
+          '</td>' +
+
+          scoreCell(
+            x.taskScore
+          ) +
+
+          scoreCell(
+            x.checklistScore
+          ) +
+
+          scoreCell(
+            x.violationScore
+          ) +
+
+          '<td class="bc-total-score">' +
+            esc(
+              Number(
+                x.total || 0
+              ).toFixed(1)
+            ) +
+          '</td>' +
+
+          '<td class="text-center">' +
+            officialRankBadge(
+              x.ranking,
+              x.rankingColor
+            ) +
+          '</td>' +
+
+          '<td class="text-center">' +
+            esc(x.taskCount || 0) +
+          '</td>' +
+
+          '<td class="text-center">' +
+            esc(x.checkCount || 0) +
+          '</td>' +
+
+          '<td class="text-center">' +
+            esc(x.violationCount || 0) +
+          '</td>' +
+
+          '<td class="bc-kpi-detail">' +
+            (
+              Array.isArray(x.details) &&
+              x.details.length
+                ? x.details
+                    .map(d => '• ' + esc(d))
+                    .join('<br>')
+                : '<span class="text-muted">Không có điểm cộng/trừ chi tiết</span>'
+            ) +
+          '</td>' +
+        '</tr>'
+      ).join('');
+    }
+
+    h +=
+          '</tbody>' +
+        '</table>' +
+      '</div>';
+
+    h += kpiChartOfficial(
+      rows
+    );
+
+    h +=
+      '<div class="bc-kpi-total-grid">' +
+        kpiTotal(
+          'Tổng lượt giao việc',
+          kpi.totalTasks || 0,
+          'bc-kpi-c1'
+        ) +
+        kpiTotal(
+          'Tổng phiếu bảng kiểm',
+          kpi.totalChecks || 0,
+          'bc-kpi-c2'
+        ) +
+        kpiTotal(
+          'Tổng lỗi vi phạm',
+          kpi.totalViolations || 0,
+          'bc-kpi-c4'
+        ) +
+        kpiTotal(
+          'Tổng điểm KPI toàn tổ',
+          Number(
+            kpi.totalScore || 0
+          ).toFixed(1),
+          'bc-kpi-c3'
+        ) +
+        kpiTotal(
+          'Điểm KPI bình quân',
+          Number(
+            kpi.averageScore || 0
+          ).toFixed(1),
+          'bc-kpi-c5'
+        ) +
+      '</div>';
+
+    return h;
+  }
+
+
+  function kpiSummaryCard(
+    label,
+    value,
+    cls
+  ) {
+    return (
+      '<div class="bc-kpi-sum-card ' +
+        cls +
+      '">' +
+        '<small>' +
+          esc(label) +
+        '</small>' +
+        '<strong>' +
+          esc(value) +
+        '</strong>' +
+      '</div>'
+    );
+  }
+
+
+  function rankSummaryCard(
+    label,
+    value,
+    cls
+  ) {
+    return (
+      '<div class="bc-kpi-rank-card ' +
+        cls +
+      '">' +
+        esc(label) +
+        '<strong>' +
+          esc(value) +
+        '</strong>' +
+      '</div>'
+    );
+  }
+
+
+  function signedNumber(value) {
+    const n =
+      Number(value || 0);
+
+    if (n > 0) {
+      return '+' + n;
+    }
+
+    return String(n);
+  }
+
+
+  function scoreCell(value) {
+    const n =
+      Number(value || 0);
+
+    const cls =
+      n > 0
+        ? 'bc-score-positive'
+        : (
+            n < 0
+              ? 'bc-score-negative'
+              : 'bc-score-zero'
+          );
+
+    return (
+      '<td class="' +
+        cls +
+      '">' +
+        esc(
+          signedNumber(n)
+        ) +
+      '</td>'
+    );
+  }
+
+
+  function officialRankBadge(rank,color) {
+    const r=
+      String(
+        rank || ''
+      ).trim();
+
+    const bg=
+      color ||
+      '#6C757D';
+
+    return (
+      '<span class="bc-rank-chip" style="background:'+
+        esc(bg)+
+        ';color:#fff;border-color:'+
+        esc(bg)+
+      '">'+
+        esc(r)+
+      '</span>'
+    );
+  }
+
+
+  function dynamicRankSummary(config,counts) {
+    config=
+      Array.isArray(config)
+        ? config
+        : [];
+
+    counts=
+      counts || {};
+
+    if(!config.length){
+      const keys=Object.keys(counts);
+
+      if(!keys.length){
+        return '';
+      }
+
+      config=keys.map(k=>({
+        ranking:k,
+        color:'#6C757D'
+      }));
+    }
+
+    return (
+      '<div class="bc-kpi-rank-grid">' +
+        config.map(x=>
+          '<div class="bc-kpi-rank-card" style="background:'+
+            esc(x.color||'#6C757D')+
+            ';color:#fff">'+
+            esc(x.ranking||'')+
+            '<strong>'+
+              esc(counts[x.ranking]||0)+
+            '</strong>'+
+          '</div>'
+        ).join('') +
+      '</div>'
+    );
+  }
+
+
+  function kpiChartOfficial(rows) {
+    rows =
+      Array.isArray(rows)
+        ? rows
+        : [];
+
+    if (!rows.length) {
+      return '';
+    }
+
+    const maxScore =
+      Math.max(
+        120,
+        ...rows.map(
+          x =>
+            Number(
+              x.total || 0
+            )
+        )
+      );
+
+    return (
+      '<div class="bc-kpi-chart">' +
+        '<div class="bc-kpi-chart-title">' +
+          'BIỂU ĐỒ ĐIỂM KPI 100 ĐIỂM CỦA NHÂN VIÊN' +
+        '</div>' +
+
+        rows.map(x => {
+          const score =
+            Number(
+              x.total || 0
+            );
+
+          const width =
+            Math.max(
+              0,
+              Math.min(
+                100,
+                score *
+                100 /
+                maxScore
+              )
+            );
+
+          const barColor =
+            (
+              x.rankingColor ||
+              rankBarColor(
+                x.ranking
+              )
+            );
+
+          return (
+            '<div class="bc-kpi-row">' +
+              '<div class="bc-kpi-name">' +
+                esc(x.name || '') +
+              '</div>' +
+
+              '<div class="bc-kpi-track">' +
+                '<div class="bc-kpi-bar" style="width:' +
+                  width +
+                  '%;background:' +
+                  barColor +
+                '"></div>' +
+              '</div>' +
+
+              '<div class="bc-kpi-value">' +
+                score.toFixed(1) +
+              '</div>' +
+            '</div>'
+          );
+        }).join('') +
+      '</div>'
+    );
+  }
+
+
+  function rankBarColor(rank) {
+    const r =
+      String(
+        rank || ''
+      ).toUpperCase();
+
+    if (r === 'XUẤT SẮC') {
+      return '#2563eb';
+    }
+
+    if (r === 'TỐT') {
+      return '#16a34a';
+    }
+
+    if (r === 'KHÁ') {
+      return '#0891b2';
+    }
+
+    if (r === 'TRUNG BÌNH') {
+      return '#f59e0b';
+    }
+
+    return '#dc2626';
+  }
+
+
+  function kpiTotal(label,value,cls) {
+    return '<div class="bc-kpi-total ' + cls + '">' +
+      esc(label) + '<strong>' + esc(value) + '</strong></div>';
+  }
+
+
+
+
+  function issueEntryForm(
+    type,
+    filters,
+    title
+  ) {
+    filters =
+      filters || {};
+
+    const isIncident =
+      type === 'SU_CO';
+
+    const prefix =
+      isIncident
+        ? 'bc-inc'
+        : 'bc-other';
+
+    const defaultStatus =
+      isIncident
+        ? 'CHƯA XỬ LÝ'
+        : 'CHƯA KHẮC PHỤC';
+
+    const today =
+      typeof AppUtil !== 'undefined' && AppUtil.today
+        ? AppUtil.today()
+        : (() => {
+            const d = new Date();
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return y + '-' + m + '-' + day;
+          })();
+
+    return (
+      '<div class="bc-entry-box no-print">' +
+
+        '<div class="bc-entry-head" ' +
+          dataActionAttr('toggle-issue', {prefix: prefix}) + '>' +
+          '<span>＋ '+
+            esc(title)+
+          '</span>' +
+          '<span>Nhấn để nhập / thu gọn</span>' +
+        '</div>' +
+
+        '<input type="hidden" id="'+esc(prefix)+'-id" value="">' +
+
+        '<div id="'+
+          esc(prefix)+
+          '-body" class="bc-entry-body">' +
+
+          '<div class="bc-entry-grid">' +
+
+            entryField(
+              prefix+'-date',
+              'Ngày (*)',
+              'date',
+              today
+            ) +
+
+            entryField(
+              prefix+'-department',
+              'Bộ phận',
+              'text',
+              filters.department || '',
+              true
+            ) +
+
+            entryField(
+              prefix+'-owner',
+              'Người phụ trách',
+              'text',
+              ''
+            ) +
+
+            entryField(
+              prefix+'-deadline',
+              'Hạn xử lý',
+              'date',
+              ''
+            ) +
+
+            entryTextarea(
+              prefix+'-issue',
+              isIncident
+                ? 'Nội dung sự cố (*)'
+                : 'Tồn tại / Nội dung (*)',
+              '',
+              'bc-entry-span2'
+            ) +
+
+            entryTextarea(
+              prefix+'-cause',
+              'Nguyên nhân',
+              '',
+              'bc-entry-span2'
+            ) +
+
+            entryTextarea(
+              prefix+'-action',
+              'Phương án khắc phục',
+              '',
+              'bc-entry-span2'
+            ) +
+
+            (
+              isIncident
+                ? entryTextarea(
+                    prefix+'-note',
+                    'Ghi chú',
+                    '',
+                    'bc-entry-span2'
+                  )
+                : entryTextarea(
+                    prefix+'-recommendation',
+                    'Kiến nghị',
+                    '',
+                    'bc-entry-span2'
+                  )
+            ) +
+
+            issueStatusSelect(
+              prefix+'-status',
+              defaultStatus,
+              isIncident
+            ) +
+
+          '</div>' +
+
+          '<div class="bc-entry-actions">' +
+            '<button '+
+              'id="'+esc(prefix)+'-save-btn" '+
+              'type="button" '+
+              'class="bc-entry-save '+(isIncident?'incident':'')+'" '+
+              dataActionAttr('save-issue', {type: type}) + '>' +
+                (
+                  isIncident
+                    ? '💾 LƯU NHẬT KÝ SỰ CỐ'
+                    : '💾 LƯU TỒN TẠI / KIẾN NGHỊ'
+                ) +
+            '</button>' +
+            '<button '+
+              'id="'+esc(prefix)+'-cancel-btn" '+
+              'type="button" '+
+              'class="btn btn-outline-secondary" '+
+              'style="display:none" '+
+              dataActionAttr('cancel-issue', {type: type}) + '>' +
+              '↶ HỦY SỬA' +
+            '</button>' +
+          '</div>' +
+
+          '<div '+
+            'id="'+esc(prefix)+'-save-status" '+
+            'class="bc-entry-inline-status">'+
+          '</div>' +
+
+        '</div>' +
+      '</div>'
+    );
+  }
+
+
+  function entryField(
+    id,
+    label,
+    type,
+    value,
+    readonly
+  ) {
+    return (
+      '<div class="bc-entry-field">' +
+        '<label for="'+
+          esc(id)+
+        '">'+
+          esc(label)+
+        '</label>' +
+
+        '<input id="'+
+          esc(id)+
+          '" type="'+
+          esc(type)+
+          '" value="'+
+          esc(value || '')+
+          '" '+
+          (readonly?'readonly':'')+
+        '>' +
+      '</div>'
+    );
+  }
+
+
+  function entryTextarea(
+    id,
+    label,
+    value,
+    cls
+  ) {
+    return (
+      '<div class="bc-entry-field '+
+        (cls||'')+
+      '">' +
+        '<label for="'+
+          esc(id)+
+        '">'+
+          esc(label)+
+        '</label>' +
+
+        '<textarea id="'+
+          esc(id)+
+        '">'+
+          esc(value || '')+
+        '</textarea>' +
+      '</div>'
+    );
+  }
+
+
+  function issueStatusSelect(
+    id,
+    selected,
+    isIncident
+  ) {
+    const list =
+      isIncident
+        ? [
+            'CHƯA XỬ LÝ',
+            'ĐANG XỬ LÝ',
+            'ĐÃ XỬ LÝ',
+            'QUÁ HẠN'
+          ]
+        : [
+            'CHƯA KHẮC PHỤC',
+            'ĐANG KHẮC PHỤC',
+            'ĐÃ KHẮC PHỤC',
+            'QUÁ HẠN'
+          ];
+
+    return (
+      '<div class="bc-entry-field">' +
+        '<label>Trạng thái</label>' +
+        '<select id="'+
+          esc(id)+
+        '">' +
+          list.map(x =>
+            '<option value="'+
+              esc(x)+
+              '" '+
+              (
+                x===selected
+                  ? 'selected'
+                  : ''
+              )+
+            '>'+
+              esc(x)+
+            '</option>'
+          ).join('') +
+        '</select>' +
+      '</div>'
+    );
+  }
+
+
+  function nextWeekPlanBlock(plan) {
+    plan = plan || {};
+
+    const rows =
+      Array.isArray(plan.rows)
+        ? plan.rows
+        : [];
+
+    let info =
+      '<div class="small text-muted mb-2">' +
+        'Tuần kế tiếp: <b>' +
+        esc(plan.from || '...') +
+        ' → ' +
+        esc(plan.to || '...') +
+        '</b>. ' +
+        'Nguồn: KẾ HOẠCH chính thức đã tạo/chuyển tiếp sang kỳ sau; ' +
+        'GIAO VIỆC có Trạng thái NV = CHƯA BẮT ĐẦU / ĐANG LÀM / QUÁ HẠN; ' +
+        'và các TỒN TẠI / SỰ CỐ / KIẾN NGHỊ chưa hoàn thành.' +
+      '</div>';
+
+    if (!rows.length) {
+      return (
+        info +
+        '<div class="alert alert-success">' +
+          'Không có công việc hoặc tồn tại cần chuyển sang kế hoạch tuần sau.' +
+        '</div>'
+      );
+    }
+
+    const body = rows.map(
+      (x, i) => {
+        const carry =
+          x.carryOver
+            ? '<span class="badge bg-warning text-dark">Chuyển tiếp</span>'
+            : '<span class="badge bg-primary">Tuần sau</span>';
+
+        return (
+          '<tr>' +
+            '<td class="text-center">' +
+              (i + 1) +
+            '</td>' +
+
+            '<td>' +
+              esc(x.source || '') +
+            '</td>' +
+
+            '<td><b>' +
+              esc(x.owner || '') +
+            '</b></td>' +
+
+            '<td>' +
+              '<b>' + esc(x.content || '') + '</b>' +
+              (x.description ? '<div class="small text-muted mt-1"><b>Nội dung / Mô tả:</b> '+esc(x.description)+'</div>' : '') +
+            '</td>' +
+
+            '<td>' +
+              esc(x.startDate || '') +
+            '</td>' +
+
+            '<td>' +
+              esc(x.dueDate || '') +
+            '</td>' +
+
+            '<td>' +
+              esc(x.status || '') +
+            '</td>' +
+
+            '<td>' +
+              esc(x.priority || '') +
+            '</td>' +
+
+            '<td>' +
+              carry +
+            '</td>' +
+
+            '<td>' +
+              (x.id && (x.kind==='TASK' || x.kind==='PLAN' || x.kind==='ISSUE')
+                ? '<textarea class="form-control form-control-sm" rows="2" onblur="BaoCaoApp.inlineSave(this)" data-kind="'+esc(x.kind)+'" data-id="'+esc(x.id)+'" data-plan-type="'+esc(x.planType||'')+'" data-field="note">'+esc(x.note||'')+'</textarea>'
+                : esc(x.note || '')) +
+            '</td>' +
+          '</tr>'
+        );
+      }
+    ).join('');
+
+    return (
+      info +
+      '<div class="bc-table-wrap">' +
+        '<table class="bc-table">' +
+          '<thead>' +
+            '<tr>' +
+              '<th>STT</th>' +
+              '<th>Nguồn</th>' +
+              '<th>Người phụ trách</th>' +
+              '<th>Nội dung kế hoạch</th>' +
+              '<th>Bắt đầu</th>' +
+              '<th>Hạn hoàn thành</th>' +
+              '<th>Trạng thái</th>' +
+              '<th>Ưu tiên</th>' +
+              '<th>Loại</th>' +
+              '<th>Ghi chú / kiến nghị</th>' +
+            '</tr>' +
+          '</thead>' +
+
+          '<tbody>' +
+            body +
+          '</tbody>' +
+        '</table>' +
+      '</div>'
+    );
+  }
+
+
+
+  function departmentReportHero(
+    hero,
+    filters
+  ) {
+    hero =
+      hero || {};
+
+    filters =
+      filters || {};
+
+    const accent =
+      hero.accent ||
+      '#1f5fbf';
+
+    const accentDark =
+      hero.accentDark ||
+      '#123b8f';
+
+    const accentLight =
+      hero.accentLight ||
+      '#eaf2ff';
+
+    const fromText =
+      formatYmd(
+        filters.from
+      ) || '...';
+
+    const toText =
+      formatYmd(
+        filters.to
+      ) || '...';
+
+    const weekText =
+      reportWeekLabel(
+        filters.from
+      );
+
+    const tasks =
+      Array.isArray(
+        hero.tasks
+      )
+        ? hero.tasks
+        : [];
+
+    return (
+      '<div class="bc-hero" ' +
+        'style="--hero-accent:' +
+          esc(accent) +
+          ';--hero-dark:' +
+          esc(accentDark) +
+          ';--hero-light:' +
+          esc(accentLight) +
+        '">' +
+
+        '<div class="bc-hero-inner">' +
+
+          '<div class="bc-hero-main">' +
+
+            '<div class="bc-hero-brand">' +
+              '<div class="bc-hero-logo">' +
+                '115' +
+              '</div>' +
+
+              '<div>' +
+                '<div class="bc-hero-hospital">' +
+                  'BỆNH VIỆN NGOẠI KHOA 115 NGHỆ AN' +
+                  '<small>“Tất cả vì sức khỏe của bạn”</small>' +
+                '</div>' +
+
+                '<div class="bc-hero-unit">' +
+                  'KHOA KSNK' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+
+            '<div class="bc-hero-report-title">' +
+              esc(
+                hero.title ||
+                'BÁO CÁO GIAO BAN'
+              ) +
+            '</div>' +
+
+            '<div class="bc-hero-department">' +
+              esc(
+                hero.department ||
+                'KHOA KSNK'
+              ) +
+            '</div>' +
+
+            '<div class="bc-hero-subtitle">' +
+              esc(
+                hero.subtitle ||
+                ''
+              ) +
+            '</div>' +
+
+            '<div class="bc-hero-period">' +
+              '▣ ' +
+              (
+                weekText
+                  ? esc(weekText) + ' — '
+                  : ''
+              ) +
+              'TỪ ' +
+              esc(fromText) +
+              ' → ' +
+              esc(toText) +
+            '</div>' +
+
+            (
+              filters.person
+                ? '<div class="bc-hero-person">' +
+                    'Nhân viên / Tổ trưởng: ' +
+                    '<b>' +
+                      esc(
+                        filters.person
+                      ) +
+                    '</b>' +
+                  '</div>'
+                : ''
+            ) +
+
+          '</div>' +
+
+          '<div class="bc-hero-side">' +
+            '<div class="bc-hero-visual">' +
+
+              '<div class="bc-hero-icon">' +
+                esc(
+                  hero.icon ||
+                  '✦'
+                ) +
+              '</div>' +
+
+              '<div class="bc-hero-task-title">' +
+                'NỘI DUNG TRỌNG TÂM' +
+              '</div>' +
+
+              tasks.map(
+                (task, i) =>
+                  '<div class="bc-hero-task">' +
+                    '<span class="bc-hero-dot">' +
+                      (i + 1) +
+                    '</span>' +
+                    '<span>' +
+                      esc(task) +
+                    '</span>' +
+                  '</div>'
+              ).join('') +
+
+              '<div class="bc-hero-slogan">' +
+                esc(
+                  hero.slogan ||
+                  ''
+                ) +
+              '</div>' +
+
+            '</div>' +
+          '</div>' +
+
+        '</div>' +
+
+        '<div class="bc-hero-footer">' +
+          'Làm đúng, ngay cả khi không ai nhìn thấy' +
+        '</div>' +
+
+      '</div>'
+    );
+  }
+
+
+  function reportWeekLabel(
+    ymd
+  ) {
+    if (!ymd) {
+      return '';
+    }
+
+    const d =
+      new Date(
+        ymd +
+        'T00:00:00'
+      );
+
+    if (
+      isNaN(
+        d.getTime()
+      )
+    ) {
+      return '';
+    }
+
+    /*
+     * ISO week number.
+     */
+    const date =
+      new Date(
+        Date.UTC(
+          d.getFullYear(),
+          d.getMonth(),
+          d.getDate()
+        )
+      );
+
+    const dayNum =
+      date.getUTCDay() ||
+      7;
+
+    date.setUTCDate(
+      date.getUTCDate() +
+      4 -
+      dayNum
+    );
+
+    const yearStart =
+      new Date(
+        Date.UTC(
+          date.getUTCFullYear(),
+          0,
+          1
+        )
+      );
+
+    const week =
+      Math.ceil(
+        (
+          (
+            date -
+            yearStart
+          ) /
+          86400000 +
+          1
+        ) /
+        7
+      );
+
+    return (
+      'TUẦN ' +
+      week
+    );
+  }
+
+
+  function reportHeader(title, filters) {
+    return '<h3 class="bc-title">' + esc(title) + '</h3>' +
+      '<div class="bc-period">Thời gian: ' +
+      esc(formatYmd(filters.from) || '...') + ' → ' +
+      esc(formatYmd(filters.to) || '...') +
+      (filters.person ? ' | Nhân viên: <b>' + esc(filters.person) + '</b>' : '') +
+      '</div>';
+  }
+
+  function metrics(items) {
+    return '<div class="row g-2 mb-3">' +
+      items.map(x =>
+        '<div class="col-xl-3 col-md-4 col-6">' +
+          '<div class="bc-metric"><small>' + esc(x[0]) + '</small><strong>' + esc(x[1]) + '</strong></div>' +
+        '</div>'
+      ).join('') +
+      '</div>';
+  }
+
+  function section(title) {
+    return '<div class="bc-section" data-bc-section-title="' + esc(title) + '">' + title + '</div>';
+  }
+
+  function taskPriorityReportTable(rows) {
+    rows = Array.isArray(rows) ? rows : [];
+    let body = rows.map((x,i) =>
+      '<tr>'+
+        '<td class="text-center">'+(i+1)+'</td>'+
+        '<td>'+esc(x.assignee||'')+'</td>'+
+        '<td><b>'+esc(x.title||'')+'</b>'+
+          (x.description ? '<div class="mt-1 text-muted"><b>Nội dung / Mô tả:</b> '+esc(x.description)+'</div>' : '')+
+        '</td>'+
+        '<td>'+esc(x.endDate||'')+'</td>'+
+        '<td>'+basicCellHtml('status',x.status,x)+'</td>'+
+        '<td>'+basicCellHtml('evalStatus',x.evalStatus,x)+
+          '<div class="mt-2"><b>Ghi chú / Phản hồi quản lý:</b></div>'+
+          basicCellHtml('managerNote',x.managerNote||'',x)+
+        '</td>'+
+      '</tr>'
+    ).join('');
+    if(!body) body='<tr><td colspan="6" class="bc-empty">Không có dữ liệu</td></tr>';
+    return '<div class="bc-table-wrap"><table class="bc-table">'+
+      '<thead><tr><th>STT</th><th>Người thực hiện</th><th>Tiêu đề / Nội dung</th><th>Ngày kết thúc</th><th>Trạng thái</th><th>Đánh giá</th></tr></thead>'+
+      '<tbody>'+body+'</tbody></table></div>';
+  }
+
+  function basicTable(cols, rows, keys) {
+    rows = Array.isArray(rows) ? rows : [];
+
+    let body = rows.map(o =>
+      '<tr>' +
+        keys.map(k =>
+          '<td>' +
+            basicCellHtml(
+              k,
+              o[k],
+              o
+            ) +
+          '</td>'
+        ).join('') +
+      '</tr>'
+    ).join('');
+
+    if (!body) {
+      body =
+        '<tr><td colspan="' +
+        cols.length +
+        '" class="bc-empty">Không có dữ liệu</td></tr>';
+    }
+
+    return '<div class="bc-table-wrap">' +
+      '<table class="bc-table">' +
+        '<thead><tr>' +
+          cols.map(x =>
+            '<th>' +
+              esc(x) +
+            '</th>'
+          ).join('') +
+        '</tr></thead>' +
+        '<tbody>' +
+          body +
+        '</tbody>' +
+      '</table>' +
+    '</div>';
+  }
+
+
+  function issueTable(rows, isIncident) {
+    rows = Array.isArray(rows) ? rows : [];
+
+    const cols = isIncident
+      ? [
+          'Ngày',
+          'Nội dung sự cố',
+          'Nguyên nhân',
+          'Phương án',
+          'Người phụ trách',
+          'Hạn',
+          'Trạng thái',
+          'Thao tác'
+        ]
+      : [
+          'Ngày',
+          'Tồn tại',
+          'Nguyên nhân',
+          'Phương án khắc phục',
+          'Kiến nghị',
+          'Người phụ trách',
+          'Trạng thái',
+          'Thao tác'
+        ];
+
+    let body = rows.map(o => {
+      const cells = isIncident
+        ? [
+            esc(o.date),
+            esc(o.issue),
+            esc(o.cause),
+            esc(o.action),
+            esc(o.owner),
+            esc(o.deadline),
+            reportStatusBadge(o.status)
+          ]
+        : [
+            esc(o.date),
+            esc(o.issue),
+            esc(o.cause),
+            esc(o.action),
+            esc(o.recommendation),
+            esc(o.owner),
+            reportStatusBadge(o.status)
+          ];
+
+      cells.push(
+        '<button type="button" class="btn btn-sm btn-outline-primary no-print" ' +
+          dataActionAttr('edit-issue', {
+            id: o.id || ''
+          }) + '>' +
+          '✏️ SỬA' +
+        '</button>'
+      );
+
+      return '<tr>' +
+        cells.map(value => '<td>' + value + '</td>').join('') +
+      '</tr>';
+    }).join('');
+
+    if (!body) {
+      body = '<tr><td colspan="' + cols.length +
+        '" class="bc-empty">Không có dữ liệu</td></tr>';
+    }
+
+    return '<div class="bc-table-wrap">' +
+      '<table class="bc-table">' +
+        '<thead><tr>' +
+          cols.map(x => '<th>' + esc(x) + '</th>').join('') +
+        '</tr></thead>' +
+        '<tbody>' + body + '</tbody>' +
+      '</table>' +
+    '</div>';
+  }
+
+
+  function bcRowKind(row) {
+    if (!row) return '';
+    if (row.kind) return row.kind;
+    if (row.assignee !== undefined && row.evalStatus !== undefined) return 'TASK';
+    if (row.type === 'WEEK' || row.type === 'MONTH') return 'PLAN';
+    if (row.errorName !== undefined) return 'VIOLATION';
+    if (row.issue !== undefined) return 'ISSUE';
+    return '';
+  }
+
+  function bcStatusOptions(kind, current) {
+    let a = [];
+    if (kind === 'TASK') a=['CHƯA BẮT ĐẦU','ĐANG LÀM','HOÀN THÀNH','QUÁ HẠN'];
+    else if (kind === 'PLAN') a=['CHƯA BẮT ĐẦU','ĐANG THỰC HIỆN','HOÀN THÀNH','QUÁ HẠN','CHUYỂN TIẾP'];
+    else if (kind === 'VIOLATION') a=['Chưa xử lý','Đang xử lý','Đã xử lý'];
+    else if (kind === 'ISSUE') a=['CHƯA KHẮC PHỤC','ĐANG XỬ LÝ','ĐÃ KHẮC PHỤC','QUÁ HẠN'];
+    if (current && !a.includes(current)) a.unshift(current);
+    return a;
+  }
+
+  function basicCellHtml(key,value,row) {
+    const kind=bcRowKind(row);
+    const id=String((row&&row.id)||'');
+    if(String(key||'').toLowerCase()==='status' && kind && id){
+      const opts=bcStatusOptions(kind,String(value||''));
+      return '<select class="form-select form-select-sm bc-colored-select '+bcColorClass(value)+'" onchange="this.className=\'form-select form-select-sm bc-colored-select \'+bcColorClass(this.value);BaoCaoApp.inlineSave(this)" data-kind="'+esc(kind)+'" data-id="'+esc(id)+'" data-plan-type="'+esc(row.type||row.planType||'')+'" data-field="status">' +
+        opts.map(x=>'<option '+(String(x)===String(value)?'selected':'')+'>'+esc(x)+'</option>').join('')+'</select>';
+    }
+    if(kind==='TASK' && key==='evalStatus' && id){
+      const opts=['CHƯA BẮT ĐẦU','XUẤT SẮC','TỐT','KHÁ','CHƯA ĐẠT','KÉM','QUÁ HẠN'];
+      return '<select class="form-select form-select-sm bc-colored-select '+bcColorClass(value)+'" onchange="this.className=\'form-select form-select-sm bc-colored-select \'+bcColorClass(this.value);BaoCaoApp.inlineSave(this)" data-kind="TASK" data-id="'+esc(id)+'" data-field="evalStatus">'+
+        opts.map(x=>'<option '+(String(x)===String(value)?'selected':'')+'>'+esc(x)+'</option>').join('')+'</select>';
+    }
+    if((key==='managerNote' || (kind==='PLAN' && key==='note')) && id){
+      return '<textarea class="form-control form-control-sm" rows="2" onblur="BaoCaoApp.inlineSave(this)" data-kind="'+esc(kind)+'" data-id="'+esc(id)+'" data-plan-type="'+esc(row.type||row.planType||'')+'" data-field="note">'+esc(value||'')+'</textarea>';
+    }
+    if(key==='imageRef' && value){
+      return '<button class="btn btn-outline-primary btn-sm" data-bc-image-ref="' + esc(encodeURIComponent(String(value))) + '" onclick="BaoCaoApp.openReportImage(this.dataset.bcImageRef)">Xem ảnh</button>';
+    }
+    return esc(value == null ? '' : value);
+  }
+
+
+  function bcColorClass(value){
+    const n=norm(value);
+    if(n.includes('qua han') || n.includes('kem') || n.includes('chua dat')) return 'bc-c-red';
+    if(n.includes('hoan thanh') || n.includes('xuat sac') || n==='tot' || n.includes('da xu ly') || n.includes('da khac phuc')) return 'bc-c-green';
+    if(n.includes('dang')) return 'bc-c-blue';
+    if(n==='kha' || n.includes('sap')) return 'bc-c-yellow';
+    return 'bc-c-gray';
+  }
+
+  function reportStatusBadge(status) {
+    const raw=
+      String(
+        status || ''
+      ).trim();
+
+    if(!raw){
+      return '';
+    }
+
+    const s=
+      norm(raw);
+
+    let cls=
+      'bc-status-new';
+
+    if(
+      s.includes('hoan thanh') ||
+      s.includes('da khac phuc') ||
+      s.includes('da xu ly') ||
+      s.includes('dong')
+    ){
+      cls='bc-status-done';
+
+    }else if(
+      s.includes('qua han')
+    ){
+      cls='bc-status-overdue';
+
+    }else if(
+      s.includes('dang lam') ||
+      s.includes('dang xu ly') ||
+      s.includes('dang khac phuc') ||
+      s.includes('dang thuc hien')
+    ){
+      cls='bc-status-doing';
+
+    }else if(
+      s.includes('chua bat dau') ||
+      s.includes('chua xu ly') ||
+      s.includes('chua khac phuc') ||
+      s.includes('chua thuc hien')
+    ){
+      cls='bc-status-new';
+
+    }else{
+      cls='bc-status-warning';
+    }
+
+    return (
+      '<span class="bc-status '+
+        cls+
+      '">'+
+        esc(raw)+
+      '</span>'
+    );
+  }
+
+
+  function errorStatsTable(rows) {
+    let body = rows.map((x, i) =>
+      '<tr>' +
+        '<td class="text-center">' + (i + 1) + '</td>' +
+        '<td>' + esc(x.errorName) + '</td>' +
+        '<td class="text-center text-danger fw-bold">' + esc(x.count) + '</td>' +
+        '<td class="text-center">' +
+          (x.overThreshold
+            ? '<span class="bc-badge-danger">Vượt ngưỡng cảnh báo</span>'
+            : '<span class="bc-badge-muted">Trong giới hạn</span>') +
+        '</td>' +
+      '</tr>'
+    ).join('');
+
+    if (!body) body = '<tr><td colspan="4" class="bc-empty">Không ghi nhận lỗi</td></tr>';
+
+    return '<div class="bc-table-wrap">' +
+      '<table class="bc-table">' +
+        '<thead><tr><th>STT</th><th>Tên lỗi phát hiện</th><th>Số lần ghi nhận</th><th>Trạng thái ngưỡng</th></tr></thead>' +
+        '<tbody>' + body + '</tbody>' +
+      '</table>' +
+    '</div>';
+  }
+
+  function errorDetailTable(rows) {
+    let body = rows.map(x =>
+      '<tr>' +
+        '<td><b>' + esc(x.name) + '</b></td>' +
+        '<td>' + esc(x.area) + '</td>' +
+        '<td class="text-danger">' + esc(x.errorName) + '</td>' +
+        '<td>' + esc(x.cause) + '</td>' +
+        '<td>' + esc(x.action) + '</td>' +
+        '<td class="text-center">' +
+          (x.imageRef
+            ? '<button class="bc-image-btn no-print" onclick="BaoCaoApp.openImage(\'' + jsq(x.imageRef) + '\')">🖼 Ảnh lỗi</button>'
+            : '<span class="text-muted">Không có ảnh</span>') +
+        '</td>' +
+      '</tr>'
+    ).join('');
+
+    if (!body) body = '<tr><td colspan="6" class="bc-empty">Không ghi nhận lỗi</td></tr>';
+
+    return '<div class="bc-table-wrap">' +
+      '<table class="bc-table">' +
+        '<thead><tr><th>Nhân viên</th><th>Khu vực</th><th>Mô tả lỗi</th><th>Nguyên nhân</th><th>Giải pháp khắc phục</th><th>Hình ảnh</th></tr></thead>' +
+        '<tbody>' + body + '</tbody>' +
+      '</table>' +
+    '</div>';
+  }
+
+  function matrixTable(rows, people, department) {
+    if (!people.length) {
+      return '<div class="alert alert-info">Chưa có phiếu giám sát phù hợp để dựng ma trận cho bộ phận ' + esc(department || '') + ' trong khoảng thời gian đã chọn.</div>';
+    }
+
+    const head = '<th>Tiêu chí đánh giá</th>' +
+      people.map(p =>
+        '<th>' + esc(p.name) + '<br><small>(' + esc(p.area || 'Chưa ghi nhận') + ')</small></th>'
+      ).join('');
+
+    const body = rows.map(row => {
+      if (row.isSection) {
+        return '<tr class="section-row"><td>' + esc(row.criterion) + '</td>' +
+          people.map(() => '<td></td>').join('') + '</tr>';
+      }
+
+      return '<tr><td>' +
+        '<div class="fw-bold">' + esc(row.criterion) + '</div>' +
+        '<div class="small text-muted">' +
+          (row.formCode ? esc(row.formCode) : '') +
+          (row.group ? ' • ' + esc(row.group) : '') +
+        '</div>' +
+        (row.detail && row.detail !== row.criterion
+          ? '<div class="small mt-1">' + esc(row.detail) + '</div>'
+          : '') +
+      '</td>' +
+        (row.values || []).map(v => {
+          const cls = v === 'KÉM' ? 'poor-cell' : (v === 'KHÔNG ĐẠT' ? 'fail-cell' : '');
+          return '<td class="' + cls + '">' + esc(v || '') + '</td>';
+        }).join('') +
+      '</tr>';
+    }).join('');
+
+    return '<div class="bc-table-wrap mb-3">' +
+      '<table class="bc-table bc-matrix">' +
+        '<thead><tr>' + head + '</tr></thead>' +
+        '<tbody>' + body + '</tbody>' +
+      '</table>' +
+    '</div>';
+  }
+
+  function staffSummaryTable(rows) {
+    let body = rows.map(x =>
+      '<tr>' +
+        '<td><b>' + esc(x.name) + '</b></td>' +
+        '<td>' + esc(x.area) + '</td>' +
+        '<td class="text-center">' + esc(x.total) + '</td>' +
+        '<td class="text-center text-success fw-bold">' + esc(x.pass) + '</td>' +
+        '<td class="text-center text-danger">' + esc(x.fail) + '</td>' +
+        '<td class="text-center text-danger">' + esc(x.poor) + '</td>' +
+        '<td class="text-center text-danger fw-bold">' + esc(x.errors) + '</td>' +
+        '<td class="text-center fw-bold">' + esc(Number(x.errorRate || 0).toFixed(1)) + '%</td>' +
+      '</tr>'
+    ).join('');
+
+    if (!body) body = '<tr><td colspan="8" class="bc-empty">Chưa có dữ liệu đánh giá</td></tr>';
+
+    return '<div class="bc-table-wrap">' +
+      '<table class="bc-table">' +
+        '<thead><tr>' +
+          '<th>TÊN NHÂN VIÊN</th>' +
+          '<th>KHU VỰC</th>' +
+          '<th>TỔNG TIÊU CHÍ ĐƯỢC ĐÁNH</th>' +
+          '<th>SỐ TIÊU CHÍ ĐẠT</th>' +
+          '<th>SỐ TIÊU CHÍ KHÔNG ĐẠT</th>' +
+          '<th>SỐ TIÊU CHÍ KÉM</th>' +
+          '<th>TỔNG LỖI</th>' +
+          '<th>TỶ LỆ LỖI</th>' +
+        '</tr></thead>' +
+        '<tbody>' + body + '</tbody>' +
+      '</table>' +
+    '</div>';
+  }
+
+  function printButton() {
+    return '<div class="mt-3 no-print">' +
+      '<button class="btn btn-outline-secondary" onclick="window.print()">🖨 IN / PDF</button>' +
+      '</div>';
+  }
+
+  async function openImage(ref) {
+    if (!ref) return;
+
+    const modal = document.getElementById('bc-image-modal');
+    const img = document.getElementById('bc-image-view');
+    const loading = document.getElementById('bc-image-loading');
+
+    img.style.display = 'none';
+    img.removeAttribute('src');
+    loading.style.display = 'block';
+    modal.classList.add('show');
+
+    try {
+      const dataUrl = await AppUtil.server('getImageDataUrl', ref);
+      if (!dataUrl) throw new Error('Không đọc được ảnh từ Drive.');
+      img.src = dataUrl;
+      img.style.display = 'block';
+      loading.style.display = 'none';
+    } catch (e) {
+      loading.textContent = 'Không tải được ảnh: ' + e.message;
+    }
+  }
+
+  function closeImage() {
+    document.getElementById('bc-image-modal').classList.remove('show');
+  }
+
+  function formatYmd(v) {
+    if (!v) return '';
+    const p = String(v).split('-');
+    return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : v;
+  }
+
+  function norm(v) {
+    return String(v || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd');
+  }
+
+  function esc(v) {
+    return String(v ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function jsq(v) {
+    return String(v ?? '')
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'")
+      .replace(/\r/g, '')
+      .replace(/\n/g, '\\n');
+  }
+
+  /*
+   * Tạo thuộc tính onclick hợp lệ cho HTML dựng động.
+   * JSON.stringify dùng dấu ngoặc kép; nếu ghép thẳng vào onclick="..."
+   * thì trình duyệt đóng thuộc tính quá sớm và nút bấm không chạy.
+   * esc() chuyển dấu nháy thành HTML entity trước khi đưa vào thuộc tính.
+   */
+  function actionAttr(method, args) {
+    const safeMethod = String(method || '')
+      .replace(/[^a-zA-Z0-9_$]/g, '');
+
+    const code =
+      'BaoCaoApp.' +
+      safeMethod +
+      '(' +
+      (args || []).map(x => JSON.stringify(x)).join(',') +
+      ')';
+
+    return 'onclick="' + esc(code) + '"';
+  }
+
+
+  function dataActionAttr(action, values) {
+    let out =
+      'data-bc-action="' +
+      esc(action || '') +
+      '"';
+
+    Object.keys(values || {}).forEach(key => {
+      const htmlKey = String(key)
+        .replace(/([A-Z])/g, '-$1')
+        .toLowerCase();
+
+      out +=
+        ' data-bc-' +
+        htmlKey +
+        '="' +
+        esc(values[key] ?? '') +
+        '"';
+    });
+
+    return out;
+  }
+
+
+
+  function showSaveFeedback(
+    type,
+    title,
+    detail
+  ) {
+    const box =
+      document.getElementById(
+        'bc-save-feedback'
+      );
+
+    if (!box) {
+      return;
+    }
+
+    const icon =
+      document.getElementById(
+        'bc-save-feedback-icon'
+      );
+
+    const titleEl =
+      document.getElementById(
+        'bc-save-feedback-title'
+      );
+
+    const detailEl =
+      document.getElementById(
+        'bc-save-feedback-detail'
+      );
+
+    box.className =
+      'bc-save-feedback no-print show ' +
+      (
+        type ||
+        'success'
+      );
+
+    if (icon) {
+      icon.textContent =
+        type === 'error'
+          ? '❌'
+          : (
+              type === 'info'
+                ? 'ℹ️'
+                : '✅'
+            );
+    }
+
+    if (titleEl) {
+      titleEl.textContent =
+        title ||
+        'ĐÃ LƯU THÀNH CÔNG';
+    }
+
+    if (detailEl) {
+      detailEl.textContent =
+        detail || '';
+    }
+
+    /*
+     * Cuộn thông báo vào vùng nhìn thấy,
+     * nhưng không kéo người dùng khỏi nội dung quá xa.
+     */
+    try {
+      box.scrollIntoView({
+        behavior:'smooth',
+        block:'nearest'
+      });
+    } catch(e) {}
+  }
+
+
+  function hideSaveFeedback() {
+    const box =
+      document.getElementById(
+        'bc-save-feedback'
+      );
+
+    if (box) {
+      box.classList.remove(
+        'show'
+      );
+    }
+  }
+
+
+  function localDateTimeText() {
+    try {
+      return new Date()
+        .toLocaleString(
+          'vi-VN'
+        );
+    } catch(e) {
+      return '';
+    }
+  }
+
+
+  function editOpinion(
+    textareaId,
+    editBtnId,
+    saveBtnId,
+    cancelBtnId
+  ) {
+    const el =
+      document.getElementById(
+        textareaId
+      );
+
+    if (!el) {
+      return;
+    }
+
+    el.readOnly=false;
+    el.classList.add(
+      'editing'
+    );
+
+    const editBtn =
+      document.getElementById(
+        editBtnId
+      );
+
+    const saveBtn =
+      document.getElementById(
+        saveBtnId
+      );
+
+    const cancelBtn =
+      document.getElementById(
+        cancelBtnId
+      );
+
+    if (editBtn) {
+      editBtn.style.display='none';
+    }
+
+    if (saveBtn) {
+      saveBtn.style.display='';
+      saveBtn.textContent=
+        '💾 CẬP NHẬT Ý KIẾN';
+    }
+
+    if (cancelBtn) {
+      cancelBtn.style.display='';
+    }
+
+    el.focus();
+    el.setSelectionRange(
+      el.value.length,
+      el.value.length
+    );
+  }
+
+
+  function cancelEditOpinion(
+    textareaId,
+    editBtnId,
+    saveBtnId,
+    cancelBtnId
+  ) {
+    const el =
+      document.getElementById(
+        textareaId
+      );
+
+    if (!el) {
+      return;
+    }
+
+    el.value =
+      el.dataset.originalOpinion ||
+      '';
+
+    el.readOnly=true;
+    el.classList.remove(
+      'editing'
+    );
+
+    const editBtn =
+      document.getElementById(
+        editBtnId
+      );
+
+    const saveBtn =
+      document.getElementById(
+        saveBtnId
+      );
+
+    const cancelBtn =
+      document.getElementById(
+        cancelBtnId
+      );
+
+    if (editBtn) {
+      editBtn.style.display='';
+    }
+
+    if (saveBtn) {
+      saveBtn.style.display='none';
+    }
+
+    if (cancelBtn) {
+      cancelBtn.style.display='none';
+    }
+  }
+
+
+  async function saveOpinion(
+    formCode,
+    formName,
+    textareaId,
+    statusId,
+    metaId,
+    editBtnId,
+    saveBtnId,
+    cancelBtnId,
+    deleteBtnId
+  ) {
+    const el =
+      document.getElementById(
+        textareaId
+      );
+
+    if (!el) {
+      return alert(
+        'Không tìm thấy ô ý kiến.'
+      );
+    }
+
+    const payload = {
+      from:
+        document.getElementById(
+          'bc-from'
+        ).value,
+
+      to:
+        document.getElementById(
+          'bc-to'
+        ).value,
+
+      department:
+        document.getElementById(
+          'bc-dept'
+        ).value,
+
+      person:
+        document.getElementById(
+          'bc-person'
+        ).value,
+
+      formCode:
+        formCode ||
+        '__TONG_THE__',
+
+      formName:
+        formName || '',
+
+      opinion:
+        el.value.trim()
+    };
+
+    if (
+      !payload.from ||
+      !payload.to
+    ) {
+      return alert(
+        'Phải chọn Từ ngày và Đến ngày.'
+      );
+    }
+
+    if (!payload.department) {
+      return alert(
+        'Phải chọn Bộ phận trước khi lưu ý kiến.'
+      );
+    }
+
+    if (!payload.opinion) {
+      return alert(
+        'Nội dung ý kiến đang trống. Nếu muốn bỏ nội dung đã lưu, hãy dùng nút XÓA NỘI DUNG.'
+      );
+    }
+
+    const wasSaved =
+      el.dataset.opinionSaved ===
+      '1';
+
+    if (
+      !confirm(
+        wasSaved
+          ? (
+              'Cập nhật ý kiến cho kỳ ' +
+              payload.from +
+              ' → ' +
+              payload.to +
+              '?'
+            )
+          : (
+              'Lưu ý kiến cho kỳ ' +
+              payload.from +
+              ' → ' +
+              payload.to +
+              '?'
+            )
+      )
+    ) {
+      return;
+    }
+
+    AppUtil.loading(
+      true,
+      wasSaved
+        ? 'Đang cập nhật ý kiến khắc phục...'
+        : 'Đang lưu ý kiến khắc phục...'
+    );
+
+    try {
+      const r = await saveOpinionRpc(payload);
+
+      el.dataset.opinionSaved='1';
+      el.dataset.originalOpinion=
+        payload.opinion;
+
+      el.readOnly=true;
+      el.classList.remove(
+        'editing'
+      );
+
+      const statusEl =
+        document.getElementById(
+          statusId
+        );
+
+      if (statusEl) {
+        statusEl.className=
+          'bc-opinion-status saved';
+
+        statusEl.textContent=
+          '✅ Nội dung đã được lưu. Khi mở lại đúng kỳ báo cáo, hệ thống sẽ tự nạp lại. Có thể bấm SỬA / BỔ SUNG để chỉnh tiếp.';
+      }
+
+      const metaEl =
+        document.getElementById(
+          metaId
+        );
+
+      if (metaEl) {
+        metaEl.textContent=
+          'Đã lưu cho kỳ ' +
+          payload.from +
+          ' → ' +
+          payload.to +
+          '. Cập nhật gần nhất: ' +
+          (
+            r.updatedAt || ''
+          ) +
+          (
+            r.author
+              ? ' — ' +
+                r.author
+              : ''
+          ) +
+          (
+            r.revision
+              ? ' — Lần cập nhật ' +
+                r.revision
+              : ''
+          );
+      }
+
+      const editBtn =
+        document.getElementById(
+          editBtnId
+        );
+
+      const saveBtn =
+        document.getElementById(
+          saveBtnId
+        );
+
+      const cancelBtn =
+        document.getElementById(
+          cancelBtnId
+        );
+
+      const deleteBtn =
+        document.getElementById(
+          deleteBtnId
+        );
+
+      if (editBtn) {
+        editBtn.style.display='';
+      }
+
+      if (saveBtn) {
+        saveBtn.style.display='none';
+        saveBtn.textContent=
+          '💾 CẬP NHẬT Ý KIẾN';
+        saveBtn.classList.remove(
+          'btn-primary'
+        );
+        saveBtn.classList.add(
+          'btn-success'
+        );
+      }
+
+      if (cancelBtn) {
+        cancelBtn.style.display='none';
+      }
+
+      if (deleteBtn) {
+        deleteBtn.style.display='';
+      }
+
+      alert(
+        (
+          r &&
+          r.message
+        ) ||
+        (
+          wasSaved
+            ? 'Đã cập nhật ý kiến.'
+            : 'Đã lưu ý kiến.'
+        )
+      );
+
+      /*
+       * Load lại báo cáo:
+       * bảo đảm mở lại đúng kỳ sẽ đọc từ Google Sheets.
+       */
+      await load();
+
+      showSaveFeedback(
+        'success',
+        wasSaved
+          ? '✅ ĐÃ CẬP NHẬT Ý KIẾN THÀNH CÔNG'
+          : '✅ ĐÃ LƯU Ý KIẾN THÀNH CÔNG',
+        'Kỳ báo cáo '+
+        payload.from+
+        ' → '+
+        payload.to+
+        ' · Bộ phận: '+
+        payload.department+
+        (
+          r && r.revision
+            ? ' · Lần cập nhật: '+r.revision
+            : ''
+        )+
+        ' · '+localDateTimeText()
+      );
+
+    } catch(e) {
+      showSaveFeedback(
+        'error',
+        '❌ LƯU Ý KIẾN KHÔNG THÀNH CÔNG',
+        e.message
+      );
+
+      alert(
+        'Không thể lưu/cập nhật ý kiến: ' +
+        e.message
+      );
+
+    } finally {
+      AppUtil.loading(false);
+    }
+  }
+
+
+  async function deleteOpinion(
+    formCode,
+    formName
+  ) {
+    const payload = {
+      from:
+        document.getElementById(
+          'bc-from'
+        ).value,
+
+      to:
+        document.getElementById(
+          'bc-to'
+        ).value,
+
+      department:
+        document.getElementById(
+          'bc-dept'
+        ).value,
+
+      person:
+        document.getElementById(
+          'bc-person'
+        ).value,
+
+      formCode:
+        formCode ||
+        '__TONG_THE__',
+
+      formName:
+        formName || ''
+    };
+
+    if (
+      !payload.from ||
+      !payload.to ||
+      !payload.department
+    ) {
+      return alert(
+        'Thiếu thông tin kỳ báo cáo.'
+      );
+    }
+
+    if (
+      !confirm(
+        'Xóa nội dung ý kiến của kỳ ' +
+        payload.from +
+        ' → ' +
+        payload.to +
+        '?\n\nLịch sử chỉnh sửa vẫn được giữ lại.'
+      )
+    ) {
+      return;
+    }
+
+    AppUtil.loading(
+      true,
+      'Đang xóa nội dung ý kiến...'
+    );
+
+    try {
+      const r = await deleteOpinionRpc(payload);
+
+      alert(
+        (
+          r &&
+          r.message
+        ) ||
+        'Đã xóa nội dung.'
+      );
+
+      await load();
+
+      showSaveFeedback(
+        'success',
+        '✅ ĐÃ XÓA NỘI DUNG Ý KIẾN',
+        'Nội dung đã được bỏ khỏi kỳ báo cáo; lịch sử thay đổi vẫn được giữ. · '+
+        localDateTimeText()
+      );
+
+    } catch(e) {
+      alert(
+        'Không thể xóa nội dung ý kiến: ' +
+        e.message
+      );
+
+    } finally {
+      AppUtil.loading(false);
+    }
+  }
+
+
+  function installEventBridge() {
+    if (eventBridgeInstalled) return;
+    eventBridgeInstalled = true;
+
+    document.addEventListener('click', function(event) {
+      const target = event.target && event.target.closest
+        ? event.target.closest('[data-bc-action]')
+        : null;
+
+      if (!target) return;
+
+      const d = target.dataset || {};
+      const action = d.bcAction || '';
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (action === 'toggle-issue') {
+        toggleIssueEntry(d.bcPrefix || '');
+        return;
+      }
+
+      if (action === 'save-issue') {
+        saveIssueEntry(d.bcType || '');
+        return;
+      }
+
+      if (action === 'edit-issue') {
+        editIssueEntry(d.bcId || '');
+        return;
+      }
+
+      if (action === 'cancel-issue') {
+        cancelIssueEdit(d.bcType || '');
+        return;
+      }
+
+      if (action === 'edit-opinion') {
+        editOpinion(
+          d.bcTextareaId,
+          d.bcEditBtnId,
+          d.bcSaveBtnId,
+          d.bcCancelBtnId
+        );
+        return;
+      }
+
+      if (action === 'cancel-opinion') {
+        cancelEditOpinion(
+          d.bcTextareaId,
+          d.bcEditBtnId,
+          d.bcSaveBtnId,
+          d.bcCancelBtnId
+        );
+        return;
+      }
+
+      if (action === 'save-opinion') {
+        saveOpinion(
+          d.bcFormCode,
+          d.bcFormName,
+          d.bcTextareaId,
+          d.bcStatusId,
+          d.bcMetaId,
+          d.bcEditBtnId,
+          d.bcSaveBtnId,
+          d.bcCancelBtnId,
+          d.bcDeleteBtnId
+        );
+        return;
+      }
+
+      if (action === 'delete-opinion') {
+        deleteOpinion(
+          d.bcFormCode,
+          d.bcFormName
+        );
+      }
+    });
+  }
+
+
+  async function editIssueEntry(id) {
+    if (!id) {
+      return alert('Không tìm thấy mã bản ghi cần sửa.');
+    }
+
+    AppUtil.loading(true, 'Đang mở dữ liệu để sửa...');
+
+    try {
+      const item = await getIssueRpc(id);
+      const incident = item.type === 'SU_CO';
+      const prefix = incident ? 'bc-inc' : 'bc-other';
+
+      const setVal = (suffix, value) => {
+        const el = document.getElementById(prefix + '-' + suffix);
+        if (el) el.value = value || '';
+      };
+
+      setVal('id', item.id);
+      setVal('date', item.date);
+      setVal('department', item.department);
+      setVal('owner', item.owner);
+      setVal('deadline', item.deadline);
+      setVal('issue', item.issue);
+      setVal('cause', item.cause);
+      setVal('action', item.action);
+      setVal('status', item.status);
+      setVal('recommendation', item.recommendation);
+      setVal('note', item.note);
+
+      const body = document.getElementById(prefix + '-body');
+      if (body) body.style.display = 'block';
+
+      const saveBtn = document.getElementById(prefix + '-save-btn');
+      if (saveBtn) {
+        saveBtn.textContent = incident
+          ? '💾 CẬP NHẬT NHẬT KÝ SỰ CỐ'
+          : '💾 CẬP NHẬT TỒN TẠI / KIẾN NGHỊ';
+      }
+
+      const cancelBtn = document.getElementById(prefix + '-cancel-btn');
+      if (cancelBtn) cancelBtn.style.display = '';
+
+      const statusBox = document.getElementById(prefix + '-save-status');
+      if (statusBox) {
+        statusBox.className = 'bc-entry-inline-status show success';
+        statusBox.textContent = '✏️ Đang sửa bản ghi ' + item.id;
+      }
+
+      if (body && body.scrollIntoView) {
+        body.scrollIntoView({behavior: 'smooth', block: 'start'});
+      }
+    } catch (e) {
+      alert('Không thể mở dữ liệu để sửa: ' + e.message);
+    } finally {
+      AppUtil.loading(false);
+    }
+  }
+
+
+  function cancelIssueEdit(type) {
+    const incident = type === 'SU_CO';
+    const prefix = incident ? 'bc-inc' : 'bc-other';
+    const clear = suffix => {
+      const el = document.getElementById(prefix + '-' + suffix);
+      if (el) el.value = '';
+    };
+
+    clear('id');
+    clear('owner');
+    clear('deadline');
+    clear('issue');
+    clear('cause');
+    clear('action');
+    clear('recommendation');
+    clear('note');
+
+    const status = document.getElementById(prefix + '-status');
+    if (status) {
+      status.value = incident ? 'CHƯA XỬ LÝ' : 'CHƯA KHẮC PHỤC';
+    }
+
+    const saveBtn = document.getElementById(prefix + '-save-btn');
+    if (saveBtn) {
+      saveBtn.textContent = incident
+        ? '💾 LƯU NHẬT KÝ SỰ CỐ'
+        : '💾 LƯU TỒN TẠI / KIẾN NGHỊ';
+    }
+
+    const cancelBtn = document.getElementById(prefix + '-cancel-btn');
+    if (cancelBtn) cancelBtn.style.display = 'none';
+
+    const statusBox = document.getElementById(prefix + '-save-status');
+    if (statusBox) {
+      statusBox.className = 'bc-entry-inline-status';
+      statusBox.textContent = '';
+    }
+  }
+
+
+  function toggleIssueEntry(prefix){
+    const el=
+      document.getElementById(
+        prefix+'-body'
+      );
+
+    if(!el)return;
+
+    el.style.display=
+      el.style.display==='none'
+        ? 'block'
+        : 'none';
+  }
+
+
+  async function saveIssueEntry(type){
+    const incident=
+      type==='SU_CO';
+
+    const prefix=
+      incident
+        ? 'bc-inc'
+        : 'bc-other';
+
+    const val=id=>{
+      const el=
+        document.getElementById(id);
+
+      return el
+        ? String(el.value||'').trim()
+        : '';
+    };
+
+    const payload={
+      id:val(prefix+'-id'),
+      type:type,
+      date:val(prefix+'-date'),
+      department:
+        val(prefix+'-department') ||
+        document.getElementById('bc-dept').value,
+      issue:val(prefix+'-issue'),
+      cause:val(prefix+'-cause'),
+      action:val(prefix+'-action'),
+      owner:val(prefix+'-owner'),
+      deadline:val(prefix+'-deadline'),
+      status:val(prefix+'-status'),
+      recommendation:
+        incident
+          ? ''
+          : val(prefix+'-recommendation'),
+      note:
+        incident
+          ? val(prefix+'-note')
+          : ''
+    };
+
+    if(!payload.department){
+      return alert(
+        'Phải chọn Bộ phận trong bộ lọc báo cáo trước khi nhập.'
+      );
+    }
+
+    if(!payload.issue){
+      return alert(
+        incident
+          ? 'Phải nhập Nội dung sự cố.'
+          : 'Phải nhập Tồn tại / Nội dung.'
+      );
+    }
+
+    const saveBtn=
+      document.getElementById(
+        prefix+'-save-btn'
+      );
+
+    const statusBox=
+      document.getElementById(
+        prefix+'-save-status'
+      );
+
+    const originalText=
+      saveBtn
+        ? saveBtn.textContent
+        : '';
+
+    if(saveBtn){
+      saveBtn.disabled=true;
+      saveBtn.classList.add(
+        'is-saving'
+      );
+      saveBtn.textContent=
+        '⏳ ĐANG LƯU...';
+    }
+
+    if(statusBox){
+      statusBox.className=
+        'bc-entry-inline-status';
+      statusBox.textContent='';
+    }
+
+    AppUtil.loading(
+      true,
+      incident
+        ? 'Đang lưu nhật ký sự cố...'
+        : 'Đang lưu tồn tại / kiến nghị...'
+    );
+
+    try{
+      const r = await saveIssueRpc(payload);
+
+      /*
+       * Phản hồi NGAY tại nút trước khi tải lại.
+       */
+      if(saveBtn){
+        saveBtn.classList.remove(
+          'is-saving'
+        );
+        saveBtn.classList.add(
+          'is-saved'
+        );
+        saveBtn.textContent=
+          '✅ ĐÃ LƯU THÀNH CÔNG';
+      }
+
+      if(statusBox){
+        statusBox.className=
+          'bc-entry-inline-status show success';
+
+        statusBox.textContent=
+          (
+            incident
+              ? '✅ Nhật ký sự cố đã được lưu.'
+              : '✅ Tồn tại / Kiến nghị đã được lưu.'
+          )+
+          (
+            r && r.id
+              ? ' Mã: '+r.id+'.'
+              : ''
+          )+
+          ' '+localDateTimeText();
+      }
+
+      alert(
+        (
+          r &&
+          r.message
+        ) ||
+        'Đã lưu thành công.'
+      );
+
+      /*
+       * Tải lại đúng bộ lọc hiện tại:
+       * bản ghi mới xuất hiện trong Mục 10/11 nếu ngày nằm trong kỳ.
+       */
+      await load();
+
+      /*
+       * Thông báo này nằm NGOÀI bc-content,
+       * nên vẫn còn sau khi load() dựng lại báo cáo.
+       */
+      showSaveFeedback(
+        'success',
+        incident
+          ? (
+              r && r.mode === 'UPDATE'
+                ? '✅ MỤC 10 — ĐÃ CẬP NHẬT NHẬT KÝ SỰ CỐ'
+                : '✅ MỤC 10 — ĐÃ LƯU NHẬT KÝ SỰ CỐ'
+            )
+          : (
+              r && r.mode === 'UPDATE'
+                ? '✅ MỤC 11 — ĐÃ CẬP NHẬT TỒN TẠI / KIẾN NGHỊ'
+                : '✅ MỤC 11 — ĐÃ LƯU TỒN TẠI / KIẾN NGHỊ'
+            ),
+        (
+          r && r.id
+            ? 'Mã bản ghi: '+r.id+' · '
+            : ''
+        )+
+        'Ngày: '+
+        payload.date+
+        ' · Bộ phận: '+
+        payload.department+
+        ' · '+localDateTimeText()
+      );
+
+    }catch(e){
+      if(saveBtn){
+        saveBtn.disabled=false;
+        saveBtn.classList.remove(
+          'is-saving',
+          'is-saved'
+        );
+        saveBtn.textContent=
+          originalText;
+      }
+
+      if(statusBox){
+        statusBox.className=
+          'bc-entry-inline-status show';
+
+        statusBox.style.background=
+          '#fff1f2';
+
+        statusBox.style.color=
+          '#b42332';
+
+        statusBox.style.border=
+          '1px solid #f2a5ae';
+
+        statusBox.textContent=
+          '❌ Lưu không thành công: '+
+          e.message;
+      }
+
+      showSaveFeedback(
+        'error',
+        incident
+          ? '❌ MỤC 10 — LƯU KHÔNG THÀNH CÔNG'
+          : '❌ MỤC 11 — LƯU KHÔNG THÀNH CÔNG',
+        e.message
+      );
+
+      alert(
+        'Không thể lưu: '+
+        e.message
+      );
+
+    }finally{
+      AppUtil.loading(false);
+
+      /*
+       * Nếu load() không chạy vì lỗi, trả nút về trạng thái thao tác.
+       * Nếu thành công, DOM cũ đã được thay bằng load().
+       */
+      if(
+        saveBtn &&
+        document.body.contains(
+          saveBtn
+        ) &&
+        !saveBtn.classList.contains(
+          'is-saved'
+        )
+      ){
+        saveBtn.disabled=false;
+        saveBtn.classList.remove(
+          'is-saving'
+        );
+        saveBtn.textContent=
+          originalText;
+      }
+    }
+  }
+
+
+  async function inlineSave(el){
+    if(!el || !el.dataset) return;
+    const payload={
+      kind:el.dataset.kind||'',
+      id:el.dataset.id||'',
+      planType:el.dataset.planType||''
+    };
+    payload[el.dataset.field||'status']=el.value;
+    try{
+      el.disabled=true;
+      await AppUtil.server('bcInlineUpdateV20',payload);
+      el.classList.add('border-success');
+      setTimeout(()=>el.classList.remove('border-success'),900);
+    }catch(e){
+      alert('Không lưu được: '+e.message);
+    }finally{el.disabled=false;}
+  }
+
+  async function openReportImage(encoded){
+    try{
+      const ref=decodeURIComponent(encoded||'');
+      const data=await AppUtil.server('getImageDataUrl',ref);
+      if(!data) throw new Error('Không tìm thấy ảnh.');
+      const w=window.open('','_blank');
+      if(w) w.document.write('<img src="'+data+'" style="max-width:100%;height:auto">');
+    }catch(e){alert('Không mở được ảnh: '+e.message);}
+  }
+
+  function refreshSectionPicker(){
+    const box=document.getElementById('bc-section-options');
+    const root=document.getElementById('bc-content');
+    if(!box||!root)return;
+    const sections=Array.from(root.querySelectorAll('.bc-section'));
+    box.innerHTML=sections.map((el,i)=>
+      '<label class="form-check form-check-inline m-0"><input class="form-check-input bc-section-check" type="checkbox" value="'+i+'" checked> <span class="form-check-label">'+esc(el.textContent.trim())+'</span></label>'
+    ).join('');
+    box.querySelectorAll('.bc-section-check').forEach(ch=>ch.addEventListener('change',applySectionVisibility));
+  }
+
+  function applySectionVisibility(){
+    const root=document.getElementById('bc-content');
+    if(!root)return;
+    const sections=Array.from(root.querySelectorAll('.bc-section'));
+    const checks=Array.from(document.querySelectorAll('.bc-section-check'));
+    sections.forEach((sec,i)=>{
+      const show=!checks[i] || checks[i].checked;
+      sec.style.display=show?'':'none';
+      let n=sec.nextElementSibling;
+      while(n && !n.classList.contains('bc-section')){
+        n.style.display=show?'':'none';
+        n=n.nextElementSibling;
+      }
+    });
+  }
+
+  return {
+    init,
+    inlineSave,
+    openReportImage,
+    load,
+    departmentChanged,
+    openImage,
+    closeImage,
+    saveOpinion,
+    editOpinion,
+    cancelEditOpinion,
+    deleteOpinion,
+    showSaveFeedback,
+    hideSaveFeedback,
+    toggleIssueEntry,
+    saveIssueEntry
+  };
+})();
+
+/* Bảo đảm các onclick sinh động luôn tìm thấy BaoCaoApp trên window. */
+window.BaoCaoApp = BaoCaoApp;
+</script>

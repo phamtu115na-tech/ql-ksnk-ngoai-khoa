@@ -1,0 +1,2824 @@
+<style>
+#bk-root .bk-card{background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.07);padding:18px}
+#bk-root .bk-title{color:var(--blue-115);font-weight:700;text-transform:uppercase}
+#bk-root .bk-table{min-width:1100px;font-size:13px}
+#bk-root .bk-table thead th{position:sticky;top:0;background:var(--blue-115);color:#fff;z-index:2;vertical-align:middle;text-align:center}
+#bk-root .bk-table td{vertical-align:top}
+#bk-root .bk-detail{min-width:330px;white-space:normal}
+#bk-root .bk-content{min-width:210px;font-weight:700}
+#bk-root .bk-result{min-width:165px}
+#bk-root .bk-note{min-width:220px}
+#bk-root .bk-photo-cell{min-width:145px;text-align:center}
+#bk-root .bk-photo-preview img{max-width:110px;max-height:90px;border-radius:6px;border:1px solid #ddd}
+#bk-root tr.bk-fail td{background:#fff1f2}
+#bk-root tr.bk-pass td{background:#f0fdf4}
+#bk-root tr.bk-na td{background:#f8fafc;color:#64748b}
+
+#bk-root .bk-tabs{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:14px;
+}
+#bk-root .bk-tab-btn{
+  border:1px solid var(--blue-115);
+  color:var(--blue-115);
+  background:#fff;
+  border-radius:8px;
+  padding:9px 15px;
+  font-weight:800;
+  cursor:pointer;
+}
+#bk-root .bk-tab-btn.active{
+  background:var(--blue-115);
+  color:#fff;
+}
+#bk-root .bk-tab-panel{display:none}
+#bk-root .bk-tab-panel.active{display:block}
+
+#bk-root .bk-create-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+#bk-root .bk-create-badge{
+  display:inline-block;
+  background:#eaf2ff;
+  color:#123b8f;
+  border:1px solid #b8cff1;
+  border-radius:999px;
+  padding:5px 10px;
+  font-size:12px;
+  font-weight:800;
+}
+#bk-root .bk-builder-table{
+  min-width:1100px;
+  font-size:13px;
+}
+#bk-root .bk-builder-table thead th{
+  background:#315f9e;
+  color:#fff;
+  text-align:center;
+  vertical-align:middle;
+  position:sticky;
+  top:0;
+}
+#bk-root .bk-builder-table td{
+  vertical-align:top;
+}
+#bk-root .bk-builder-table textarea{
+  min-height:64px;
+  resize:vertical;
+}
+#bk-root .bk-form-list{
+  min-width:900px;
+  font-size:13px;
+}
+#bk-root .bk-form-list th{
+  background:#123b8f;
+  color:#fff;
+  text-align:center;
+}
+#bk-root .bk-code-input{
+  text-transform:uppercase;
+  font-weight:800;
+  letter-spacing:.3px;
+}
+#bk-root .bk-creator-note{
+  border-left:4px solid #198754;
+  background:#f0fff6;
+  padding:10px 12px;
+  border-radius:6px;
+  font-size:13px;
+}
+#bk-root .bk-status-active{
+  display:inline-block;
+  color:#087443;
+  background:#d1fae5;
+  border-radius:999px;
+  padding:4px 8px;
+  font-weight:800;
+}
+#bk-root .bk-status-paused{
+  display:inline-block;
+  color:#8a5a00;
+  background:#fff3cd;
+  border-radius:999px;
+  padding:4px 8px;
+  font-weight:800;
+}
+@media(max-width:900px){
+  #bk-root .bk-tab-btn{
+    flex:1 1 150px;
+  }
+}
+
+
+#bk-root .bk-score-box{
+  border:1px solid #cbd8ea;
+  background:linear-gradient(135deg,#f8fbff,#eef5ff);
+  border-radius:10px;
+  padding:14px;
+  margin-top:14px;
+}
+#bk-root .bk-score-title{
+  color:#123b8f;
+  font-weight:900;
+  text-transform:uppercase;
+}
+#bk-root .bk-score-switch{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 10px;
+  border-radius:8px;
+  background:#fff;
+  border:1px solid #d8e2ef;
+}
+#bk-root .bk-score-preview{
+  border-left:4px solid #7b2cbf;
+  background:#faf5ff;
+  padding:10px 12px;
+  border-radius:6px;
+  font-size:13px;
+}
+#bk-root .bk-grade-a{color:#087443;font-weight:900}
+#bk-root .bk-grade-b{color:#0b63b6;font-weight:900}
+#bk-root .bk-grade-c{color:#a05a00;font-weight:900}
+#bk-root .bk-grade-d{color:#b91c1c;font-weight:900}
+
+
+#bk-edit-modal{
+  position:fixed;
+  inset:0;
+  z-index:999999;
+  display:none;
+  align-items:flex-start;
+  justify-content:center;
+  background:rgba(15,23,42,.62);
+  padding:18px;
+  overflow:auto;
+}
+#bk-edit-modal.show{display:flex}
+#bk-edit-modal .bk-edit-dialog{
+  width:min(1180px,98vw);
+  background:#fff;
+  border-radius:14px;
+  box-shadow:0 24px 70px rgba(0,0,0,.28);
+  margin:auto;
+  overflow:hidden;
+}
+#bk-edit-modal .bk-edit-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:14px 16px;
+  background:#123b8f;
+  color:#fff;
+}
+#bk-edit-modal .bk-edit-title{
+  font-size:17px;
+  font-weight:900;
+}
+#bk-edit-modal .bk-edit-close{
+  border:1px solid rgba(255,255,255,.55);
+  background:transparent;
+  color:#fff;
+  border-radius:7px;
+  padding:6px 10px;
+  cursor:pointer;
+}
+#bk-edit-modal .bk-edit-body{padding:15px}
+#bk-edit-modal .bk-edit-grid{
+  display:grid;
+  grid-template-columns:180px 1fr 1fr;
+  gap:10px;
+}
+#bk-edit-modal label{
+  display:block;
+  font-size:11px;
+  font-weight:900;
+  color:#475569;
+  margin-bottom:4px;
+}
+#bk-edit-modal input,
+#bk-edit-modal select,
+#bk-edit-modal textarea{
+  width:100%;
+  border:1px solid #cbd5e1;
+  border-radius:7px;
+  padding:8px 9px;
+  font:inherit;
+}
+#bk-edit-modal input[readonly]{
+  background:#eef2f7;
+  font-weight:900;
+  color:#123b8f;
+}
+#bk-edit-modal .span3{grid-column:1/-1}
+#bk-edit-modal .edit-section{
+  border-top:2px solid #e2e8f0;
+  margin-top:14px;
+  padding-top:12px;
+}
+#bk-edit-modal .edit-section-title{
+  font-weight:900;
+  color:#123b8f;
+  margin-bottom:8px;
+}
+#bk-edit-modal .edit-table-wrap{overflow:auto}
+#bk-edit-modal table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:900px;
+}
+#bk-edit-modal th{
+  background:#16478f;
+  color:#fff;
+  padding:8px;
+  border:1px solid #fff;
+  font-size:12px;
+}
+#bk-edit-modal td{
+  padding:6px;
+  border:1px solid #d7e0ec;
+  vertical-align:top;
+}
+#bk-edit-modal textarea{min-height:58px;resize:vertical}
+#bk-edit-modal .score-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:9px;
+}
+#bk-edit-modal .bk-edit-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  padding:13px 16px;
+  border-top:1px solid #e2e8f0;
+  background:#f8fafc;
+}
+#bk-edit-modal .btn-edit-save{
+  background:#198754;
+  color:#fff;
+  border:0;
+  border-radius:7px;
+  padding:9px 16px;
+  font-weight:900;
+}
+#bk-edit-modal .btn-edit-cancel{
+  background:#fff;
+  color:#475569;
+  border:1px solid #94a3b8;
+  border-radius:7px;
+  padding:9px 16px;
+  font-weight:800;
+}
+#bk-edit-modal .btn-edit-add{
+  background:#0d6efd;
+  color:#fff;
+  border:0;
+  border-radius:6px;
+  padding:7px 10px;
+  font-weight:800;
+}
+#bk-edit-modal .btn-edit-del{
+  background:#fff;
+  color:#dc3545;
+  border:1px solid #dc3545;
+  border-radius:6px;
+  padding:6px 8px;
+}
+@media(max-width:760px){
+  #bk-edit-modal .bk-edit-grid,
+  #bk-edit-modal .score-grid{
+    grid-template-columns:1fr;
+  }
+  #bk-edit-modal .span3{grid-column:auto}
+}
+
+</style>
+
+<div id="bk-root" class="content-shell">
+
+  <div class="bk-tabs no-print">
+    <button
+      id="bk-tab-run-btn"
+      type="button"
+      class="bk-tab-btn active"
+      onclick="BangKiemApp.showTab('run')"
+    >
+      ✓ CHẤM PHIẾU GIÁM SÁT
+    </button>
+
+    <button
+      id="bk-tab-create-btn"
+      type="button"
+      class="bk-tab-btn"
+      onclick="BangKiemApp.showTab('create')"
+    >
+      ＋ TẠO / SỬA PHIẾU GIÁM SÁT
+    </button>
+  </div>
+
+  <div id="bk-tab-run" class="bk-tab-panel active">
+
+  <div class="bk-card mb-3">
+    <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center mb-3">
+      <div>
+        <h5 class="bk-title mb-1">BẢNG KIỂM GIÁM SÁT</h5>
+        <div class="small text-muted">Chọn Bộ phận → Phiếu giám sát → hệ thống tự tải đúng tiêu chí.</div>
+      </div>
+      <button class="btn btn-outline-success btn-sm" type="button" onclick="BangKiemApp.markAllPass()">✓ ĐÁNH DẤU TẤT CẢ ĐẠT</button>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-lg-2 col-md-4"><label class="form-label small fw-bold">Ngày giám sát (*)</label><input id="bk-date" type="date" class="form-control"></div>
+      <div class="col-lg-3 col-md-4"><label class="form-label small fw-bold">Bộ phận (*)</label><select id="bk-dept" class="form-select" onchange="BangKiemApp.departmentChanged()"></select></div>
+      <div class="col-lg-4 col-md-8"><label class="form-label small fw-bold">Phiếu giám sát (*)</label><select id="bk-form" class="form-select" onchange="BangKiemApp.formChanged()"><option value="">-- Chọn phiếu giám sát --</option></select></div>
+      <div class="col-lg-3 col-md-4"><label class="form-label small fw-bold">Người giám sát</label><input id="bk-supervisor" class="form-control"></div>
+    </div>
+
+    <div class="row g-3 mt-1">
+      <div class="col-lg-4 col-md-6">
+        <label class="form-label small fw-bold">Nhân viên được giám sát (*)</label>
+        <div class="smart-wrap"><input id="bk-name" class="form-control" placeholder="Gõ tên → lọc → chọn"><input id="bk-staffid" type="hidden"><div id="bk-menu" class="smart-menu"></div></div>
+      </div>
+      <div class="col-lg-3 col-md-6"><label class="form-label small fw-bold">Khu vực</label><input id="bk-area" class="form-control" placeholder="Nhập khu vực"></div>
+      <div class="col-lg-2 col-md-4"><label class="form-label small fw-bold">Ca</label><select id="bk-shift" class="form-select"><option value="">-- Ca --</option><option>Sáng</option><option>Chiều</option><option>Đêm</option></select></div>
+      <div class="col-lg-3 col-md-8"><label class="form-label small fw-bold">Ghi chú chung</label><input id="bk-note" class="form-control" placeholder="Ghi chú chung"></div>
+    </div>
+  </div>
+
+  <div class="bk-card">
+    <div class="table-wrap" style="max-height:620px">
+      <table class="table table-bordered table-sm bk-table mb-0">
+        <thead><tr><th style="width:60px">STT</th><th>NỘI DUNG</th><th>NỘI DUNG CHI TIẾT</th><th>KẾT QUẢ</th><th>HÌNH ẢNH LỖI</th><th>GHI CHÚ</th></tr></thead>
+        <tbody id="bk-body"><tr><td colspan="6" class="text-center p-4 text-muted">Chọn bộ phận và phiếu giám sát để tải tiêu chí.</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="row g-2 mt-3 align-items-stretch">
+      <div class="col-lg-9"><div id="bk-summary" class="alert alert-info mb-0 h-100">Chọn bộ phận và phiếu giám sát để tải tiêu chí.</div></div>
+      <div class="col-lg-3"><button id="bk-save" class="btn btn-success w-100 h-100 fw-bold py-3" onclick="BangKiemApp.save()">LƯU PHIẾU GIÁM SÁT</button></div>
+    </div>
+  </div>
+
+  </div><!-- /bk-tab-run -->
+
+
+  <!-- =======================================================
+       TAB: TẠO / SỬA PHIẾU GIÁM SÁT
+       ======================================================= -->
+  <div id="bk-tab-create" class="bk-tab-panel">
+
+    <div class="bk-card mb-3">
+      <div class="bk-create-head">
+        <div>
+          <h5 class="bk-title mb-1">
+            TẠO PHIẾU GIÁM SÁT MỚI
+          </h5>
+          <div class="small text-muted">
+            Tạo phiếu → thêm tiêu chí → lưu trực tiếp vào
+            <b>DM_PHIEU_GIAMSAT</b> và <b>DM_BANGKIEM</b>.
+          </div>
+        </div>
+
+        <span class="bk-create-badge">
+          Không cần sửa Google Sheet bằng tay
+        </span>
+      </div>
+
+      <div class="bk-creator-note mb-3">
+        <b>Nguyên tắc:</b>
+        Mã phiếu là duy nhất. Có thể để trống để hệ thống tự sinh.
+        Sau khi lưu, phiếu mới xuất hiện ngay trong mục
+        <b>CHẤM PHIẾU GIÁM SÁT</b>.
+      </div>
+
+      <div
+        id="bk-edit-mode-note"
+        class="alert alert-warning mb-3"
+        style="display:none"
+      >
+        <b>✏️ ĐANG SỬA MẪU CŨ:</b>
+        Dữ liệu của phiếu đã được nạp vào các ô phía dưới.
+        Mã phiếu được khóa để bảo toàn liên kết lịch sử.
+      </div>
+
+
+      <div class="row g-3">
+        <div class="col-lg-3 col-md-6">
+          <label class="form-label small fw-bold">
+            Bộ phận (*)
+          </label>
+
+          <select
+            id="bk-new-dept"
+            class="form-select"
+            onchange="BangKiemApp.creatorDepartmentChanged()"
+          >
+            <option value="">
+              -- Chọn bộ phận --
+            </option>
+          </select>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <label class="form-label small fw-bold">
+            Mã phiếu
+          </label>
+
+          <div class="input-group">
+            <input
+              id="bk-new-code"
+              class="form-control bk-code-input"
+              placeholder="Để trống = tự sinh"
+            >
+
+            <button
+              type="button"
+              class="btn btn-outline-primary"
+              onclick="BangKiemApp.suggestCode()"
+            >
+              TỰ TẠO MÃ
+            </button>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <label class="form-label small fw-bold">
+            Tên phiếu giám sát (*)
+          </label>
+
+          <input
+            id="bk-new-name"
+            class="form-control"
+            placeholder="Ví dụ: GIÁM SÁT KHU VỰC..."
+          >
+        </div>
+      </div>
+
+      <div class="mt-3">
+        <label class="form-label small fw-bold">
+          Mô tả phiếu
+        </label>
+
+        <textarea
+          id="bk-new-description"
+          class="form-control"
+          rows="2"
+          placeholder="Mô tả mục đích / phạm vi phiếu giám sát..."
+        ></textarea>
+      </div>
+
+      <div class="bk-score-box">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+          <div>
+            <div class="bk-score-title">
+              CẤU HÌNH XẾP LOẠI THEO TỶ LỆ %
+            </div>
+
+            <div class="small text-muted">
+              Công thức:
+              <b>ĐẠT / (ĐẠT + KHÔNG ĐẠT) × 100%</b>.
+              N/A không tính vào mẫu số.
+            </div>
+          </div>
+
+          <label class="bk-score-switch">
+            <input
+              id="bk-score-enabled"
+              type="checkbox"
+              checked
+              onchange="BangKiemApp.scoreEnabledChanged()"
+            >
+            <b>Dùng xếp loại riêng cho phiếu này</b>
+          </label>
+        </div>
+
+        <div id="bk-score-fields">
+          <div class="row g-2">
+            <div class="col-lg-2 col-md-4">
+              <label class="form-label small fw-bold">
+                A từ (%)
+              </label>
+
+              <input
+                id="bk-score-a"
+                type="number"
+                class="form-control"
+                value="95"
+                min="0"
+                max="100"
+                oninput="BangKiemApp.updateScorePreview()"
+              >
+            </div>
+
+            <div class="col-lg-2 col-md-4">
+              <label class="form-label small fw-bold">
+                B từ (%)
+              </label>
+
+              <input
+                id="bk-score-b"
+                type="number"
+                class="form-control"
+                value="90"
+                min="0"
+                max="100"
+                oninput="BangKiemApp.updateScorePreview()"
+              >
+            </div>
+
+            <div class="col-lg-2 col-md-4">
+              <label class="form-label small fw-bold">
+                C từ (%)
+              </label>
+
+              <input
+                id="bk-score-c"
+                type="number"
+                class="form-control"
+                value="80"
+                min="0"
+                max="100"
+                oninput="BangKiemApp.updateScorePreview()"
+              >
+            </div>
+
+            <div class="col-lg-2 col-md-4">
+              <label class="form-label small fw-bold">
+                Tên mức A
+              </label>
+
+              <input
+                id="bk-score-label-a"
+                class="form-control"
+                value="A"
+                oninput="BangKiemApp.updateScorePreview()"
+              >
+            </div>
+
+            <div class="col-lg-2 col-md-4">
+              <label class="form-label small fw-bold">
+                Tên mức B
+              </label>
+
+              <input
+                id="bk-score-label-b"
+                class="form-control"
+                value="B"
+                oninput="BangKiemApp.updateScorePreview()"
+              >
+            </div>
+
+            <div class="col-lg-2 col-md-4">
+              <label class="form-label small fw-bold">
+                Tên mức C
+              </label>
+
+              <input
+                id="bk-score-label-c"
+                class="form-control"
+                value="C"
+                oninput="BangKiemApp.updateScorePreview()"
+              >
+            </div>
+          </div>
+
+          <div class="row g-2 mt-1">
+            <div class="col-lg-3 col-md-6">
+              <label class="form-label small fw-bold">
+                Tên dưới C
+              </label>
+
+              <input
+                id="bk-score-below"
+                class="form-control"
+                value="CHƯA ĐẠT"
+                oninput="BangKiemApp.updateScorePreview()"
+              >
+            </div>
+
+            <div class="col-lg-9">
+              <div
+                id="bk-score-preview"
+                class="bk-score-preview h-100"
+              ></div>
+            </div>
+          </div>
+
+          <div class="mt-3 border-top pt-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+              <div>
+                <b class="text-primary">
+                  LIÊN KẾT KPI THEO TỶ LỆ %
+                </b>
+
+                <div class="small text-muted">
+                  Tắt = giữ nguyên cách tính KPI bảng kiểm cũ.
+                </div>
+              </div>
+
+              <label class="bk-score-switch">
+                <input
+                  id="bk-kpi-custom"
+                  type="checkbox"
+                  onchange="BangKiemApp.customKpiChanged()"
+                >
+                <b>Cấu hình KPI riêng cho phiếu</b>
+              </label>
+            </div>
+
+            <div
+              id="bk-kpi-fields"
+              style="opacity:.45;pointer-events:none"
+            >
+              <div class="table-responsive">
+                <table class="table table-bordered table-sm mb-1">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Mức</th>
+                      <th>Tỷ lệ từ (%)</th>
+                      <th>Điểm KPI</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    <tr>
+                      <td class="fw-bold">Mức 1</td>
+                      <td><input id="bk-kpi-from-1" type="number" class="form-control form-control-sm" value="98"></td>
+                      <td><input id="bk-kpi-point-1" type="number" class="form-control form-control-sm" value="5"></td>
+                    </tr>
+
+                    <tr>
+                      <td class="fw-bold">Mức 2</td>
+                      <td><input id="bk-kpi-from-2" type="number" class="form-control form-control-sm" value="95"></td>
+                      <td><input id="bk-kpi-point-2" type="number" class="form-control form-control-sm" value="3"></td>
+                    </tr>
+
+                    <tr>
+                      <td class="fw-bold">Mức 3</td>
+                      <td><input id="bk-kpi-from-3" type="number" class="form-control form-control-sm" value="90"></td>
+                      <td><input id="bk-kpi-point-3" type="number" class="form-control form-control-sm" value="0"></td>
+                    </tr>
+
+                    <tr>
+                      <td class="fw-bold">Mức 4</td>
+                      <td><input id="bk-kpi-from-4" type="number" class="form-control form-control-sm" value="85"></td>
+                      <td><input id="bk-kpi-point-4" type="number" class="form-control form-control-sm" value="-2"></td>
+                    </tr>
+
+                    <tr>
+                      <td class="fw-bold">Mức 5</td>
+                      <td><input id="bk-kpi-from-5" type="number" class="form-control form-control-sm" value="80"></td>
+                      <td><input id="bk-kpi-point-5" type="number" class="form-control form-control-sm" value="-4"></td>
+                    </tr>
+
+                    <tr>
+                      <td class="fw-bold">Dưới mức 5</td>
+                      <td class="text-center text-muted">—</td>
+                      <td><input id="bk-kpi-below" type="number" class="form-control form-control-sm" value="-5"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="bk-card mb-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+        <div>
+          <h6 class="bk-title mb-1">
+            DANH SÁCH TIÊU CHÍ CỦA PHIẾU
+          </h6>
+
+          <div class="small text-muted">
+            Có thể thêm / xóa dòng trước khi lưu.
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-outline-primary btn-sm"
+          onclick="BangKiemApp.addCreatorCriterion()"
+        >
+          ＋ THÊM TIÊU CHÍ
+        </button>
+      </div>
+
+      <div class="table-wrap" style="max-height:520px">
+        <table class="table table-bordered table-sm bk-builder-table mb-0">
+          <thead>
+            <tr>
+              <th style="width:60px">STT</th>
+              <th style="width:170px">NHÓM</th>
+              <th style="width:260px">NỘI DUNG (*)</th>
+              <th>NỘI DUNG CHI TIẾT</th>
+              <th style="width:130px">CHO PHÉP ẢNH</th>
+              <th style="width:80px">XÓA</th>
+            </tr>
+          </thead>
+
+          <tbody id="bk-new-criteria-body"></tbody>
+        </table>
+      </div>
+
+      <div class="row g-2 mt-3">
+        <div class="col-lg-9">
+          <div id="bk-new-summary" class="alert alert-info mb-0 h-100">
+            Chưa nhập phiếu mới.
+          </div>
+        </div>
+
+        <div class="col-lg-3">
+          <button
+            id="bk-new-save"
+            type="button"
+            class="btn btn-success w-100 h-100 fw-bold py-3"
+            onclick="BangKiemApp.saveNewForm()"
+          >
+            💾 LƯU PHIẾU MỚI
+          </button>
+
+          <button
+            id="bk-edit-cancel"
+            type="button"
+            class="btn btn-outline-secondary w-100 fw-bold py-2 mt-2"
+            style="display:none"
+            onclick="BangKiemApp.cancelEditForm()"
+          >
+            ✕ HỦY SỬA
+          </button>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="bk-card">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+        <div>
+          <h6 class="bk-title mb-1">
+            DANH SÁCH PHIẾU GIÁM SÁT HIỆN CÓ <span style="font-size:10px;background:#e8f1ff;color:#123b8f;padding:3px 7px;border-radius:999px;margin-left:6px">V19</span>
+          </h6>
+          <div class="small text-muted">
+            Bấm <b>✏️ SỬA</b> → hệ thống chuyển lên <b>khung TẠO / SỬA phía trên</b>, nạp toàn bộ mẫu cũ và khóa mã phiếu. Có thể <b>📋 SAO CHÉP</b> để tạo mẫu mới. Tạm ngưng không xóa lịch sử.
+          </div>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button
+            type="button"
+            class="btn btn-outline-primary btn-sm"
+            onclick="BangKiemApp.testChecklistManager()"
+          >
+            🔌 KIỂM TRA KẾT NỐI
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-outline-secondary btn-sm"
+            onclick="BangKiemApp.loadFormDefinitions()"
+          >
+            ↻ LÀM MỚI DANH SÁCH
+          </button>
+        </div>
+      </div>
+
+      <div class="table-wrap" style="max-height:420px">
+        <table class="table table-bordered table-sm bk-form-list mb-0">
+          <thead>
+            <tr>
+              <th>STT</th>
+              <th>MÃ PHIẾU</th>
+              <th>TÊN PHIẾU</th>
+              <th>BỘ PHẬN</th>
+              <th>SỐ TIÊU CHÍ</th>
+              <th>TRẠNG THÁI</th>
+              <th>THAO TÁC</th>
+            </tr>
+          </thead>
+
+          <tbody id="bk-form-definition-body">
+            <tr>
+              <td colspan="7" class="text-center p-3 text-muted">
+                Chọn tab để tải danh sách.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /bk-tab-create -->
+
+</div>
+
+
+<!-- =========================================================
+     V17.4 - MODAL SỬA PHIẾU ĐỘC LẬP
+     ========================================================= -->
+<div id="bk-edit-modal" aria-hidden="true">
+  <div class="bk-edit-dialog">
+    <div class="bk-edit-head">
+      <div class="bk-edit-title">
+        ✏️ CHỈNH SỬA MẪU PHIẾU GIÁM SÁT
+      </div>
+
+      <button
+        type="button"
+        class="bk-edit-close"
+        onclick="BangKiemApp.closeEditModal()"
+      >
+        ✕ Đóng
+      </button>
+    </div>
+
+    <div class="bk-edit-body">
+      <div class="bk-edit-grid">
+        <div>
+          <label>Mã phiếu (khóa)</label>
+          <input id="bk-modal-code" readonly>
+        </div>
+
+        <div>
+          <label>Tên phiếu (*)</label>
+          <input id="bk-modal-name">
+        </div>
+
+        <div>
+          <label>Bộ phận (*)</label>
+          <input id="bk-modal-dept">
+        </div>
+
+        <div class="span3">
+          <label>Mô tả</label>
+          <textarea id="bk-modal-description"></textarea>
+        </div>
+      </div>
+
+      <div class="edit-section">
+        <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+          <div class="edit-section-title">
+            DANH SÁCH TIÊU CHÍ
+          </div>
+
+          <button
+            type="button"
+            class="btn-edit-add"
+            onclick="BangKiemApp.addModalCriterion()"
+          >
+            ＋ THÊM TIÊU CHÍ
+          </button>
+        </div>
+
+        <div class="edit-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:55px">STT</th>
+                <th style="width:160px">NHÓM</th>
+                <th>NỘI DUNG</th>
+                <th>NỘI DUNG CHI TIẾT</th>
+                <th style="width:120px">HÌNH ẢNH</th>
+                <th style="width:70px">XÓA</th>
+              </tr>
+            </thead>
+
+            <tbody id="bk-modal-criteria-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="edit-section">
+        <div class="edit-section-title">
+          XẾP LOẠI THEO TỶ LỆ %
+        </div>
+
+        <div class="score-grid">
+          <div>
+            <label>A từ (%)</label>
+            <input id="bk-modal-score-a" type="number" min="0" max="100" value="95">
+          </div>
+
+          <div>
+            <label>B từ (%)</label>
+            <input id="bk-modal-score-b" type="number" min="0" max="100" value="90">
+          </div>
+
+          <div>
+            <label>C từ (%)</label>
+            <input id="bk-modal-score-c" type="number" min="0" max="100" value="80">
+          </div>
+
+          <div>
+            <label>Dưới C</label>
+            <input id="bk-modal-score-below" value="CHƯA ĐẠT">
+          </div>
+
+          <div>
+            <label>Tên A</label>
+            <input id="bk-modal-label-a" value="A">
+          </div>
+
+          <div>
+            <label>Tên B</label>
+            <input id="bk-modal-label-b" value="B">
+          </div>
+
+          <div>
+            <label>Tên C</label>
+            <input id="bk-modal-label-c" value="C">
+          </div>
+
+          <div>
+            <label>KPI riêng</label>
+            <select id="bk-modal-kpi-custom">
+              <option value="0">Không - dùng KPI cũ</option>
+              <option value="1">Có</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bk-edit-actions">
+      <button
+        type="button"
+        class="btn-edit-cancel"
+        onclick="BangKiemApp.closeEditModal()"
+      >
+        HỦY
+      </button>
+
+      <button
+        id="bk-modal-save"
+        type="button"
+        class="btn-edit-save"
+        onclick="BangKiemApp.saveEditModal()"
+      >
+        💾 LƯU THAY ĐỔI
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+
+/**
+ * V19 - gọi trực tiếp API nạp mẫu cũ vào khung phía trên.
+ */
+const ChecklistEditorV19Api = (() => {
+  function call(executor) {
+    return new Promise((resolve, reject) => {
+      try {
+        executor(
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(err => {
+              reject(
+                new Error(
+                  err && err.message
+                    ? err.message
+                    : String(err)
+                )
+              );
+            })
+        );
+      } catch (err) {
+        reject(
+          err instanceof Error
+            ? err
+            : new Error(String(err))
+        );
+      }
+    });
+  }
+
+  return {
+    load: formCode =>
+      call(r => r.apiLoadChecklistIntoEditorV19(formCode)),
+
+    save: payload =>
+      call(r => r.apiSaveChecklistFromEditorV19(payload))
+  };
+})();
+
+
+window.BangKiemApp=(()=>{
+  let d={forms:[],criteria:[],staff:[]}, allStaff=[], picker=null, pendingImages={}, creatorRows=0, editingFormCode='';
+
+  async function init(){
+    AppUtil.loading(true,'Đang tải danh mục bảng kiểm...');
+    try{
+      d=await AppUtil.server('getChecklistInitialData');
+      allStaff=d.staff||[];
+      document.getElementById('bk-date').value=AppUtil.today();
+      document.getElementById('bk-supervisor').value=d.currentUser||'';
+      const departmentOptions='<option value="">-- Chọn bộ phận --</option>'+(d.departments||[]).filter(x=>x!=='VI PHẠM CHUNG').map(x=>'<option value="'+AppUtil.escape(x)+'">'+AppUtil.escape(x)+'</option>').join('');
+
+      document.getElementById('bk-dept').innerHTML=departmentOptions;
+
+      const newDept=document.getElementById('bk-new-dept');
+      if(newDept)newDept.innerHTML=departmentOptions;
+
+      bindStaff(allStaff);
+
+      resetCreatorCriteria();
+      scoreEnabledChanged();
+      customKpiChanged();
+
+      if(!Array.isArray(d.forms) || d.forms.length<=1){
+        console.warn('DM_PHIEU_GIAMSAT chưa có dữ liệu hoặc Web App đang đọc nhầm Spreadsheet.', d.forms);
+      }
+    }catch(e){alert('Lỗi tải bảng kiểm: '+e.message)}finally{AppUtil.loading(false)}
+  }
+
+  function bindStaff(items){
+    if(picker&&picker.setItems){picker.setItems(items);return;}
+    picker=SmartSelect.bind({input:'bk-name',hidden:'bk-staffid',menu:'bk-menu',items:items,label:x=>x.name+' ('+x.department+')',value:x=>x.id,onSelect:x=>{
+      document.getElementById('bk-dept').value=x.department;
+      departmentChanged(false);
+    }});
+  }
+
+  function normText(value){
+    return String(value||'')
+      .trim()
+      .toUpperCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g,'')
+      .replace(/Đ/g,'D')
+      .replace(/\s+/g,' ');
+  }
+
+  function dataRows(matrix){
+    const rows=Array.isArray(matrix)?matrix:[];
+    if(!rows.length)return [];
+    const first=rows[0]||[];
+    const first0=normText(first[0]);
+    const first1=normText(first[1]);
+    const hasHeader=first0.includes('MA PHIEU')||first1.includes('TEN PHIEU')||first0.includes('MA TIEU CHI');
+    return hasHeader?rows.slice(1):rows;
+  }
+
+  function activeForms(){
+    const dep=document.getElementById('bk-dept').value;
+    const depKey=normText(dep);
+    return dataRows(d.forms).filter(r=>{
+      const status=normText(r[5]);
+      return normText(r[2])===depKey && status!=='NGUNG' && status!=='NGHI' && status!=='TAM NGUNG';
+    });
+  }
+
+  function departmentChanged(clearStaff=true){
+    const dep=document.getElementById('bk-dept').value;
+    const depKey=normText(dep);
+    if(clearStaff){document.getElementById('bk-name').value='';document.getElementById('bk-staffid').value='';}
+    if(picker&&picker.setItems)picker.setItems(allStaff.filter(x=>!depKey||normText(x.department)===depKey));
+    const forms=activeForms();
+    const formSelect=document.getElementById('bk-form');
+    formSelect.innerHTML='<option value="">-- Chọn phiếu giám sát --</option>'+forms.map(r=>'<option value="'+AppUtil.escape(String(r[0]||''))+'">'+AppUtil.escape(String(r[1]||''))+'</option>').join('');
+    formSelect.disabled=!forms.length;
+
+    const msg=!dep
+      ? 'Chọn bộ phận để tải danh sách phiếu.'
+      : forms.length
+        ? 'Đã tải '+forms.length+' phiếu. Hãy chọn phiếu giám sát.'
+        : 'Chưa có phiếu giám sát cho bộ phận này. Kiểm tra DM_PHIEU_GIAMSAT và Spreadsheet ID.';
+
+    document.getElementById('bk-body').innerHTML='<tr><td colspan="6" class="text-center p-4 text-muted">'+msg+'</td></tr>';
+    document.getElementById('bk-summary').textContent=msg;
+    pendingImages={};
+  }
+
+  function formChanged(){
+    const dep=document.getElementById('bk-dept').value;
+    const code=document.getElementById('bk-form').value;
+    pendingImages={};
+    if(!dep||!code){document.getElementById('bk-body').innerHTML='<tr><td colspan="6" class="text-center p-4 text-muted">Chọn bộ phận và phiếu giám sát để tải tiêu chí.</td></tr>';recalc();return;}
+    const depKey=normText(dep), codeKey=normText(code);
+    const rows=dataRows(d.criteria).filter(r=>{
+      const status=normText(r[4]);
+      return normText(r[1])===depKey && normText(r[5])===codeKey &&
+        status!=='NGUNG' && status!=='NGHI' && status!=='TAM NGUNG';
+    }).sort((a,b)=>(Number(a[6])||0)-(Number(b[6])||0));
+    document.getElementById('bk-body').innerHTML=rows.map((r,i)=>{
+      const id=String(r[0]||''), order=Number(r[6])||i+1, content=String(r[3]||''), detail=String(r[7]||r[3]||''), allow=String(r[8]||'Có').toLowerCase()!=='không';
+      return '<tr data-id="'+AppUtil.escape(id)+'" data-group="'+AppUtil.escape(r[2])+'" data-order="'+order+'" data-detail="'+encodeURIComponent(detail)+'">'+
+        '<td class="text-center fw-bold">'+order+'</td><td class="bk-content content">'+AppUtil.escape(content)+'</td><td class="bk-detail detail">'+AppUtil.escape(detail)+'</td>'+
+        '<td class="bk-result"><select class="form-select form-select-sm result" onchange="BangKiemApp.rowChanged(this)"><option value="">-- Chọn --</option><option>ĐẠT</option><option>KHÔNG ĐẠT</option><option>KHÔNG ÁP DỤNG</option></select></td>'+
+        '<td class="bk-photo-cell">'+(allow?'<input type="file" class="d-none photo-input" accept="image/*" capture="environment" onchange="BangKiemApp.photoSelected(event,\''+id.replace(/'/g,"\\'")+'\')"><button type="button" class="btn btn-outline-primary btn-sm" onclick="this.previousElementSibling.click()">📷 Chụp/Tải ảnh</button><div class="bk-photo-preview mt-1"></div>':'<span class="text-muted small">Không yêu cầu</span>')+'</td>'+
+        '<td class="bk-note"><input class="form-control form-control-sm note" placeholder="Ghi chú; bắt buộc khi Không đạt"></td></tr>';
+    }).join('')||'<tr><td colspan="6" class="text-center p-4">Chưa có tiêu chí cho phiếu này.</td></tr>';
+    recalc();
+  }
+
+  function rowChanged(select){
+    const tr=select.closest('tr');
+    tr.classList.remove('bk-pass','bk-fail','bk-na');
+    if(select.value==='ĐẠT')tr.classList.add('bk-pass');
+    else if(select.value==='KHÔNG ĐẠT')tr.classList.add('bk-fail');
+    else if(select.value==='KHÔNG ÁP DỤNG')tr.classList.add('bk-na');
+    recalc();
+  }
+
+  function markAllPass(){
+    document.querySelectorAll('#bk-body tr[data-id] .result').forEach(s=>{s.value='ĐẠT';rowChanged(s)});
+  }
+
+  function photoSelected(event,id){
+    const file=event.target.files&&event.target.files[0]; if(!file)return;
+    if(!file.type.startsWith('image/')){alert('Vui lòng chọn hình ảnh.');event.target.value='';return;}
+    if(file.size>8*1024*1024){alert('Ảnh quá lớn. Vui lòng chọn ảnh dưới 8 MB.');event.target.value='';return;}
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const full=e.target.result;
+      pendingImages[id]={fileName:file.name,mimeType:file.type,base64:String(full).split(',')[1]};
+      const preview=event.target.closest('td').querySelector('.bk-photo-preview');
+      preview.innerHTML='<img src="'+full+'" alt="Ảnh lỗi">';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function recalc(){
+    const rows=[...document.querySelectorAll('#bk-body tr[data-id]')];
+    let applied=0,pass=0,fail=0,na=0,unselected=0;
+    rows.forEach(tr=>{const v=tr.querySelector('.result').value;if(!v){unselected++;return;}if(v==='KHÔNG ÁP DỤNG'){na++;return;}applied++;if(v==='ĐẠT')pass++;else fail++;});
+    const rate=applied?Math.round(pass*10000/applied)/100:0;
+    let kpi=rate>=95?0:rate>=90?-3:rate>=80?-5:rate>=70?-10:-20;
+    document.getElementById('bk-summary').innerHTML='<b>Tổng tiêu chí:</b> '+rows.length+' &nbsp; <b>Đã chấm:</b> '+(rows.length-unselected)+' &nbsp; <b>Đạt:</b> '+pass+' &nbsp; <b>Không đạt:</b> '+fail+' &nbsp; <b>N/A:</b> '+na+' &nbsp; <b>Tỷ lệ:</b> '+rate+'% &nbsp; <b>Điểm KPI:</b> '+kpi;
+  }
+
+  async function save(){
+    const rows=[...document.querySelectorAll('#bk-body tr[data-id]')];
+    const dep=document.getElementById('bk-dept').value;
+    const formCode=document.getElementById('bk-form').value;
+    const formRow=activeForms().find(r=>r[0]===formCode);
+    const staff=allStaff.find(x=>x.id===document.getElementById('bk-staffid').value);
+    if(!dep)return alert('Vui lòng chọn bộ phận.');
+    if(!formRow)return alert('Vui lòng chọn phiếu giám sát.');
+    if(!staff)return alert('Phải gõ và chọn đúng nhân viên trong danh sách.');
+    if(staff.department!==dep)return alert('Nhân viên được chọn không thuộc bộ phận đang giám sát.');
+    if(!rows.length)return alert('Phiếu chưa có tiêu chí.');
+
+    const details=[];
+    for(const tr of rows){
+      const result=tr.querySelector('.result').value;
+      if(!result)return alert('Còn tiêu chí chưa chọn kết quả.');
+      const note=tr.querySelector('.note').value.trim();
+      if(result==='KHÔNG ĐẠT'&&!note)return alert('Tiêu chí số '+tr.dataset.order+' KHÔNG ĐẠT: cần nhập ghi chú lỗi.');
+      details.push({id:tr.dataset.id,group:tr.dataset.group,order:Number(tr.dataset.order)||0,content:tr.querySelector('.content').textContent,detail:decodeURIComponent(tr.dataset.detail||''),result:result,note:note,imageObject:pendingImages[tr.dataset.id]||null});
+    }
+
+    const payload={date:document.getElementById('bk-date').value,formCode:formCode,formName:formRow[1],staffId:staff.id,staffName:staff.name,department:dep,supervisor:document.getElementById('bk-supervisor').value,area:document.getElementById('bk-area').value,shift:document.getElementById('bk-shift').value,note:document.getElementById('bk-note').value,details:details};
+    const btn=document.getElementById('bk-save');btn.disabled=true;AppUtil.loading(true,'Đang lưu phiếu giám sát...');
+    try{
+      const r=await AppUtil.server('saveChecklistForm',payload);
+      let msg=
+        'Đã lưu '+r.formName+
+        '\nTỷ lệ: '+r.rate+'%'+
+        '\nĐiểm KPI: '+r.kpi+
+        '\nKhông đạt: '+r.fail+' | N/A: '+r.na;
+
+      if(r.percentScoring){
+        msg +=
+          '\nXếp loại theo phiếu: '+r.percentRank;
+      }
+
+      alert(msg);
+      formChanged(); document.getElementById('bk-note').value='';
+    }catch(e){alert('Không thể lưu phiếu: '+e.message)}finally{btn.disabled=false;AppUtil.loading(false)}
+  }
+
+
+  function showTab(tab){
+    const run=tab==='run';
+
+    document.getElementById('bk-tab-run').classList.toggle('active',run);
+    document.getElementById('bk-tab-create').classList.toggle('active',!run);
+
+    document.getElementById('bk-tab-run-btn').classList.toggle('active',run);
+    document.getElementById('bk-tab-create-btn').classList.toggle('active',!run);
+
+    if(!run){
+      loadFormDefinitions();
+    }
+  }
+
+
+  function creatorDepartmentChanged(){
+    const code=document.getElementById('bk-new-code');
+
+    if(code && !code.value.trim()){
+      suggestCode();
+    }
+  }
+
+
+  async function suggestCode(){
+    const dep=document.getElementById('bk-new-dept').value;
+
+    if(!dep){
+      return alert('Hãy chọn Bộ phận trước.');
+    }
+
+    try{
+      const code=await AppUtil.server(
+        'suggestChecklistFormCode',
+        dep
+      );
+
+      document.getElementById('bk-new-code').value=code||'';
+
+    }catch(e){
+      alert('Không tạo được mã phiếu: '+e.message);
+    }
+  }
+
+
+  function resetCreatorCriteria(){
+    creatorRows=0;
+
+    const body=document.getElementById('bk-new-criteria-body');
+
+    if(!body)return;
+
+    body.innerHTML='';
+
+    addCreatorCriterion();
+    addCreatorCriterion();
+    addCreatorCriterion();
+
+    updateCreatorSummary();
+  }
+
+
+  function addCreatorCriterion(prefill){
+    const body=document.getElementById('bk-new-criteria-body');
+
+    if(!body)return;
+
+    creatorRows++;
+
+    prefill=prefill||{};
+
+    const tr=document.createElement('tr');
+    tr.setAttribute('data-creator-row','1');
+
+    tr.innerHTML=
+      '<td class="text-center fw-bold creator-no"></td>'+
+
+      '<td>'+
+        '<input class="form-control form-control-sm creator-group" '+
+          'placeholder="Ví dụ: Chuẩn bị" value="'+
+          AppUtil.escape(prefill.group||'')+
+        '">'+
+      '</td>'+
+
+      '<td>'+
+        '<textarea class="form-control form-control-sm creator-content" '+
+          'placeholder="Nội dung tiêu chí...">'+
+          AppUtil.escape(prefill.content||'')+
+        '</textarea>'+
+      '</td>'+
+
+      '<td>'+
+        '<textarea class="form-control form-control-sm creator-detail" '+
+          'placeholder="Mô tả chi tiết cách đánh giá...">'+
+          AppUtil.escape(prefill.detail||'')+
+        '</textarea>'+
+      '</td>'+
+
+      '<td>'+
+        '<select class="form-select form-select-sm creator-image">'+
+          '<option value="Có">Có</option>'+
+          '<option value="Không">Không</option>'+
+        '</select>'+
+      '</td>'+
+
+      '<td class="text-center">'+
+        '<button type="button" class="btn btn-outline-danger btn-sm" '+
+          'onclick="BangKiemApp.removeCreatorCriterion(this)">🗑</button>'+
+      '</td>';
+
+    body.appendChild(tr);
+
+    const select=tr.querySelector('.creator-image');
+    select.value=String(prefill.allowImage||'Có').toLowerCase()==='không'
+      ? 'Không'
+      : 'Có';
+
+    [
+      tr.querySelector('.creator-group'),
+      tr.querySelector('.creator-content'),
+      tr.querySelector('.creator-detail')
+    ].forEach(el=>{
+      el.addEventListener('input',updateCreatorSummary);
+    });
+
+    renumberCreatorCriteria();
+    updateCreatorSummary();
+  }
+
+
+  function removeCreatorCriterion(btn){
+    const rows=[
+      ...document.querySelectorAll('#bk-new-criteria-body tr[data-creator-row]')
+    ];
+
+    if(rows.length<=1){
+      return alert('Phiếu phải có ít nhất 1 tiêu chí.');
+    }
+
+    const tr=btn.closest('tr');
+    if(tr)tr.remove();
+
+    renumberCreatorCriteria();
+    updateCreatorSummary();
+  }
+
+
+  function renumberCreatorCriteria(){
+    const rows=[
+      ...document.querySelectorAll('#bk-new-criteria-body tr[data-creator-row]')
+    ];
+
+    rows.forEach((tr,i)=>{
+      tr.querySelector('.creator-no').textContent=i+1;
+    });
+  }
+
+
+  function collectCreatorCriteria(){
+    const rows=[
+      ...document.querySelectorAll('#bk-new-criteria-body tr[data-creator-row]')
+    ];
+
+    return rows.map((tr,i)=>{
+      const content=tr.querySelector('.creator-content').value.trim();
+      const detail=tr.querySelector('.creator-detail').value.trim();
+
+      return {
+        order:i+1,
+        group:tr.querySelector('.creator-group').value.trim()||'Chung',
+        content:content,
+        detail:detail||content,
+        allowImage:tr.querySelector('.creator-image').value
+      };
+    });
+  }
+
+
+  function updateCreatorSummary(){
+    const rows=collectCreatorCriteria();
+
+    const completed=rows.filter(x=>x.content).length;
+
+    const summary=document.getElementById('bk-new-summary');
+
+    if(summary){
+      summary.innerHTML=
+        '<b>Số dòng tiêu chí:</b> '+rows.length+
+        ' &nbsp; <b>Đã nhập nội dung:</b> '+completed+
+        ' &nbsp; <b>Còn trống:</b> '+(rows.length-completed);
+    }
+  }
+
+
+
+  function scoreEnabledChanged(){
+    const enabled=
+      document.getElementById('bk-score-enabled').checked;
+
+    const fields=
+      document.getElementById('bk-score-fields');
+
+    if(fields){
+      fields.style.opacity=enabled?'1':'.45';
+      fields.style.pointerEvents=enabled?'auto':'none';
+    }
+
+    updateScorePreview();
+  }
+
+
+  function customKpiChanged(){
+    const enabled=
+      document.getElementById('bk-kpi-custom').checked;
+
+    const fields=
+      document.getElementById('bk-kpi-fields');
+
+    if(fields){
+      fields.style.opacity=enabled?'1':'.45';
+      fields.style.pointerEvents=enabled?'auto':'none';
+    }
+  }
+
+
+  function updateScorePreview(){
+    const enabled=
+      document.getElementById('bk-score-enabled').checked;
+
+    const box=
+      document.getElementById('bk-score-preview');
+
+    if(!box)return;
+
+    if(!enabled){
+      box.innerHTML=
+        '<b>Không dùng xếp loại riêng.</b><br>'+
+        'Phiếu vẫn tính tỷ lệ ĐẠT / (ĐẠT + KHÔNG ĐẠT) × 100%.';
+      return;
+    }
+
+    const a=
+      Number(document.getElementById('bk-score-a').value||95);
+
+    const b=
+      Number(document.getElementById('bk-score-b').value||90);
+
+    const c=
+      Number(document.getElementById('bk-score-c').value||80);
+
+    const la=
+      document.getElementById('bk-score-label-a').value.trim()||'A';
+
+    const lb=
+      document.getElementById('bk-score-label-b').value.trim()||'B';
+
+    const lc=
+      document.getElementById('bk-score-label-c').value.trim()||'C';
+
+    const ld=
+      document.getElementById('bk-score-below').value.trim()||'CHƯA ĐẠT';
+
+    box.innerHTML=
+      '<b>Công thức:</b> ĐẠT / (ĐẠT + KHÔNG ĐẠT) × 100%<br>'+
+      '<span class="bk-grade-a">'+AppUtil.escape(la)+': ≥ '+a+'%</span> · '+
+      '<span class="bk-grade-b">'+AppUtil.escape(lb)+': ≥ '+b+'%</span> · '+
+      '<span class="bk-grade-c">'+AppUtil.escape(lc)+': ≥ '+c+'%</span> · '+
+      '<span class="bk-grade-d">'+AppUtil.escape(ld)+': < '+c+'%</span>';
+  }
+
+
+  function collectScoringConfig(){
+    const enabled=
+      document.getElementById('bk-score-enabled').checked;
+
+    const useCustomKpi=
+      document.getElementById('bk-kpi-custom').checked;
+
+    const kpiBands=[];
+
+    for(let i=1;i<=5;i++){
+      kpiBands.push({
+        from:
+          Number(
+            document.getElementById('bk-kpi-from-'+i).value
+          ),
+        points:
+          Number(
+            document.getElementById('bk-kpi-point-'+i).value
+          )
+      });
+    }
+
+    return {
+      enabled:enabled,
+
+      thresholdA:
+        Number(
+          document.getElementById('bk-score-a').value
+        ),
+
+      thresholdB:
+        Number(
+          document.getElementById('bk-score-b').value
+        ),
+
+      thresholdC:
+        Number(
+          document.getElementById('bk-score-c').value
+        ),
+
+      labelA:
+        document.getElementById('bk-score-label-a').value.trim()||'A',
+
+      labelB:
+        document.getElementById('bk-score-label-b').value.trim()||'B',
+
+      labelC:
+        document.getElementById('bk-score-label-c').value.trim()||'C',
+
+      labelBelow:
+        document.getElementById('bk-score-below').value.trim()||'CHƯA ĐẠT',
+
+      useCustomKpi:
+        useCustomKpi,
+
+      kpiBands:
+        kpiBands,
+
+      kpiBelow:
+        Number(
+          document.getElementById('bk-kpi-below').value
+        )
+    };
+  }
+
+
+  function validateScoringConfig(scoring){
+    if(!scoring.enabled){
+      return true;
+    }
+
+    if(
+      !(
+        scoring.thresholdA >
+        scoring.thresholdB &&
+        scoring.thresholdB >
+        scoring.thresholdC
+      )
+    ){
+      alert('Ngưỡng xếp loại phải theo thứ tự A > B > C.');
+      return false;
+    }
+
+    if(
+      scoring.thresholdA>100 ||
+      scoring.thresholdC<0
+    ){
+      alert('Ngưỡng xếp loại phải nằm trong 0–100%.');
+      return false;
+    }
+
+    if(scoring.useCustomKpi){
+      for(let i=0;i<scoring.kpiBands.length;i++){
+        const x=scoring.kpiBands[i];
+
+        if(
+          !Number.isFinite(x.from) ||
+          !Number.isFinite(x.points)
+        ){
+          alert('Các mức KPI phải là số.');
+          return false;
+        }
+
+        if(x.from<0 || x.from>100){
+          alert('Ngưỡng KPI phải nằm trong 0–100%.');
+          return false;
+        }
+
+        if(
+          i>0 &&
+          !(scoring.kpiBands[i-1].from>x.from)
+        ){
+          alert('Ngưỡng KPI phải giảm dần từ mức 1 đến mức 5.');
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+
+  async function saveNewForm(){
+    const dep=document.getElementById('bk-new-dept').value;
+    const name=document.getElementById('bk-new-name').value.trim();
+    const code=document.getElementById('bk-new-code').value.trim();
+    const description=document.getElementById('bk-new-description').value.trim();
+
+    if(!dep){
+      return alert('Phải chọn Bộ phận.');
+    }
+
+    if(!name){
+      return alert('Phải nhập Tên phiếu giám sát.');
+    }
+
+    const criteria=collectCreatorCriteria();
+
+    const blankIndex=criteria.findIndex(x=>!x.content);
+
+    if(blankIndex!==-1){
+      return alert(
+        'Tiêu chí số '+(blankIndex+1)+' chưa có Nội dung. '+
+        'Hãy nhập nội dung hoặc xóa dòng này.'
+      );
+    }
+
+    if(!criteria.length){
+      return alert('Phiếu phải có ít nhất 1 tiêu chí.');
+    }
+
+    const scoring=
+      collectScoringConfig();
+
+    if(
+      !validateScoringConfig(
+        scoring
+      )
+    ){
+      return;
+    }
+
+    const payload={
+      formCode:code,
+      formName:name,
+      department:dep,
+      description:description,
+      criteria:criteria,
+      scoring:scoring
+    };
+
+    const btn=document.getElementById('bk-new-save');
+
+    btn.disabled=true;
+
+    checklistManageLoading(
+      true,
+      editingFormCode
+        ? 'Đang lưu thay đổi phiếu giám sát...'
+        : 'Đang tạo phiếu giám sát mới...'
+    );
+
+    try{
+      let r;
+
+      if(editingFormCode){
+        payload.formCode=editingFormCode;
+
+        r=
+          await ChecklistEditorV19Api.save(
+            payload
+          );
+      }else{
+        r=
+          await ChecklistManageBridge.create(
+            payload
+          );
+      }
+
+      alert(
+        (r&&r.message)
+        ? r.message
+        : 'Đã tạo phiếu mới.'
+      );
+
+      /*
+       * Tải lại toàn bộ danh mục ngay lập tức,
+       * không cần refresh Web App.
+       */
+      d=
+        await ChecklistManageBridge.initialData();
+
+      allStaff=d.staff||[];
+
+      const departmentOptions=
+        '<option value="">-- Chọn bộ phận --</option>'+
+        (d.departments||[])
+          .filter(x=>x!=='VI PHẠM CHUNG')
+          .map(x=>
+            '<option value="'+AppUtil.escape(x)+'">'+
+              AppUtil.escape(x)+
+            '</option>'
+          ).join('');
+
+      document.getElementById('bk-dept').innerHTML=departmentOptions;
+      document.getElementById('bk-new-dept').innerHTML=departmentOptions;
+
+      /*
+       * Giữ bộ phận vừa tạo và tự chọn phiếu mới
+       * ở tab Chấm phiếu.
+       */
+      document.getElementById('bk-dept').value=r.department||dep;
+      departmentChanged();
+
+      document.getElementById('bk-form').value=r.formCode||'';
+      formChanged();
+
+      const wasEditing=!!editingFormCode;
+      clearCreatorForm();
+      await loadFormDefinitions();
+
+      if(!wasEditing){
+        showTab('run');
+        alert(
+          'Phiếu mới đã sẵn sàng để chấm: '+
+          (r.formCode||'')+' - '+(r.formName||name)
+        );
+      }
+
+    }catch(e){
+      alert(
+        (editingFormCode
+          ? 'Không thể lưu thay đổi phiếu: '
+          : 'Không thể tạo phiếu mới: '
+        )+
+        e.message
+      );
+
+    }finally{
+      btn.disabled=false;
+      checklistManageLoading(false);
+    }
+  }
+
+
+  function clearCreatorForm(){
+    editingFormCode='';
+
+    const codeEl=document.getElementById('bk-new-code');
+    codeEl.disabled=false;
+    codeEl.readOnly=false;
+    codeEl.title='';
+    codeEl.value='';
+
+    const editNote=document.getElementById('bk-edit-mode-note');
+    if(editNote)editNote.style.display='none';
+
+    const creatorTitle=document.getElementById('bk-create-title');
+    if(creatorTitle)creatorTitle.textContent='TẠO PHIẾU GIÁM SÁT MỚI';
+
+    const saveBtn=document.getElementById('bk-new-save');
+    if(saveBtn)saveBtn.innerHTML='💾 LƯU PHIẾU MỚI';
+
+    const cancelBtn=document.getElementById('bk-edit-cancel');
+    if(cancelBtn)cancelBtn.style.display='none';
+    document.getElementById('bk-new-name').value='';
+    document.getElementById('bk-new-description').value='';
+    document.getElementById('bk-new-dept').value='';
+
+    document.getElementById('bk-score-enabled').checked=true;
+    document.getElementById('bk-score-a').value='95';
+    document.getElementById('bk-score-b').value='90';
+    document.getElementById('bk-score-c').value='80';
+    document.getElementById('bk-score-label-a').value='A';
+    document.getElementById('bk-score-label-b').value='B';
+    document.getElementById('bk-score-label-c').value='C';
+    document.getElementById('bk-score-below').value='CHƯA ĐẠT';
+
+    document.getElementById('bk-kpi-custom').checked=false;
+
+    const defaultKpi=[
+      [98,5],
+      [95,3],
+      [90,0],
+      [85,-2],
+      [80,-4]
+    ];
+
+    defaultKpi.forEach((x,i)=>{
+      document.getElementById('bk-kpi-from-'+(i+1)).value=x[0];
+      document.getElementById('bk-kpi-point-'+(i+1)).value=x[1];
+    });
+
+    document.getElementById('bk-kpi-below').value='-5';
+
+    resetCreatorCriteria();
+    scoreEnabledChanged();
+    customKpiChanged();
+  }
+
+
+
+
+  /**
+   * ==========================================================
+   * V17.1 - CẦU NỐI THAO TÁC MẪU PHIẾU
+   * ==========================================================
+   * Không dùng runner[functionName].
+   * Gọi tường minh từng API Apps Script.
+   * ==========================================================
+   */
+  /**
+   * ==========================================================
+   * V17.3 - CẦU NỐI QUẢN LÝ PHIẾU ĐỘC LẬP
+   * ==========================================================
+   * Chỉ gọi 1 hàm backend:
+   * google.script.run.apiChecklistManager(...)
+   *
+   * Không AppUtil.server().
+   * Không runner[functionName].
+   * ==========================================================
+   */
+  const ChecklistManageBridge = (() => {
+
+    const call = (action,payload) =>
+      new Promise((resolve,reject) => {
+        try {
+          google.script.run
+            .withSuccessHandler(result => {
+              if(
+                !result ||
+                result.success !== true
+              ){
+                reject(
+                  new Error(
+                    result && result.message
+                      ? result.message
+                      : 'Server không trả về kết quả hợp lệ.'
+                  )
+                );
+                return;
+              }
+
+              resolve(
+                Object.prototype.hasOwnProperty.call(
+                  result,
+                  'data'
+                )
+                  ? result.data
+                  : (
+                      Object.prototype.hasOwnProperty.call(
+                        result,
+                        'rows'
+                      )
+                        ? result.rows
+                        : result
+                    )
+              );
+            })
+            .withFailureHandler(err => {
+              reject(
+                new Error(
+                  err && err.message
+                    ? err.message
+                    : String(err)
+                )
+              );
+            })
+            .apiChecklistManager(
+              action,
+              payload || {}
+            );
+
+        } catch (err) {
+          reject(
+            err instanceof Error
+              ? err
+              : new Error(
+                  String(err)
+                )
+          );
+        }
+      });
+
+
+    return {
+      ping: () =>
+        call(
+          'PING',
+          {}
+        ),
+
+      list: filters =>
+        call(
+          'LIST',
+          {
+            filters:
+              filters || {}
+          }
+        ),
+
+      detail: formCode =>
+        call(
+          'DETAIL',
+          {
+            formCode:
+              formCode
+          }
+        ),
+
+      editData: formCode =>
+        call(
+          'EDIT_DATA',
+          {
+            formCode:
+              formCode
+          }
+        ),
+
+      initialData: () =>
+        call(
+          'INITIAL_DATA',
+          {}
+        ),
+
+      create: data =>
+        call(
+          'CREATE',
+          {
+            data:
+              data || {}
+          }
+        ),
+
+      update: data =>
+        call(
+          'UPDATE',
+          {
+            data:
+              data || {}
+          }
+        ),
+
+      copy: (
+        sourceFormCode,
+        newFormCode,
+        newFormName
+      ) =>
+        call(
+          'COPY',
+          {
+            sourceFormCode:
+              sourceFormCode,
+
+            newFormCode:
+              newFormCode || '',
+
+            newFormName:
+              newFormName || ''
+          }
+        ),
+
+      setStatus: (
+        formCode,
+        newStatus
+      ) =>
+        call(
+          'SET_STATUS',
+          {
+            formCode:
+              formCode,
+
+            newStatus:
+              newStatus
+          }
+        )
+    };
+  })();
+
+
+  function checklistManageLoading(
+    show,
+    text
+  ) {
+    /*
+     * Ưu tiên loader chung nếu có.
+     * Nếu không có, không làm lỗi chức năng.
+     */
+    try {
+      if (
+        typeof AppUtil !== 'undefined' &&
+        AppUtil &&
+        typeof AppUtil.loading === 'function'
+      ) {
+        AppUtil.loading(
+          show,
+          text
+        );
+      }
+    } catch (e) {}
+  }
+
+
+  function checklistEscape(value) {
+    try {
+      if (
+        typeof AppUtil !== 'undefined' &&
+        AppUtil &&
+        typeof AppUtil.escape === 'function'
+      ) {
+        return AppUtil.escape(
+          value
+        );
+      }
+    } catch (e) {}
+
+    return String(
+      value == null
+        ? ''
+        : value
+    )
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#039;');
+  }
+
+
+
+  async function editFormDefinition(formCode){
+    const code=String(formCode||'').trim();
+
+    if(!code){
+      return alert('Thiếu mã phiếu cần sửa.');
+    }
+
+    checklistManageLoading(
+      true,
+      'Đang nạp mẫu '+code+' lên khung sửa...'
+    );
+
+    try{
+      const x=
+        await ChecklistEditorV19Api.load(
+          code
+        );
+
+      if(
+        !x ||
+        x.success!==true ||
+        !x.formCode
+      ){
+        throw new Error(
+          'Server không trả về dữ liệu phiếu hợp lệ.'
+        );
+      }
+
+      /*
+       * 1. CHUYỂN SANG TAB TẠO/SỬA.
+       */
+      showTab('create');
+
+      /*
+       * 2. GHI NHẬN ĐANG SỬA.
+       */
+      editingFormCode=
+        String(x.formCode||'').trim();
+
+      /*
+       * 3. NẠP BỘ PHẬN.
+       * Nếu danh sách select chưa có đúng giá trị thì bổ sung.
+       */
+      const depEl=
+        document.getElementById('bk-new-dept');
+
+      const depValue=
+        String(x.department||'').trim();
+
+      if(depEl){
+        const exists=
+          [...depEl.options].some(opt=>
+            normText(opt.value)===
+            normText(depValue)
+          );
+
+        if(depValue&&!exists){
+          const opt=document.createElement('option');
+          opt.value=depValue;
+          opt.textContent=depValue;
+          depEl.appendChild(opt);
+        }
+
+        depEl.value=depValue;
+      }
+
+      /*
+       * 4. NẠP MÃ PHIẾU + KHÓA MÃ.
+       */
+      const codeEl=
+        document.getElementById('bk-new-code');
+
+      codeEl.value=x.formCode||'';
+      codeEl.disabled=true;
+      codeEl.readOnly=true;
+      codeEl.title=
+        'Mã phiếu được khóa khi sửa để giữ nguyên liên kết lịch sử.';
+
+      /*
+       * 5. NẠP TÊN + MÔ TẢ.
+       */
+      document.getElementById('bk-new-name').value=
+        x.formName||'';
+
+      document.getElementById('bk-new-description').value=
+        x.description||'';
+
+      /*
+       * 6. NẠP TOÀN BỘ TIÊU CHÍ VÀO BẢNG PHÍA TRÊN.
+       */
+      const body=
+        document.getElementById(
+          'bk-new-criteria-body'
+        );
+
+      body.innerHTML='';
+      creatorRows=0;
+
+      (x.criteria||[]).forEach(c=>{
+        addCreatorCriterion({
+          group:c.group||'Chung',
+          content:c.content||'',
+          detail:c.detail||'',
+          allowImage:c.allowImage||'Có'
+        });
+      });
+
+      if(!(x.criteria||[]).length){
+        addCreatorCriterion();
+      }
+
+      /*
+       * 7. NẠP CẤU HÌNH XẾP LOẠI/KPI.
+       * Nếu phiếu cũ chưa có cấu hình -> dùng mặc định.
+       */
+      const s=x.scoring||null;
+
+      document.getElementById('bk-score-enabled').checked=
+        !!s;
+
+      document.getElementById('bk-score-a').value=
+        s ? s.thresholdA : 95;
+
+      document.getElementById('bk-score-b').value=
+        s ? s.thresholdB : 90;
+
+      document.getElementById('bk-score-c').value=
+        s ? s.thresholdC : 80;
+
+      document.getElementById('bk-score-label-a').value=
+        s ? (s.labelA||'A') : 'A';
+
+      document.getElementById('bk-score-label-b').value=
+        s ? (s.labelB||'B') : 'B';
+
+      document.getElementById('bk-score-label-c').value=
+        s ? (s.labelC||'C') : 'C';
+
+      document.getElementById('bk-score-below').value=
+        s ? (s.labelBelow||'CHƯA ĐẠT') : 'CHƯA ĐẠT';
+
+      document.getElementById('bk-kpi-custom').checked=
+        !!(
+          s &&
+          s.useCustomKpi
+        );
+
+      const defaultBands=[
+        {from:98,points:5},
+        {from:95,points:3},
+        {from:90,points:0},
+        {from:85,points:-2},
+        {from:80,points:-4}
+      ];
+
+      const bands=
+        s &&
+        Array.isArray(s.kpiBands) &&
+        s.kpiBands.length
+          ? s.kpiBands
+          : defaultBands;
+
+      for(let i=1;i<=5;i++){
+        const band=
+          bands[i-1]||
+          defaultBands[i-1];
+
+        document.getElementById(
+          'bk-kpi-from-'+i
+        ).value=
+          Number.isFinite(Number(band.from))
+            ? Number(band.from)
+            : defaultBands[i-1].from;
+
+        document.getElementById(
+          'bk-kpi-point-'+i
+        ).value=
+          Number.isFinite(Number(band.points))
+            ? Number(band.points)
+            : defaultBands[i-1].points;
+      }
+
+      document.getElementById('bk-kpi-below').value=
+        s &&
+        Number.isFinite(Number(s.kpiBelow))
+          ? Number(s.kpiBelow)
+          : -5;
+
+      scoreEnabledChanged();
+      customKpiChanged();
+      updateScorePreview();
+      updateCreatorSummary();
+
+      /*
+       * 8. ĐỔI NÚT LƯU SANG CHẾ ĐỘ CẬP NHẬT.
+       */
+      const saveBtn=
+        document.getElementById('bk-new-save');
+
+      if(saveBtn){
+        saveBtn.innerHTML=
+          '💾 LƯU THAY ĐỔI';
+      }
+
+      const cancelBtn=
+        document.getElementById('bk-edit-cancel');
+
+      if(cancelBtn){
+        cancelBtn.style.display='block';
+      }
+
+      const editNote=
+        document.getElementById(
+          'bk-edit-mode-note'
+        );
+
+      if(editNote){
+        editNote.style.display='block';
+        editNote.innerHTML=
+          '<b>✏️ ĐANG SỬA:</b> '+
+          checklistEscape(x.formCode||'')+
+          ' - '+
+          checklistEscape(x.formName||'')+
+          '. Mã phiếu đã khóa. Lịch sử giám sát cũ không bị xóa.';
+      }
+
+      const title=
+        document.getElementById(
+          'bk-create-title'
+        );
+
+      if(title){
+        title.textContent=
+          'CHỈNH SỬA PHIẾU GIÁM SÁT - '+
+          (x.formCode||'');
+      }
+
+      /*
+       * 9. CUỘN LÊN KHUNG SỬA.
+       */
+      const target=
+        document.getElementById(
+          'bk-new-dept'
+        );
+
+      if(
+        target &&
+        typeof target.scrollIntoView==='function'
+      ){
+        target.scrollIntoView({
+          behavior:'smooth',
+          block:'start'
+        });
+      }
+
+      setTimeout(()=>{
+        const nameEl=
+          document.getElementById(
+            'bk-new-name'
+          );
+
+        if(nameEl){
+          nameEl.focus();
+        }
+      },350);
+
+    }catch(e){
+      alert(
+        'KHÔNG THỂ NẠP PHIẾU '+code+' ĐỂ SỬA:\\n\\n'+
+        e.message+
+        '\\n\\nChạy debugChecklistEditorV19("'+code+'") trong Apps Script để kiểm tra.'
+      );
+
+    }finally{
+      checklistManageLoading(false);
+    }
+  }
+
+
+  function closeEditModal(){
+    const modal=
+      document.getElementById(
+        'bk-edit-modal'
+      );
+
+    if(modal){
+      modal.classList.remove('show');
+      modal.setAttribute(
+        'aria-hidden',
+        'true'
+      );
+    }
+
+    document.body.style.overflow='';
+
+    editingFormCode='';
+  }
+
+
+  function addModalCriterion(prefill){
+    prefill=
+      prefill || {};
+
+    const body=
+      document.getElementById(
+        'bk-modal-criteria-body'
+      );
+
+    const tr=
+      document.createElement(
+        'tr'
+      );
+
+    tr.setAttribute(
+      'data-modal-criterion',
+      '1'
+    );
+
+    tr.innerHTML=
+      '<td class="text-center fw-bold modal-no"></td>'+
+      '<td><input class="modal-group" value="'+
+        checklistEscape(prefill.group||'Chung')+
+      '"></td>'+
+      '<td><textarea class="modal-content">'+
+        checklistEscape(prefill.content||'')+
+      '</textarea></td>'+
+      '<td><textarea class="modal-detail">'+
+        checklistEscape(prefill.detail||'')+
+      '</textarea></td>'+
+      '<td><select class="modal-image">'+
+        '<option value="Có">Có</option>'+
+        '<option value="Không">Không</option>'+
+      '</select></td>'+
+      '<td class="text-center">'+
+        '<button type="button" class="btn-edit-del" onclick="BangKiemApp.removeModalCriterion(this)">🗑</button>'+
+      '</td>';
+
+    body.appendChild(
+      tr
+    );
+
+    tr.querySelector('.modal-image').value=
+      normText(prefill.allowImage)==='KHONG'
+        ? 'Không'
+        : 'Có';
+
+    renumberModalCriteria();
+  }
+
+
+  function removeModalCriterion(button){
+    const rows=
+      document.querySelectorAll(
+        '#bk-modal-criteria-body tr[data-modal-criterion]'
+      );
+
+    if(rows.length<=1){
+      return alert(
+        'Phiếu phải có ít nhất 1 tiêu chí.'
+      );
+    }
+
+    const tr=
+      button.closest('tr');
+
+    if(tr){
+      tr.remove();
+    }
+
+    renumberModalCriteria();
+  }
+
+
+  function renumberModalCriteria(){
+    [
+      ...document.querySelectorAll(
+        '#bk-modal-criteria-body tr[data-modal-criterion]'
+      )
+    ].forEach((tr,i)=>{
+      tr.querySelector('.modal-no').textContent=
+        i+1;
+    });
+  }
+
+
+  function collectModalCriteria(){
+    return [
+      ...document.querySelectorAll(
+        '#bk-modal-criteria-body tr[data-modal-criterion]'
+      )
+    ].map((tr,i)=>({
+      order:i+1,
+      group:
+        tr.querySelector('.modal-group').value.trim()||
+        'Chung',
+      content:
+        tr.querySelector('.modal-content').value.trim(),
+      detail:
+        tr.querySelector('.modal-detail').value.trim(),
+      allowImage:
+        tr.querySelector('.modal-image').value
+    }));
+  }
+
+
+  async function saveEditModal(){
+    const formCode=
+      document.getElementById('bk-modal-code').value.trim();
+
+    const formName=
+      document.getElementById('bk-modal-name').value.trim();
+
+    const department=
+      document.getElementById('bk-modal-dept').value.trim();
+
+    const description=
+      document.getElementById('bk-modal-description').value.trim();
+
+    const criteria=
+      collectModalCriteria();
+
+    if(!formCode){
+      return alert('Thiếu mã phiếu.');
+    }
+
+    if(!formName){
+      return alert('Phải nhập Tên phiếu.');
+    }
+
+    if(!department){
+      return alert('Phải nhập Bộ phận.');
+    }
+
+    const emptyIndex=
+      criteria.findIndex(x=>!x.content);
+
+    if(emptyIndex>=0){
+      return alert(
+        'Tiêu chí số '+(emptyIndex+1)+' chưa có Nội dung.'
+      );
+    }
+
+    const a=
+      Number(
+        document.getElementById('bk-modal-score-a').value
+      );
+
+    const b=
+      Number(
+        document.getElementById('bk-modal-score-b').value
+      );
+
+    const c=
+      Number(
+        document.getElementById('bk-modal-score-c').value
+      );
+
+    if(!(a>b && b>c)){
+      return alert(
+        'Ngưỡng xếp loại phải theo thứ tự A > B > C.'
+      );
+    }
+
+    const payload={
+      formCode,
+      formName,
+      department,
+      description,
+      criteria,
+      scoring:{
+        enabled:true,
+        thresholdA:a,
+        thresholdB:b,
+        thresholdC:c,
+        labelA:
+          document.getElementById('bk-modal-label-a').value.trim()||'A',
+        labelB:
+          document.getElementById('bk-modal-label-b').value.trim()||'B',
+        labelC:
+          document.getElementById('bk-modal-label-c').value.trim()||'C',
+        labelBelow:
+          document.getElementById('bk-modal-score-below').value.trim()||'CHƯA ĐẠT',
+        useCustomKpi:
+          document.getElementById('bk-modal-kpi-custom').value==='1',
+        kpiBands:[
+          {from:98,points:5},
+          {from:95,points:3},
+          {from:90,points:0},
+          {from:85,points:-2},
+          {from:80,points:-4}
+        ],
+        kpiBelow:-5
+      }
+    };
+
+    if(!confirm(
+      'Lưu thay đổi cho phiếu '+formCode+'?\\n\\nDữ liệu giám sát lịch sử sẽ được giữ nguyên.'
+    )){
+      return;
+    }
+
+    const btn=
+      document.getElementById(
+        'bk-modal-save'
+      );
+
+    btn.disabled=true;
+
+    checklistManageLoading(
+      true,
+      'Đang lưu thay đổi phiếu...'
+    );
+
+    try{
+      const r=
+        await ChecklistManageBridge.update(
+          payload
+        );
+
+      alert(
+        r.message||
+        'Đã lưu thay đổi.'
+      );
+
+      closeEditModal();
+
+      d=
+        await ChecklistManageBridge.initialData();
+
+      allStaff=d.staff||[];
+
+      await loadFormDefinitions();
+
+      const currentDep=
+        document.getElementById('bk-dept').value;
+
+      if(currentDep){
+        departmentChanged(false);
+      }
+
+    }catch(e){
+      alert(
+        'Không thể lưu thay đổi:\\n'+
+        e.message
+      );
+
+    }finally{
+      btn.disabled=false;
+      checklistManageLoading(false);
+    }
+  }
+
+
+  function cancelEditForm(){
+    if(
+      editingFormCode &&
+      !confirm('Hủy các thay đổi đang sửa?')
+    ){
+      return;
+    }
+
+    clearCreatorForm();
+  }
+
+  async function copyFormDefinition(formCode){
+    const newCode=prompt(
+      'SAO CHÉP '+formCode+'\n\nNhập MÃ PHIẾU MỚI.\nCó thể để trống để hệ thống tự sinh mã:',
+      ''
+    );
+
+    if(newCode===null)return;
+
+    const newName=prompt(
+      'Nhập TÊN PHIẾU MỚI.\nNếu để trống, hệ thống dùng tên phiếu nguồn + BẢN SAO:',
+      ''
+    );
+
+    if(newName===null)return;
+
+    checklistManageLoading(true,'Đang sao chép mẫu phiếu...');
+    try{
+      const r=
+        await ChecklistManageBridge.copy(
+          formCode,
+          newCode.trim(),
+          newName.trim()
+        );
+      alert(r.message||'Đã sao chép phiếu.');
+      d=
+        await ChecklistManageBridge.initialData();
+
+      allStaff=d.staff||[];
+
+      await loadFormDefinitions();
+    }catch(e){
+      alert(
+        'Không thể sao chép phiếu: '+e.message+
+        '\n\nNếu vừa thay 40_BangKiem.gs, hãy Deploy NEW VERSION rồi mở lại URL /exec.'
+      );
+    }finally{
+      checklistManageLoading(false);
+    }
+  }
+
+  async function loadFormDefinitions(){
+    const body=document.getElementById('bk-form-definition-body');
+
+    if(!body)return;
+
+    body.innerHTML=
+      '<tr><td colspan="7" class="text-center p-3 text-muted">'+
+        'Đang tải danh sách phiếu...'+
+      '</td></tr>';
+
+    try{
+      const rows=
+        await ChecklistManageBridge.list(
+          {}
+        );
+
+      renderFormDefinitions(
+        rows||[]
+      );
+
+    }catch(e){
+      body.innerHTML=
+        '<tr><td colspan="7" class="text-center p-3 text-danger">'+
+          checklistEscape(e.message)+
+        '</td></tr>';
+    }
+  }
+
+
+  function renderFormDefinitions(rows){
+    const body=document.getElementById('bk-form-definition-body');
+
+    if(!rows.length){
+      body.innerHTML=
+        '<tr><td colspan="7" class="text-center p-3 text-muted">'+
+          'Chưa có phiếu giám sát.'+
+        '</td></tr>';
+      return;
+    }
+
+    body.innerHTML=rows.map((x,i)=>{
+      const active=normText(x.status)==='HOAT DONG';
+
+      const statusHtml=active
+        ? '<span class="bk-status-active">HOẠT ĐỘNG</span>'
+        : '<span class="bk-status-paused">'+checklistEscape(x.status||'TẠM NGƯNG')+'</span>';
+
+      const nextStatus=active
+        ? 'Tạm ngưng'
+        : 'Hoạt động';
+
+      return '<tr>'+
+        '<td class="text-center">'+(i+1)+'</td>'+
+        '<td class="fw-bold">'+checklistEscape(x.formCode||'')+'</td>'+
+        '<td>'+checklistEscape(x.formName||'')+'</td>'+
+        '<td>'+checklistEscape(x.department||'')+'</td>'+
+        '<td class="text-center fw-bold">'+checklistEscape(x.criterionCount||0)+'</td>'+
+        '<td class="text-center">'+statusHtml+'</td>'+
+        '<td class="text-center">'+
+          '<div class="d-flex flex-wrap gap-1 justify-content-center">'+
+            '<button type="button" class="btn btn-outline-primary btn-sm" '+
+              'onclick="BangKiemApp.editFormDefinition('+JSON.stringify(String(x.formCode||''))+')">✏️ SỬA</button>'+
+            '<button type="button" class="btn btn-outline-info btn-sm" '+
+              'onclick="BangKiemApp.copyFormDefinition('+JSON.stringify(String(x.formCode||''))+')">📋 Sao chép</button>'+
+            '<button type="button" class="btn btn-outline-'+(active?'warning':'success')+' btn-sm" '+
+              'onclick="BangKiemApp.toggleFormStatus('+
+                JSON.stringify(String(x.formCode||''))+','+
+                JSON.stringify(nextStatus)+
+              ')">'+
+              (active?'⏸ Tạm ngưng':'▶ Kích hoạt')+
+            '</button>'+
+          '</div>'+
+        '</td>'+
+      '</tr>';
+    }).join('');
+  }
+
+
+  async function toggleFormStatus(formCode,newStatus){
+    const message=
+      newStatus==='Tạm ngưng'
+        ? 'Tạm ngưng phiếu '+formCode+'? Phiếu sẽ không còn xuất hiện khi chấm mới, nhưng dữ liệu lịch sử vẫn giữ nguyên.'
+        : 'Kích hoạt lại phiếu '+formCode+'?';
+
+    if(!confirm(message)){
+      return;
+    }
+
+    checklistManageLoading(true,'Đang cập nhật trạng thái phiếu...');
+
+    try{
+      const r=
+        await ChecklistManageBridge.setStatus(
+          formCode,
+          newStatus
+        );
+
+      alert(r.message||'Đã cập nhật.');
+
+      d=
+        await ChecklistManageBridge.initialData();
+
+      allStaff=d.staff||[];
+
+      const currentDep=document.getElementById('bk-dept').value;
+
+      if(currentDep){
+        departmentChanged(false);
+      }
+
+      await loadFormDefinitions();
+
+    }catch(e){
+      alert(
+        'Không thể cập nhật phiếu: '+e.message+
+        '\n\nNếu vừa thay 40_BangKiem.gs, hãy Deploy NEW VERSION rồi mở lại URL /exec.'
+      );
+
+    }finally{
+      checklistManageLoading(false);
+    }
+  }
+
+
+  async function testChecklistManager(){
+    checklistManageLoading(
+      true,
+      'Đang kiểm tra chức năng quản lý phiếu...'
+    );
+
+    try{
+      const result=
+        await ChecklistManageBridge.ping();
+
+      alert(
+        'KẾT NỐI QUẢN LÝ PHIẾU: OK\n'+
+        'Phiên bản: '+
+        (result.version||'V17.3')+
+        '\n'+
+        (result.message||'')
+      );
+
+      return true;
+
+    }catch(e){
+      alert(
+        'KẾT NỐI QUẢN LÝ PHIẾU: LỖI\n\n'+
+        e.message+
+        '\n\nHãy chắc chắn đã Deploy NEW VERSION chứa 40_BangKiem.gs V17.3.'
+      );
+
+      return false;
+
+    }finally{
+      checklistManageLoading(
+        false
+      );
+    }
+  }
+
+
+  return {
+    init,
+    departmentChanged,
+    formChanged,
+    rowChanged,
+    markAllPass,
+    photoSelected,
+    recalc,
+    save,
+
+    showTab,
+    creatorDepartmentChanged,
+    suggestCode,
+    addCreatorCriterion,
+    removeCreatorCriterion,
+    updateCreatorSummary,
+    scoreEnabledChanged,
+    customKpiChanged,
+    updateScorePreview,
+    saveNewForm,
+    clearCreatorForm,
+    editFormDefinition,
+    closeEditModal,
+    addModalCriterion,
+    removeModalCriterion,
+    saveEditModal,
+    cancelEditForm,
+    copyFormDefinition,
+    loadFormDefinitions,
+    toggleFormStatus,
+    testChecklistManager
+  };
+})();
+</script>

@@ -27,7 +27,7 @@
 +  if(!criteria.length){
 +    throw new Error('Phiếu phải có ít nhất 1 tiêu chí.');
 +  }
- 
+
    const clean=criteria.map(function(item,index){
      item=item||{};
      const content=requireText_(item.content,'Nội dung tiêu chí số '+(index+1));
@@ -40,14 +40,14 @@
        allowImage:normalizeChecklistKey_(item.allowImage)==='khong'?'Không':'Có'
      };
    });
- 
+
 -  const lock=LockService.getDocumentLock();
 -  if(!lock.tryLock(20000)) throw new Error('Hệ thống đang có người khác cập nhật danh mục. Vui lòng thử lại.');
 +  const lock=getChecklistWriteLock_();
 +  if(!lock.tryLock(20000)){
 +    throw new Error('Hệ thống đang có người khác cập nhật danh mục. Vui lòng thử lại sau vài giây.');
 +  }
- 
+
    try{
      const formSheet=getRequiredSheet_(EXT_CONFIG.SHEETS.CHECKLIST_FORMS_MASTER);
      const criterionSheet=getRequiredSheet_(EXT_CONFIG.SHEETS.CHECKLIST_MASTER);
@@ -55,13 +55,13 @@
      let formRow=-1, oldStatus='Hoạt động';
 @@
      if(formRow<2) throw new Error('Không tìm thấy phiếu "'+formCode+'" để sửa.');
- 
+
      formSheet.getRange(formRow,1,1,6).setValues([[
        formCode,formName,department,
        description||('Phiếu giám sát '+formName),
        clean.length,oldStatus
      ]]);
- 
+
 +    /*
 +     * Không xóa tiêu chí cũ: CT_PHIEU_GIAMSAT tham chiếu Mã tiêu chí.
 +     * Còn tồn tại -> cập nhật tại chỗ và giữ ID.
@@ -86,7 +86,7 @@
 +        if(id) existingById[normalizeChecklistKey_(id)]=rowInfo;
        }
      }
- 
+
 -    const newRows=clean.map(function(x){
 -      const id=formCode+'-'+('0'+x.order).slice(-2);
 -      return [id,department,x.group,x.content,'Hoạt động',formCode,x.order,x.detail,x.allowImage];

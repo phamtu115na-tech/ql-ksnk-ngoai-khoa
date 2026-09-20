@@ -1,0 +1,25 @@
+7. BÁO CÁO TỔNG HỢP MỚI - SỬA LỖI KHÔNG HIỂN THỊ
+==================================================
+Đã xác định được lỗi cụ thể trong BaoCao.html của bản hiện tại:
+- JavaScript bị SyntaxError tại nút "Xem ảnh".
+- Khi một <script> có lỗi cú pháp, TOÀN BỘ script BaoCao không chạy.
+- Hậu quả đúng với hiện tượng: Bộ phận không được khởi tạo, Nhân viên không được bind,
+  nút xem báo cáo không render nội dung.
+
+Đã sửa:
+- Lỗi cú pháp JavaScript.
+- Giữ cấu trúc cũ Bộ phận.
+- Giữ SmartSelect Nhân viên/Tổ trưởng cũ.
+- Giữ Từ ngày/Đến ngày mặc định trọn tháng hiện tại.
+- Giữ các nội dung đã bổ sung khác.
+
+Kiểm tra:
+- JavaScript BaoCao.html: Node --check PASS.
+- Toàn bộ .gs: Node --check PASS.
+
+Nếu sau deploy vẫn không có dữ liệu:
+1. Chạy KSNK_TEST_BAOCAO_V7().
+2. staffCount = 0 -> nguồn DM_NHANVIEN / trạng thái nhân viên.
+3. initJsonOk = false -> lỗi API khởi tạo / quyền / sheet.
+4. reportJsonOk = false -> lỗi API tổng hợp hoặc một nguồn sheet báo cáo.
+5. Nếu cả 3 đều OK mà web cũ vẫn lỗi -> deployment/cache/version cũ.

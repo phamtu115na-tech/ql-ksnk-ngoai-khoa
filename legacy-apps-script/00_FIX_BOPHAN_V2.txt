@@ -1,0 +1,18 @@
+FIX BỘ PHẬN BÁO CÁO V2
+=======================
+Bộ phận nay được render ngay từ BaoCao.html theo cấu trúc cũ:
+- VỆ SINH MÔI TRƯỜNG
+- ĐỒ VẢI
+- GIÁM SÁT
+- DỤNG CỤ
+- VI PHẠM CHUNG
+
+Không còn phụ thuộc việc API khởi tạo trả departments trước khi hiện dropdown.
+Khi API tải xong, các bộ phận thực tế khác trong DM_NHANVIEN vẫn được bổ sung.
+
+Nếu đang dùng bản ngay trước:
+1. Thay BaoCao.html
+2. Thay 60_BaoCao.gs
+3. Save
+4. Chạy KSNK_TEST_BOPHAN_BAOCAO() - phải trả danh sách Bộ phận.
+5. Deploy NEW VERSION.

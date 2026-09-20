@@ -1,0 +1,1155 @@
+<div id="kpi-root">
+  <div id="kpi-local-loading"><div class="inner" id="kpi-local-loading-text">Đang xử lý...</div></div>
+  <style>
+    #kpi-root{
+      --blue:#123b8f;
+      --blue2:#2f5fa7;
+      --border:#d9e2ef;
+      font-family:Arial,Helvetica,sans-serif;
+    }
+    #kpi-root .kpi-panel{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:14px;
+      margin-bottom:14px;
+    }
+    #kpi-root .kpi-filter{
+      display:grid;
+      grid-template-columns:160px 160px minmax(180px,1fr) minmax(220px,1fr) 150px 190px;
+      gap:10px;
+      align-items:end;
+    }
+    #kpi-root label{
+      display:block;
+      font-size:12px;
+      font-weight:800;
+      margin-bottom:4px;
+      color:#34445c;
+    }
+    #kpi-root input,
+    #kpi-root select{
+      width:100%;
+      padding:8px 9px;
+      border:1px solid #cbd5e1;
+      border-radius:6px;
+      background:#fff;
+    }
+    #kpi-root button{
+      border:0;
+      border-radius:6px;
+      padding:9px 12px;
+      font-weight:800;
+      cursor:pointer;
+    }
+    #kpi-root .btn-primary{background:#1769e0;color:#fff}
+    #kpi-root .btn-config{background:#6f42c1;color:#fff}
+    #kpi-root .btn-save{background:#dc3545;color:#fff}
+    #kpi-root .btn-outline{background:#fff;border:1px solid #9aa9bd;color:#34445c}
+    #kpi-root .table-wrap{overflow:auto}
+    #kpi-root table{width:100%;border-collapse:collapse;min-width:1050px}
+    #kpi-root th{
+      background:var(--blue);
+      color:#fff;
+      padding:9px 7px;
+      border:1px solid #fff;
+      white-space:nowrap;
+    }
+    #kpi-root td{
+      padding:8px 7px;
+      border:1px solid #dbe3ee;
+      vertical-align:top;
+    }
+    #kpi-root tbody tr:nth-child(even) td{background:#f8fafc}
+    #kpi-root .score-total{
+      font-size:16px;
+      font-weight:900;
+      text-align:center;
+      background:#f3e8ff!important;
+      color:#6b21a8;
+    }
+    #kpi-root .rank-pill{
+      display:inline-block;
+      min-width:92px;
+      padding:5px 9px;
+      color:#fff;
+      border-radius:999px;
+      font-weight:900;
+      text-align:center;
+      white-space:nowrap;
+    }
+    #kpi-root .detail{
+      min-width:260px;
+      font-size:12px;
+      line-height:1.4;
+    }
+    #kpi-root .kpi-note{
+      padding:10px 12px;
+      border-left:4px solid #6f42c1;
+      background:#faf7ff;
+      margin-bottom:12px;
+      font-size:13px;
+    }
+    #kpi-config-modal{
+      position:fixed;
+      inset:0;
+      z-index:99999;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background:rgba(0,0,0,.45);
+      padding:20px;
+    }
+    #kpi-config-modal .box{
+      width:min(980px,96vw);
+      max-height:90vh;
+      overflow:auto;
+      background:#fff;
+      border-radius:12px;
+      box-shadow:0 15px 50px rgba(0,0,0,.25);
+      padding:16px;
+    }
+    #kpi-config-modal .head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      border-bottom:2px solid #123b8f;
+      padding-bottom:10px;
+      margin-bottom:12px;
+    }
+    #kpi-config-modal .head h3{margin:0;color:#123b8f}
+    #kpi-config-modal table{min-width:760px}
+    #kpi-config-modal input[type=color]{
+      min-width:70px;
+      height:36px;
+      padding:2px;
+    }
+    #kpi-config-modal .actions{
+      display:flex;
+      justify-content:flex-end;
+      gap:8px;
+      margin-top:12px;
+    }
+    @media(max-width:1100px){
+      #kpi-root .kpi-filter{grid-template-columns:1fr 1fr 1fr}
+    }
+    @media(max-width:650px){
+      #kpi-root .kpi-filter{grid-template-columns:1fr}
+    }
+
+    #kpi-root .kpi-summary-grid{
+      display:grid;
+      grid-template-columns:repeat(5,minmax(140px,1fr));
+      gap:10px;
+      margin:12px 0 16px;
+    }
+    #kpi-root .kpi-summary-card{
+      border-radius:10px;
+      padding:12px;
+      color:#fff;
+      text-align:center;
+      font-weight:800;
+      box-shadow:0 5px 14px rgba(0,0,0,.10);
+    }
+    #kpi-root .kpi-summary-card small{
+      display:block;
+      opacity:.92;
+      font-size:11px;
+    }
+    #kpi-root .kpi-summary-card strong{
+      display:block;
+      font-size:24px;
+      margin-top:5px;
+    }
+    #kpi-root .sum1{background:linear-gradient(135deg,#37474f,#263238)}
+    #kpi-root .sum2{background:linear-gradient(135deg,#1976d2,#0d47a1)}
+    #kpi-root .sum3{background:linear-gradient(135deg,#009688,#00695c)}
+    #kpi-root .sum4{background:linear-gradient(135deg,#e53935,#b71c1c)}
+    #kpi-root .sum5{background:linear-gradient(135deg,#8e24aa,#4a148c)}
+
+    #kpi-root .rank-grid{
+      display:grid;
+      grid-template-columns:repeat(5,minmax(120px,1fr));
+      gap:8px;
+      margin:8px 0 18px;
+    }
+    #kpi-root .rank-card{
+      border-radius:9px;
+      padding:10px;
+      text-align:center;
+      color:#fff;
+      font-weight:900;
+    }
+    #kpi-root .rank-card strong{
+      display:block;
+      font-size:22px;
+      margin-top:4px;
+    }
+
+    #kpi-root .chart-box{
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:14px;
+      margin:16px 0;
+      background:#fff;
+    }
+    #kpi-root .chart-title{
+      font-weight:900;
+      color:#123b8f;
+      text-align:center;
+      margin-bottom:12px;
+    }
+    #kpi-root .chart-row{
+      display:grid;
+      grid-template-columns:minmax(150px,220px) 1fr 58px;
+      gap:10px;
+      align-items:center;
+      margin:8px 0;
+    }
+    #kpi-root .chart-name{
+      text-align:right;
+      font-size:12px;
+      font-weight:700;
+    }
+    #kpi-root .chart-track{
+      height:20px;
+      background:#eef2f7;
+      border-radius:4px;
+      overflow:hidden;
+    }
+    #kpi-root .chart-bar{
+      height:100%;
+      min-width:2px;
+      border-radius:4px;
+    }
+    #kpi-root .chart-value{
+      font-size:12px;
+      font-weight:900;
+    }
+
+    #kpi-root .conclusion-box{
+      border-left:5px solid #ff9800;
+      background:#fff8e8;
+      padding:13px 15px;
+      border-radius:8px;
+      margin:14px 0;
+    }
+    #kpi-root .conclusion-box h4{
+      margin:0 0 8px;
+      color:#8a5a00;
+    }
+    #kpi-root .conclusion-box ul{
+      margin:0;
+      padding-left:20px;
+    }
+    #kpi-root .conclusion-box li{
+      margin:5px 0;
+    }
+
+    #kpi-root .feedback-box{
+      border:1px solid #d5ddec;
+      border-radius:10px;
+      background:#fbfcff;
+      padding:13px;
+      margin-top:14px;
+    }
+    #kpi-root .feedback-box h4{
+      margin:0 0 8px;
+      color:#123b8f;
+    }
+    #kpi-root .feedback-box textarea{
+      width:100%;
+      min-height:100px;
+      resize:vertical;
+      border:1px solid #cbd5e1;
+      border-radius:7px;
+      padding:10px;
+      font:inherit;
+    }
+    #kpi-root .feedback-meta{
+      font-size:11px;
+      color:#667085;
+      margin-top:5px;
+    }
+    #kpi-root .feedback-actions{
+      display:flex;
+      justify-content:flex-end;
+      margin-top:8px;
+    }
+    #kpi-root .btn-feedback{
+      background:#198754;
+      color:#fff;
+    }
+
+    @media(max-width:900px){
+      #kpi-root .kpi-summary-grid,
+      #kpi-root .rank-grid{
+        grid-template-columns:1fr 1fr;
+      }
+      #kpi-root .chart-row{
+        grid-template-columns:110px 1fr 48px;
+      }
+    }
+
+
+    #kpi-local-loading{
+      position:fixed;
+      inset:0;
+      z-index:100000;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background:rgba(255,255,255,.72);
+      backdrop-filter:blur(2px);
+    }
+    #kpi-local-loading.show{
+      display:flex;
+    }
+    #kpi-local-loading .inner{
+      background:#123b8f;
+      color:#fff;
+      padding:14px 20px;
+      border-radius:10px;
+      font-weight:900;
+      box-shadow:0 10px 30px rgba(0,0,0,.18);
+    }
+
+
+  .kpi-staff-smart{position:relative;width:100%}
+  .kpi-staff-smart #kpi-name{width:100%}
+  .kpi-staff-menu{
+    display:none;position:absolute;z-index:9999;left:0;right:0;top:calc(100% + 4px);
+    max-height:280px;overflow:auto;background:#fff;border:1px solid #d0d5dd;
+    border-radius:10px;box-shadow:0 10px 28px rgba(16,24,40,.16);padding:4px
+  }
+  .kpi-staff-menu.show{display:block}
+  .kpi-staff-option{
+    display:block;width:100%;border:0;background:#fff;text-align:left;padding:9px 10px;
+    border-radius:7px;cursor:pointer;color:#101828
+  }
+  .kpi-staff-option:hover,.kpi-staff-option.active{background:#eef4ff}
+  .kpi-staff-option small{display:block;color:#667085;margin-top:2px}
+  .kpi-staff-empty{padding:10px;color:#667085}
+</style>
+
+  <div class="kpi-panel no-print">
+    <div class="kpi-filter">
+      <div>
+        <label>Từ ngày</label>
+        <input id="kpi-from" type="date">
+      </div>
+
+      <div>
+        <label>Đến ngày</label>
+        <input id="kpi-to" type="date">
+      </div>
+
+      <div>
+        <label>Bộ phận</label>
+        <select id="kpi-dept">
+          <option value="">-- Tất cả bộ phận --</option>
+          <option value="VỆ SINH MÔI TRƯỜNG">VỆ SINH MÔI TRƯỜNG</option>
+          <option value="ĐỒ VẢI">ĐỒ VẢI</option>
+          <option value="GIÁM SÁT">GIÁM SÁT</option>
+          <option value="DỤNG CỤ">DỤNG CỤ</option>
+          <option value="VI PHẠM CHUNG">VI PHẠM CHUNG</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Nhân viên</label>
+        <div class="kpi-staff-smart">
+          <input id="kpi-name" placeholder="Gõ → lọc → chọn nhân viên" autocomplete="off">
+          <input id="kpi-person" type="hidden">
+          <div id="kpi-name-menu" class="kpi-staff-menu"></div>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="KpiApp.load()">
+        TÍNH KPI
+      </button>
+
+      <button class="btn-config" onclick="KpiApp.openConfig()">
+        ⚙ QUY ĐỔI XẾP LOẠI
+      </button>
+    </div>
+  </div>
+
+  <div class="kpi-panel">
+    <div class="kpi-note">
+      <b>MỘT NGUỒN CÔNG THỨC:</b>
+      cột <b>Tổng</b> và <b>Xếp loại</b> của bảng KPI được tính tại
+      <code>70_KPI.gs</code>. Báo cáo tổng hợp gọi lại chính
+      <code>getKpiReport()</code>, vì vậy thay quy đổi ở đây sẽ áp dụng cho cả KPI và Báo cáo.
+    </div>
+
+    <div id="kpi-summary"></div>
+    <div id="kpi-ranks"></div>
+    <div id="kpi-chart"></div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nhân viên</th>
+            <th>Bộ phận</th>
+            <th>Điểm gốc</th>
+            <th>Giao việc</th>
+            <th>Bảng kiểm</th>
+            <th>Vi phạm</th>
+            <th>Tổng</th>
+            <th>Xếp loại</th>
+            <th>Chi tiết</th>
+          </tr>
+        </thead>
+
+        <tbody id="kpi-body">
+          <tr>
+            <td colspan="9" style="text-align:center;color:#6b7280;padding:20px">
+              Chọn điều kiện và bấm TÍNH KPI.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="kpi-conclusion"></div>
+
+    <div id="kpi-feedback" class="feedback-box no-print" style="display:none">
+      <h4>✍ KẾT LUẬN / GÓP Ý CỦA QUẢN LÝ</h4>
+
+      <textarea
+        id="kpi-feedback-text"
+        placeholder="Nhập góp ý, yêu cầu khắc phục, nội dung cần theo dõi thêm..."
+      ></textarea>
+
+      <div
+        id="kpi-feedback-meta"
+        class="feedback-meta"
+      ></div>
+
+      <div class="feedback-actions">
+        <button
+          type="button"
+          class="btn-feedback"
+          onclick="KpiApp.saveFeedback()"
+        >
+          💾 LƯU GÓP Ý
+        </button>
+      </div>
+    </div>
+
+    <button class="btn-save no-print" style="margin-top:12px" onclick="KpiApp.save()">
+      LƯU KẾT QUẢ KPI
+    </button>
+  </div>
+
+  <div id="kpi-config-modal">
+    <div class="box">
+      <div class="head">
+        <div>
+          <h3>⚙ CẤU HÌNH QUY ĐỔI ĐIỂM → XẾP LOẠI</h3>
+          <div style="font-size:12px;color:#667085;margin-top:4px">
+            Lưu tại sheet <b>DM_QUYDOI_KPI</b>. Cả KPI và Báo cáo cùng sử dụng.
+          </div>
+        </div>
+
+        <button class="btn-outline" onclick="KpiApp.closeConfig()">
+          ✕ Đóng
+        </button>
+      </div>
+
+      <div class="kpi-note">
+        Các khoảng điểm <b>không được chồng lấn</b>.
+        Ví dụ: TỐT 95–109.99 thì KHÁ phải kết thúc tối đa 94.99.
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>STT</th>
+              <th>Xếp loại</th>
+              <th>Từ điểm</th>
+              <th>Đến điểm</th>
+              <th>Màu</th>
+              <th>Xóa</th>
+            </tr>
+          </thead>
+          <tbody id="kpi-config-body"></tbody>
+        </table>
+      </div>
+
+      <div class="actions">
+        <button class="btn-outline" onclick="KpiApp.addRule()">
+          ＋ THÊM MỨC
+        </button>
+
+        <button class="btn-primary" onclick="KpiApp.saveConfig()">
+          💾 LƯU QUY ĐỔI
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+/**
+ * ============================================================
+ * V19.3 - CẦU NỐI KPI ĐỘC LẬP - FIX MAXIMUM CALL STACK
+ * ============================================================
+ * KPI không còn bắt buộc Index.html phải khai báo AppUtil trước.
+ * Nếu AppUtil có sẵn -> dùng AppUtil.
+ * Nếu chưa có -> gọi google.script.run trực tiếp.
+ */
+const KpiBridge = (() => {
+
+  function callRunner_(invoke){
+    return new Promise((resolve,reject)=>{
+      try{
+        invoke(
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(err=>{
+              reject(
+                new Error(
+                  err && err.message
+                    ? err.message
+                    : String(err)
+                )
+              );
+            })
+        );
+      }catch(err){
+        reject(
+          err instanceof Error
+            ? err
+            : new Error(String(err))
+        );
+      }
+    });
+  }
+
+  /**
+   * KHÔNG dùng runner[functionName].
+   * Từng hàm Apps Script được gọi tường minh.
+   * Vì vậy loại bỏ hoàn toàn lỗi:
+   * runner[functionName] is not a function
+   */
+  const server = (functionName, ...args) => {
+    switch(functionName){
+
+      case 'getKpiBootstrapData':
+        return callRunner_(r=>
+          r.getKpiBootstrapData()
+        );
+
+      case 'getKpiFilterOptions':
+        return callRunner_(r=>
+          r.getKpiFilterOptions()
+        );
+
+      case 'setupKpiConversionSystem':
+        return callRunner_(r=>
+          r.setupKpiConversionSystem()
+        );
+
+      case 'setupKpiDashboardSystem':
+        return callRunner_(r=>
+          r.setupKpiDashboardSystem()
+        );
+
+      case 'getKpiDashboardData':
+        return callRunner_(r=>
+          r.getKpiDashboardData(
+            args[0] || {}
+          )
+        );
+
+      case 'getKpiReport':
+        return callRunner_(r=>
+          r.getKpiReport(
+            args[0] || {}
+          )
+        );
+
+      case 'saveKpiReport':
+        return callRunner_(r=>
+          r.saveKpiReport(
+            args[0] || {}
+          )
+        );
+
+      case 'getKpiConversionRules':
+        return callRunner_(r=>
+          r.getKpiConversionRules()
+        );
+
+      case 'saveKpiConversionRules':
+        return callRunner_(r=>
+          r.saveKpiConversionRules(
+            args[0] || []
+          )
+        );
+
+      case 'saveKpiFeedback':
+        return callRunner_(r=>
+          r.saveKpiFeedback(
+            args[0] || {}
+          )
+        );
+
+      case 'debugKpiDataSources':
+        return callRunner_(r=>
+          r.debugKpiDataSources()
+        );
+
+      default:
+        return Promise.reject(
+          new Error(
+            'KPI.html chưa khai báo API: '+
+            functionName
+          )
+        );
+    }
+  };
+
+  const loading = (show,text) => {
+    /*
+     * Không phụ thuộc AppUtil.
+     * KPI dùng loader riêng để tránh lỗi thứ tự include.
+     */
+    const box =
+      document.getElementById(
+        'kpi-local-loading'
+      );
+
+    const label =
+      document.getElementById(
+        'kpi-local-loading-text'
+      );
+
+    if(label){
+      label.textContent =
+        text ||
+        'Đang xử lý...';
+    }
+
+    if(box){
+      box.classList.toggle(
+        'show',
+        !!show
+      );
+    }
+  };
+
+  return {
+    server,
+    loading
+  };
+})();
+
+const KpiApp=(()=>{
+  let staff=[];
+  let rules=[];
+
+  const esc=s=>String(s==null?'':s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
+
+  async function init(){
+    try{
+      const today=new Date().toISOString().slice(0,10);
+      document.getElementById('kpi-from').value=today;
+      document.getElementById('kpi-to').value=today;
+
+      const options=
+        await KpiBridge.server(
+          'getKpiBootstrapData'
+        );
+
+      staff=
+        Array.isArray(options.staff)
+          ? options.staff
+          : [];
+
+      const deps=
+        Array.isArray(options.departments)
+          ? options.departments
+          : [];
+
+      // Giữ nguyên danh sách Bộ phận cấu trúc cũ; API chỉ bổ sung, không xóa.
+      const deptEl=document.getElementById('kpi-dept');
+      deps.forEach(function(dep){
+        dep=String(dep||'').trim();
+        if(!dep) return;
+        const exists=Array.from(deptEl.options).some(function(op){
+          return String(op.value||'').trim().toUpperCase()===dep.toUpperCase();
+        });
+        if(!exists){
+          const op=document.createElement('option');
+          op.value=dep;
+          op.textContent=dep;
+          deptEl.appendChild(op);
+        }
+      });
+
+      bindNameInput();
+
+    }catch(e){
+      alert(
+        'Lỗi khởi tạo KPI: '+e.message+
+        '\n\nNếu vừa thay 70_KPI.gs, hãy Deploy NEW VERSION rồi mở đúng URL /exec mới.'
+      );
+    }
+  }
+
+  function bindNameInput(){
+    const input=document.getElementById('kpi-name');
+    const hidden=document.getElementById('kpi-person');
+    const menu=document.getElementById('kpi-name-menu');
+
+    const normText=v=>String(v||'')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/đ/g,'d').replace(/Đ/g,'D')
+      .toLowerCase().trim();
+
+    function availableStaff(){
+      const dep=String(document.getElementById('kpi-dept').value||'').trim();
+      if(!dep) return staff.slice();
+      return staff.filter(x=>normText(x.department)===normText(dep));
+    }
+
+    function renderMenu(query){
+      const q=normText(query);
+      const rows=availableStaff()
+        .filter(x=>!q || normText(x.name).includes(q) ||
+                    normText(x.id).includes(q) ||
+                    normText(x.department).includes(q))
+        .slice(0,80);
+
+      if(!rows.length){
+        menu.innerHTML='<div class="kpi-staff-empty">Không tìm thấy nhân viên phù hợp.</div>';
+      }else{
+        menu.innerHTML=rows.map((x,i)=>
+          '<button type="button" class="kpi-staff-option" data-kpi-staff="'+i+'">'+
+          '<b>'+esc(x.name||'')+'</b>'+
+          '<small>'+esc([x.department,x.position].filter(Boolean).join(' • '))+'</small>'+
+          '</button>'
+        ).join('');
+      }
+      menu._rows=rows;
+      menu.classList.add('show');
+    }
+
+    function selectStaff(x){
+      if(!x)return;
+      input.value=x.name||'';
+      hidden.value=x.name||'';
+      menu.classList.remove('show');
+    }
+
+    input.addEventListener('focus',()=>renderMenu(input.value));
+    input.addEventListener('input',()=>{
+      hidden.value='';
+      renderMenu(input.value);
+    });
+    input.addEventListener('keydown',e=>{
+      if(e.key==='Escape') menu.classList.remove('show');
+      if(e.key==='Enter'){
+        const rows=menu._rows||[];
+        if(rows.length===1){
+          e.preventDefault();
+          selectStaff(rows[0]);
+        }
+      }
+    });
+    input.addEventListener('blur',()=>{
+      setTimeout(()=>{
+        const q=normText(input.value);
+        const exact=staff.find(x=>normText(x.name)===q);
+        if(exact){
+          hidden.value=exact.name;
+          input.value=exact.name;
+        }else if(!input.value.trim()){
+          hidden.value='';
+        }
+        menu.classList.remove('show');
+      },180);
+    });
+
+    menu.addEventListener('mousedown',e=>e.preventDefault());
+    menu.addEventListener('click',e=>{
+      const btn=e.target.closest('[data-kpi-staff]');
+      if(!btn)return;
+      const rows=menu._rows||[];
+      selectStaff(rows[Number(btn.dataset.kpiStaff)]);
+    });
+
+    // Khi đổi Bộ phận: xóa nhân viên cũ và lần gõ sau chỉ hiện NV của bộ phận đó.
+    document.getElementById('kpi-dept').addEventListener('change',()=>{
+      input.value='';
+      hidden.value='';
+      menu.classList.remove('show');
+    });
+  }
+
+  function filters(){
+    return {
+      from:document.getElementById('kpi-from').value,
+      to:document.getElementById('kpi-to').value,
+      department:document.getElementById('kpi-dept').value,
+      person:document.getElementById('kpi-person').value
+    };
+  }
+
+  async function load(){
+    KpiBridge.loading(true,'Đang tính KPI...');
+
+    try{
+      const data=await KpiBridge.server('getKpiDashboardData',filters());
+      renderDashboard(data||{});
+    }catch(e){
+      alert('Lỗi tính KPI: '+e.message);
+    }finally{
+      KpiBridge.loading(false);
+    }
+  }
+
+
+  function renderDashboard(data){
+    const rows=Array.isArray(data.rows)?data.rows:[];
+    const summary=data.summary||{};
+    const config=Array.isArray(data.rankingConfig)?data.rankingConfig:[];
+    const conclusion=Array.isArray(data.conclusion)?data.conclusion:[];
+    const feedback=data.feedback||{};
+
+    renderSummary(summary);
+    renderRankCards(config,summary.rankCounts||{});
+    renderChart(rows);
+    render(rows);
+    renderConclusion(conclusion);
+    renderFeedback(feedback);
+  }
+
+  function renderSummary(s){
+    document.getElementById('kpi-summary').innerHTML=
+      '<div class="kpi-summary-grid">'+
+        summaryCard('Số nhân viên',s.staffCount||0,'sum1')+
+        summaryCard('KPI bình quân',Number(s.averageScore||0).toFixed(1),'sum2')+
+        summaryCard('Tổng điểm giao việc',signed(s.totalTaskScore||0),'sum3')+
+        summaryCard('Tổng điểm bảng kiểm',signed(s.totalChecklistScore||0),'sum2')+
+        summaryCard('Tổng điểm vi phạm',signed(s.totalViolationScore||0),'sum4')+
+      '</div>';
+  }
+
+  function summaryCard(label,value,cls){
+    return '<div class="kpi-summary-card '+cls+'">'+
+      '<small>'+esc(label)+'</small>'+
+      '<strong>'+esc(value)+'</strong>'+
+    '</div>';
+  }
+
+  function signed(v){
+    const n=Number(v||0);
+    return n>0?'+'+n:String(n);
+  }
+
+  function renderRankCards(config,counts){
+    if(!config.length){
+      document.getElementById('kpi-ranks').innerHTML='';
+      return;
+    }
+
+    document.getElementById('kpi-ranks').innerHTML=
+      '<div class="rank-grid">'+
+        config.map(x=>
+          '<div class="rank-card" style="background:'+esc(x.color||'#6C757D')+'">'+
+            esc(x.ranking||'')+
+            '<strong>'+esc(counts[x.ranking]||0)+'</strong>'+
+          '</div>'
+        ).join('')+
+      '</div>';
+  }
+
+  function renderChart(rows){
+    const box=document.getElementById('kpi-chart');
+
+    if(!rows.length){
+      box.innerHTML='';
+      return;
+    }
+
+    const values=rows.map(x=>Number(x.total||0));
+    const max=Math.max(120,...values);
+
+    box.innerHTML=
+      '<div class="chart-box">'+
+        '<div class="chart-title">BIỂU ĐỒ ĐIỂM KPI CỦA NHÂN VIÊN</div>'+
+        rows.map(x=>{
+          const score=Number(x.total||0);
+          const width=Math.max(0,Math.min(100,score*100/max));
+
+          return '<div class="chart-row">'+
+            '<div class="chart-name">'+esc(x.name||'')+'</div>'+
+            '<div class="chart-track">'+
+              '<div class="chart-bar" style="width:'+width+'%;background:'+esc(x.rankingColor||'#6C757D')+'"></div>'+
+            '</div>'+
+            '<div class="chart-value">'+score.toFixed(1)+'</div>'+
+          '</div>';
+        }).join('')+
+      '</div>';
+  }
+
+  function renderConclusion(lines){
+    const el=document.getElementById('kpi-conclusion');
+
+    if(!lines.length){
+      el.innerHTML='';
+      return;
+    }
+
+    el.innerHTML=
+      '<div class="conclusion-box">'+
+        '<h4>📌 KẾT LUẬN KPI</h4>'+
+        '<ul>'+
+          lines.map(x=>'<li>'+esc(x)+'</li>').join('')+
+        '</ul>'+
+      '</div>';
+  }
+
+  function renderFeedback(feedback){
+    const box=document.getElementById('kpi-feedback');
+    box.style.display='block';
+
+    document.getElementById('kpi-feedback-text').value=
+      feedback.text||'';
+
+    document.getElementById('kpi-feedback-meta').textContent=
+      feedback.updatedAt
+        ? 'Đã lưu: '+feedback.updatedAt+(feedback.author?' — '+feedback.author:'')
+        : 'Chưa có góp ý đã lưu cho kỳ KPI này.';
+  }
+
+  function render(rows){
+    const body=document.getElementById('kpi-body');
+
+    if(!rows.length){
+      body.innerHTML=
+        '<tr><td colspan="9" style="text-align:center;color:#6b7280;padding:20px">Không có dữ liệu KPI.</td></tr>';
+      return;
+    }
+
+    body.innerHTML=rows.map(x=>
+      '<tr>'+
+        '<td><b>'+esc(x.name)+'</b></td>'+
+        '<td>'+esc(x.department)+'</td>'+
+        '<td style="text-align:center">'+esc(x.base)+'</td>'+
+        scoreCell(x.taskScore)+
+        scoreCell(x.checklistScore)+
+        scoreCell(x.violationScore)+
+        '<td class="score-total">'+Number(x.total||0).toFixed(1)+'</td>'+
+        '<td style="text-align:center">'+
+          '<span class="rank-pill" style="background:'+esc(x.rankingColor||'#6C757D')+'">'+
+            esc(x.ranking||'')+
+          '</span>'+
+        '</td>'+
+        '<td class="detail">'+
+          ((x.details||[]).length
+            ? x.details.map(d=>'• '+esc(d)).join('<br>')
+            : '<span style="color:#98a2b3">Không có điểm cộng/trừ chi tiết</span>')+
+        '</td>'+
+      '</tr>'
+    ).join('');
+  }
+
+  function scoreCell(v){
+    const n=Number(v||0);
+    const color=n>0?'#087443':n<0?'#b91c1c':'#667085';
+    const bg=n>0?'#ecfdf3':n<0?'#fff1f2':'#f8fafc';
+
+    return '<td style="text-align:center;font-weight:800;color:'+color+';background:'+bg+'">'+
+      (n>0?'+':'')+n+
+    '</td>';
+  }
+
+  async function save(){
+    KpiBridge.loading(true,'Đang lưu KPI...');
+
+    try{
+      const msg=await KpiBridge.server('saveKpiReport',filters());
+      alert(msg||'Đã lưu KPI.');
+    }catch(e){
+      alert('Không thể lưu KPI: '+e.message);
+    }finally{
+      KpiBridge.loading(false);
+    }
+  }
+
+  async function openConfig(){
+    KpiBridge.loading(true,'Đang tải quy đổi KPI...');
+
+    try{
+      rules=await KpiBridge.server('getKpiConversionRules');
+      renderRules();
+      document.getElementById('kpi-config-modal').style.display='flex';
+    }catch(e){
+      alert('Không tải được bảng quy đổi: '+e.message);
+    }finally{
+      KpiBridge.loading(false);
+    }
+  }
+
+  function closeConfig(){
+    document.getElementById('kpi-config-modal').style.display='none';
+  }
+
+  function renderRules(){
+    const body=document.getElementById('kpi-config-body');
+
+    if(!rules.length){
+      rules=[
+        {ranking:'XUẤT SẮC',min:110,max:999999,color:'#2563EB'},
+        {ranking:'TỐT',min:95,max:109.99,color:'#16A34A'},
+        {ranking:'KHÁ',min:80,max:94.99,color:'#0891B2'},
+        {ranking:'TRUNG BÌNH',min:65,max:79.99,color:'#F59E0B'},
+        {ranking:'CHƯA ĐẠT',min:-999999,max:64.99,color:'#DC2626'}
+      ];
+    }
+
+    body.innerHTML=rules.map((x,i)=>
+      '<tr data-rule-row>'+
+        '<td style="text-align:center;font-weight:800">'+(i+1)+'</td>'+
+        '<td><input class="rule-name" value="'+esc(x.ranking||'')+'"></td>'+
+        '<td><input class="rule-min" type="number" step="0.01" value="'+esc(x.min)+'"></td>'+
+        '<td><input class="rule-max" type="number" step="0.01" value="'+esc(x.max)+'"></td>'+
+        '<td style="text-align:center"><input class="rule-color" type="color" value="'+esc(x.color||'#6C757D')+'"></td>'+
+        '<td style="text-align:center"><button class="btn-outline" onclick="KpiApp.removeRule(this)">🗑</button></td>'+
+      '</tr>'
+    ).join('');
+  }
+
+  function collectRules(){
+    return [...document.querySelectorAll('#kpi-config-body tr[data-rule-row]')]
+      .map(tr=>({
+        ranking:tr.querySelector('.rule-name').value.trim(),
+        min:Number(tr.querySelector('.rule-min').value),
+        max:Number(tr.querySelector('.rule-max').value),
+        color:tr.querySelector('.rule-color').value
+      }));
+  }
+
+  function addRule(){
+    rules=collectRules();
+    rules.push({
+      ranking:'MỨC MỚI',
+      min:0,
+      max:0,
+      color:'#6C757D'
+    });
+    renderRules();
+  }
+
+  function removeRule(btn){
+    const tr=btn.closest('tr');
+    if(tr)tr.remove();
+  }
+
+  async function saveConfig(){
+    const payload=collectRules();
+
+    if(!payload.length){
+      return alert('Phải có ít nhất 1 mức xếp loại.');
+    }
+
+    if(!confirm(
+      'Lưu quy đổi mới?\n\nSau khi lưu, cả bảng KPI và Báo cáo tổng hợp sẽ dùng quy đổi này.'
+    )){
+      return;
+    }
+
+    KpiBridge.loading(true,'Đang lưu quy đổi KPI...');
+
+    try{
+      const r=await KpiBridge.server('saveKpiConversionRules',payload);
+
+      alert((r&&r.message)||'Đã lưu quy đổi.');
+
+      rules=(r&&r.rows)||payload;
+      renderRules();
+      closeConfig();
+
+      /*
+       * Tính lại bảng KPI đang xem theo cấu hình mới.
+       */
+      await load();
+
+    }catch(e){
+      alert('Không thể lưu quy đổi: '+e.message);
+    }finally{
+      KpiBridge.loading(false);
+    }
+  }
+
+
+  async function saveFeedback(){
+    const payload=filters();
+
+    payload.text=
+      document.getElementById('kpi-feedback-text').value.trim();
+
+    KpiBridge.loading(true,'Đang lưu góp ý KPI...');
+
+    try{
+      const r=await KpiBridge.server('saveKpiFeedback',payload);
+
+      alert((r&&r.message)||'Đã lưu góp ý.');
+
+      await load();
+
+    }catch(e){
+      alert('Không thể lưu góp ý: '+e.message);
+
+    }finally{
+      KpiBridge.loading(false);
+    }
+  }
+
+  return {
+    init,
+    load,
+    save,
+    openConfig,
+    closeConfig,
+    addRule,
+    removeRule,
+    saveConfig,
+    saveFeedback
+  };
+})();
+
+function startKpiV192(){
+  /*
+   * Chờ DOM của module KPI tồn tại.
+   * Không phụ thuộc AppUtil có được khai báo trước hay sau.
+   */
+  if(
+    document.readyState === 'loading'
+  ){
+    document.addEventListener(
+      'DOMContentLoaded',
+      () => KpiApp.init(),
+      {once:true}
+    );
+  }else{
+    KpiApp.init();
+  }
+}
+
+startKpiV192();
+</script>

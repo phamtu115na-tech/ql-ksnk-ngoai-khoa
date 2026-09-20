@@ -1,0 +1,347 @@
+<style>
+  #vp-root .vp-nav .btn.active { background: var(--blue-115); color: #fff; }
+  #vp-root .vp-view { display: none; }
+  #vp-root .vp-view.active { display: block; }
+  #vp-root .rating-badge { min-width: 115px; display: inline-block; padding: 5px 8px; border-radius: 5px; font-weight: 700; text-align: center; }
+</style>
+
+<div id="vp-root" class="content-shell">
+  <div class="vp-nav d-flex flex-wrap gap-2 mb-3 no-print">
+    <button class="btn btn-outline-primary active" data-vp-view="entry" onclick="ViPhamApp.showView('entry', this)">Ghi nhận vi phạm</button>
+    <button class="btn btn-outline-primary" data-vp-view="errors" onclick="ViPhamApp.showView('errors', this)">Danh mục lỗi</button>
+    <button class="btn btn-outline-primary" data-vp-view="summary" onclick="ViPhamApp.showView('summary', this)">Báo cáo tổng hợp</button>
+  </div>
+
+  <section id="vp-view-entry" class="vp-view active">
+    <div class="panel-card mx-auto" style="max-width:650px">
+      <h5 class="text-center text-primary fw-bold mb-4">GHI NHẬN LỖI ĐỘT XUẤT / VI PHẠM</h5>
+      <div class="mb-3"><label class="form-label small fw-bold">Ngày vi phạm (*)</label><input type="date" id="vp-date" class="form-control"></div>
+      <div class="mb-3"><label class="form-label small fw-bold">Nhân viên (*)</label><select id="vp-staff-select" placeholder="Nhập tên hoặc mã để tìm..."></select></div>
+      <div class="mb-3"><label class="form-label small fw-bold">Lỗi vi phạm (*)</label><select id="vp-error-select" placeholder="Nhập tên lỗi để tìm..."></select></div>
+      <div class="row g-2 mb-3">
+        <div class="col-6"><div class="p-2 bg-light border rounded text-center">Mức độ: <b id="vp-level">-</b></div></div>
+        <div class="col-6"><div class="p-2 bg-light border rounded text-center">Điểm trừ: <b id="vp-score" class="text-danger">0</b></div></div>
+      </div>
+      <div class="mb-3"><label class="form-label small fw-bold">Người ghi nhận (*)</label><input id="vp-recorder" class="form-control"></div>
+      <div class="mb-3"><label class="form-label small fw-bold">Ghi chú</label><textarea id="vp-note" class="form-control" rows="3"></textarea>
+      <div class="mt-2">
+        <label class="form-label small fw-bold">Hình ảnh vi phạm</label>
+        <input id="vp-image" type="file" accept="image/*" capture="environment" class="form-control">
+      </div></div>
+      <button class="btn btn-danger w-100 fw-bold py-2" onclick="ViPhamApp.saveViolation()">LƯU VI PHẠM</button>
+    </div>
+  </section>
+
+  <section id="vp-view-errors" class="vp-view">
+    <div class="panel-card">
+      <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center mb-3">
+        <h5 class="m-0 fw-bold text-primary">DANH MỤC LỖI</h5>
+        <button class="btn btn-success btn-sm" onclick="ViPhamApp.openAddError()">+ THÊM LỖI MỚI</button>
+      </div>
+      <div class="table-wrap"><table id="vp-error-table" class="table table-bordered table-striped table-app"></table></div>
+    </div>
+  </section>
+
+  <section id="vp-view-summary" class="vp-view">
+    <div class="panel-card mb-3 no-print">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-3"><label class="form-label small fw-bold">Từ ngày</label><input id="vp-from" type="date" class="form-control"></div>
+        <div class="col-md-3"><label class="form-label small fw-bold">Đến ngày</label><input id="vp-to" type="date" class="form-control"></div>
+        <div class="col-md-3"><label class="form-label small fw-bold">Bộ phận</label><select id="vp-department-filter" class="form-select" onchange="ViPhamApp.renderReport()"></select></div>
+        <div class="col-md-3"><button class="btn btn-primary w-100 fw-bold" onclick="ViPhamApp.renderReport()">LỌC DỮ LIỆU</button></div>
+      </div>
+    </div>
+
+    <div class="panel-card mb-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+        <h6 class="fw-bold m-0">PHẦN 1: DANH SÁCH VI PHẠM TRONG KỲ</h6>
+        <button class="btn btn-secondary btn-sm no-print" onclick="window.print()">IN BÁO CÁO</button>
+      </div>
+      <div class="table-wrap"><table id="vp-report-table" class="table table-bordered table-striped table-app"></table></div>
+    </div>
+
+    <div class="panel-card">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+        <h6 class="fw-bold m-0">PHẦN 2: BẢNG BÌNH XÉT NHÂN VIÊN (GỐC 100 ĐIỂM)</h6>
+        <button class="btn btn-danger btn-sm no-print" onclick="ViPhamApp.saveSummary()">LƯU VÀO tong_hop</button>
+      </div>
+      <div class="table-wrap"><table id="vp-summary-table" class="table table-bordered table-striped table-app"></table></div>
+    </div>
+  </section>
+</div>
+
+<div class="modal fade" id="vp-error-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white"><h5 class="modal-title">THÊM DANH MỤC LỖI</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div class="mb-3"><label class="form-label small fw-bold">Tên lỗi (*)</label><input id="vp-new-error-name" class="form-control"></div>
+        <div class="mb-3"><label class="form-label small fw-bold">Bộ phận (*)</label><select id="vp-new-error-department" class="form-select"></select></div>
+        <div class="mb-3"><label class="form-label small fw-bold">Mức độ</label><select id="vp-new-error-level" class="form-select"><option>Nhắc nhở</option><option>Nhẹ</option><option>Trung bình</option><option>Nặng</option></select></div>
+        <div class="mb-3"><label class="form-label small fw-bold">Điểm trừ</label><input id="vp-new-error-score" type="number" min="0" value="0" class="form-control"></div>
+        <div><label class="form-label small fw-bold">Ghi chú</label><textarea id="vp-new-error-note" class="form-control" rows="2"></textarea></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button><button class="btn btn-success fw-bold" onclick="ViPhamApp.saveNewError()">LƯU LỖI MỚI</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const ViPhamApp = (() => {
+    let data = { nhanVien: [], loaiLoi: [], viPham: [], boPhan: [] };
+    let staffSelect;
+    let errorSelect;
+    let errorModal;
+    let visibleSummary = [];
+
+    async function init() {
+      errorModal = errorModal || new bootstrap.Modal(document.getElementById('vp-error-modal'));
+      document.getElementById('vp-date').value = AppUtil.todayYmd();
+      document.getElementById('vp-from').value = AppUtil.firstDayOfMonthYmd();
+      document.getElementById('vp-to').value = AppUtil.todayYmd();
+      await load();
+    }
+
+    async function load() {
+      AppUtil.loading(true, 'Đang tải dữ liệu vi phạm...');
+      try {
+        data = await AppUtil.server('getViolationSystemData');
+        setupSelects();
+        document.getElementById('vp-recorder').value = data.currentUser || '';
+        populateDepartments();
+        renderErrorTable();
+        renderReport();
+      } catch (error) {
+        alert('Lỗi tải dữ liệu vi phạm: ' + error.message);
+      } finally {
+        AppUtil.loading(false);
+      }
+    }
+
+    function setupSelects() {
+      if (!staffSelect) {
+        staffSelect = new TomSelect('#vp-staff-select', { create: false, sortField: { field: 'text', direction: 'asc' } });
+      }
+      if (!errorSelect) {
+        errorSelect = new TomSelect('#vp-error-select', {
+          create: false,
+          sortField: { field: 'text', direction: 'asc' },
+          onChange: updateErrorInfo
+        });
+      }
+      staffSelect.clear(true); staffSelect.clearOptions();
+      errorSelect.clear(true); errorSelect.clearOptions();
+      (data.nhanVien || []).slice(1).forEach(row => {
+        const status = String(row[5] || '').toLowerCase();
+        if (row[0] && row[1] && !status.includes('nghỉ')) {
+          staffSelect.addOption({ value: row[0], text: row[0] + ' - ' + row[1] + ' (' + (row[2] || '') + ')' });
+        }
+      });
+      (data.loaiLoi || []).slice(1).forEach(row => {
+        if (row[0] && row[1] && String(row[6] || '').toLowerCase() !== 'ngừng hoạt động') {
+          errorSelect.addOption({ value: row[0], text: row[0] + ' - ' + row[1] });
+        }
+      });
+      staffSelect.refreshOptions(false);
+      errorSelect.refreshOptions(false);
+    }
+
+    function populateDepartments() {
+      const options = (data.boPhan || []).map(value => '<option value="' + AppUtil.escape(value) + '">' + AppUtil.escape(value) + '</option>').join('');
+      document.getElementById('vp-new-error-department').innerHTML = '<option value="">-- Chọn --</option>' + options;
+      document.getElementById('vp-department-filter').innerHTML = '<option value="ALL">-- Tất cả bộ phận --</option>' + options;
+    }
+
+    function showView(name, button) {
+      document.querySelectorAll('#vp-root .vp-view').forEach(view => view.classList.remove('active'));
+      document.getElementById('vp-view-' + name).classList.add('active');
+      document.querySelectorAll('#vp-root .vp-nav .btn').forEach(btn => btn.classList.remove('active'));
+      if (button) button.classList.add('active');
+      if (name === 'summary') renderReport();
+    }
+
+    function updateErrorInfo(errorId) {
+      const row = (data.loaiLoi || []).find(item => String(item[0]) === String(errorId));
+      document.getElementById('vp-level').textContent = row ? (row[3] || '-') : '-';
+      document.getElementById('vp-score').textContent = row ? (row[4] || '0') : '0';
+    }
+
+    function vpReadImage_() {
+    return new Promise((resolve,reject) => {
+      const el=document.getElementById('vp-image');
+      const f=el && el.files && el.files[0];
+      if(!f) return resolve(null);
+      if(!f.type.startsWith('image/')) return reject(new Error('Tệp đã chọn không phải hình ảnh.'));
+      const r=new FileReader();
+      r.onload=()=>resolve({fileName:f.name,mimeType:f.type,base64:String(r.result).split(',')[1]});
+      r.onerror=()=>reject(new Error('Không đọc được ảnh.'));
+      r.readAsDataURL(f);
+    });
+  }
+
+  async function saveViolation() {
+      const staffId = staffSelect.getValue();
+      const errorId = errorSelect.getValue();
+      const staff = (data.nhanVien || []).find(row => String(row[0]) === String(staffId));
+      const errorRow = (data.loaiLoi || []).find(row => String(row[0]) === String(errorId));
+      const formData = {
+        ngayViPham: document.getElementById('vp-date').value,
+        maNV: staffId,
+        tenNV: staff ? staff[1] : '',
+        boPhan: staff ? staff[2] : '',
+        maLoi: errorId,
+        tenLoi: errorRow ? errorRow[1] : '',
+        mucDo: errorRow ? errorRow[3] : '',
+        diem: errorRow ? errorRow[4] : 0,
+        nguoiGhiNhan: document.getElementById('vp-recorder').value.trim(),
+        ghiChu: document.getElementById('vp-note').value.trim(),
+        image: await vpReadImage_()
+      };
+      if (!formData.ngayViPham || !formData.maNV || !formData.maLoi || !formData.nguoiGhiNhan) {
+        return alert('Vui lòng điền đủ ngày, nhân viên, lỗi và người ghi nhận.');
+      }
+      AppUtil.loading(true, 'Đang lưu vi phạm...');
+      try {
+        alert(await AppUtil.server('saveViolation', formData));
+        staffSelect.clear(); errorSelect.clear();
+        document.getElementById('vp-note').value = '';
+        if(document.getElementById('vp-image')) document.getElementById('vp-image').value='';
+        document.getElementById('vp-date').value = AppUtil.todayYmd();
+        await load();
+      } catch (error) {
+        alert('Không thể lưu: ' + error.message);
+      } finally {
+        AppUtil.loading(false);
+      }
+    }
+
+    function renderErrorTable() {
+      const table = document.getElementById('vp-error-table');
+      const rows = data.loaiLoi || [];
+      if (!rows.length) return table.innerHTML = '<tbody><tr><td class="text-center p-4">Chưa có sheet DM_LOI.</td></tr></tbody>';
+      table.innerHTML = '<thead><tr>' + rows[0].map(value => '<th>' + AppUtil.escape(value) + '</th>').join('') + '<th>Xóa</th></tr></thead><tbody>' +
+        rows.slice(1).map(row => '<tr>' + row.map(value => '<td>' + AppUtil.escape(value) + '</td>').join('') +
+          '<td><button class="btn btn-outline-danger btn-sm" onclick="ViPhamApp.removeError(\'' + encodeURIComponent(row[0]) + '\')">Xóa</button></td></tr>').join('') + '</tbody>';
+    }
+
+    function openAddError() {
+      document.getElementById('vp-new-error-name').value = '';
+      document.getElementById('vp-new-error-department').value = '';
+      document.getElementById('vp-new-error-level').value = 'Nhắc nhở';
+      document.getElementById('vp-new-error-score').value = '0';
+      document.getElementById('vp-new-error-note').value = '';
+      errorModal.show();
+    }
+
+    async function saveNewError() {
+      const formData = {
+        tenLoi: document.getElementById('vp-new-error-name').value.trim(),
+        boPhan: document.getElementById('vp-new-error-department').value,
+        mucDo: document.getElementById('vp-new-error-level').value,
+        diem: document.getElementById('vp-new-error-score').value,
+        ghiChu: document.getElementById('vp-new-error-note').value.trim()
+      };
+      if (!formData.tenLoi || !formData.boPhan) return alert('Vui lòng nhập tên lỗi và bộ phận.');
+      AppUtil.loading(true, 'Đang thêm lỗi mới...');
+      try {
+        alert(await AppUtil.server('addViolationError', formData));
+        errorModal.hide();
+        await load();
+      } catch (error) {
+        alert('Không thể thêm lỗi: ' + error.message);
+      } finally {
+        AppUtil.loading(false);
+      }
+    }
+
+    async function removeError(encodedId) {
+      if (!confirm('Bạn chắc chắn muốn xóa lỗi này?')) return;
+      AppUtil.loading(true, 'Đang xóa lỗi...');
+      try {
+        alert(await AppUtil.server('deleteViolationError', decodeURIComponent(encodedId)));
+        await load();
+      } catch (error) {
+        alert('Không thể xóa: ' + error.message);
+      } finally {
+        AppUtil.loading(false);
+      }
+    }
+
+    function renderReport() {
+      const fromValue = document.getElementById('vp-from').value;
+      const toValue = document.getElementById('vp-to').value;
+      const department = document.getElementById('vp-department-filter').value || 'ALL';
+      if (!fromValue || !toValue) return;
+      const fromDate = AppUtil.parseDisplayDate(fromValue);
+      const toDate = AppUtil.parseDisplayDate(toValue); toDate.setHours(23, 59, 59, 999);
+      const source = data.viPham || [];
+      if (!source.length) {
+        document.getElementById('vp-report-table').innerHTML = '<tbody><tr><td class="text-center p-4">Chưa có dữ liệu vi phạm.</td></tr></tbody>';
+        document.getElementById('vp-summary-table').innerHTML = '';
+        return;
+      }
+      const filtered = source.slice(1).filter(row => {
+        const date = AppUtil.parseDisplayDate(row[1]);
+        return date && date >= fromDate && date <= toDate && (department === 'ALL' || row[4] === department);
+      });
+      renderViolationRows(source[0], filtered);
+      renderSummary(filtered, department);
+    }
+
+    function renderViolationRows(headers, rows) {
+      document.getElementById('vp-report-table').innerHTML = '<thead><tr>' + headers.map(value => '<th>' + AppUtil.escape(value) + '</th>').join('') + '<th class="no-print">Xóa</th></tr></thead><tbody>' +
+        rows.map(row => '<tr>' + row.map(value => '<td>' + AppUtil.escape(value) + '</td>').join('') +
+          '<td class="no-print"><button class="btn btn-outline-danger btn-sm" onclick="ViPhamApp.removeViolation(\'' + encodeURIComponent(row[0]) + '\')">Xóa</button></td></tr>').join('') +
+        (rows.length ? '' : '<tr><td colspan="' + (headers.length + 1) + '" class="text-center p-4">Không có vi phạm trong kỳ lọc.</td></tr>') + '</tbody>';
+    }
+
+    function renderSummary(filteredViolations, department) {
+      const scoreMap = {};
+      filteredViolations.forEach(row => scoreMap[row[2]] = (scoreMap[row[2]] || 0) + (Number(row[8]) || 0));
+      visibleSummary = (data.nhanVien || []).slice(1)
+        .filter(row => department === 'ALL' || row[2] === department)
+        .map(row => {
+          const deduction = scoreMap[row[0]] || 0;
+          const remaining = Math.max(0, 100 - deduction);
+          let rating = 'Yếu/Kém (C)', badge = 'bg-danger text-white';
+          if (remaining === 100) { rating = 'Xuất sắc (A+)'; badge = 'bg-success text-white'; }
+          else if (remaining >= 90) { rating = 'Khá (A)'; badge = 'bg-primary text-white'; }
+          else if (remaining >= 70) { rating = 'Trung bình (B)'; badge = 'bg-warning text-dark'; }
+          return { maNV: row[0], tenNV: row[1], boPhan: row[2], chucVu: row[3], tongDiemTru: deduction, diemConLai: remaining, xepLoai: rating, badge };
+        });
+      document.getElementById('vp-summary-table').innerHTML = '<thead><tr><th>Mã NV</th><th>Họ tên</th><th>Bộ phận</th><th>Chức vụ</th><th>Tổng điểm trừ</th><th>Điểm bình xét</th><th>Xếp loại</th></tr></thead><tbody>' +
+        visibleSummary.map(item => '<tr><td>' + AppUtil.escape(item.maNV) + '</td><td>' + AppUtil.escape(item.tenNV) + '</td><td>' + AppUtil.escape(item.boPhan) + '</td><td>' + AppUtil.escape(item.chucVu) + '</td><td class="text-danger fw-bold">' + item.tongDiemTru + '</td><td class="text-primary fw-bold">' + item.diemConLai + '</td><td><span class="rating-badge ' + item.badge + '">' + AppUtil.escape(item.xepLoai) + '</span></td></tr>').join('') + '</tbody>';
+    }
+
+    async function removeViolation(encodedId) {
+      if (!confirm('Bạn chắc chắn muốn xóa bản ghi vi phạm này?')) return;
+      AppUtil.loading(true, 'Đang xóa vi phạm...');
+      try {
+        alert(await AppUtil.server('deleteViolationRecord', decodeURIComponent(encodedId)));
+        await load();
+      } catch (error) {
+        alert('Không thể xóa: ' + error.message);
+      } finally {
+        AppUtil.loading(false);
+      }
+    }
+
+    async function saveSummary() {
+      if (!visibleSummary.length) return alert('Không có dữ liệu bình xét để lưu.');
+      const fromValue = document.getElementById('vp-from').value;
+      const toValue = document.getElementById('vp-to').value;
+      const period = fromValue + '_den_' + toValue;
+      if (!confirm('Lưu bảng bình xét kỳ ' + fromValue + ' đến ' + toValue + ' vào sheet tong_hop?')) return;
+      AppUtil.loading(true, 'Đang lưu bảng bình xét...');
+      try {
+        alert(await AppUtil.server('saveViolationMonthlySummary', period, visibleSummary));
+      } catch (error) {
+        alert('Không thể lưu bảng bình xét: ' + error.message);
+      } finally {
+        AppUtil.loading(false);
+      }
+    }
+
+    return { init, showView, saveViolation, openAddError, saveNewError, removeError, renderReport, removeViolation, saveSummary };
+  })();
+</script>

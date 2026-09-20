@@ -1,0 +1,25 @@
+KSNK - GIỮ NGUYÊN NỘI DUNG HIỆN TẠI + SMART MULTI
+===================================================
+Chỉ chỉnh lại 2 bộ lọc trong mục CÔNG VIỆC:
+
+1. NGƯỜI THỰC HIỆN
+- Trả về giao diện chọn thông minh kiểu cũ.
+- Có thể gõ để tìm.
+- Có thể chọn NHIỀU người cùng lúc.
+- Mục đã chọn có dấu ✓.
+- Không cần giữ Ctrl/Cmd.
+
+2. TRẠNG THÁI
+- Không dùng ô select nhiều kiểu trình duyệt nữa.
+- Dùng cùng kiểu dropdown thông minh.
+- Có thể chọn NHIỀU trạng thái cùng lúc.
+- Mục đã chọn có dấu ✓.
+- Không cần giữ Ctrl/Cmd.
+
+Các nội dung đã bổ sung trước đó (từ ngày/đến ngày tháng hiện tại, tìm tiêu đề,
+Nội dung/Mô tả, Ghi chú/Phản hồi quản lý, Báo cáo mới, ảnh vi phạm...) ĐƯỢC GIỮ NGUYÊN.
+
+Khi thay Apps Script:
+- Có thể chỉ thay GiaoViec.html nếu đang dùng đúng bộ KSNK_HOAN_THIEN_THEO_DE_XUAT.
+- Save.
+- Deploy > Manage deployments > Edit > New version > Deploy.

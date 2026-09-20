@@ -1,0 +1,13 @@
+FIX 8. KPI 100 ĐIỂM - BỘ PHẬN
+================================
+Giữ nguyên cấu trúc dropdown Bộ phận cũ.
+Luôn có:
+- VỆ SINH MÔI TRƯỜNG
+- ĐỒ VẢI
+- GIÁM SÁT
+- DỤNG CỤ
+- VI PHẠM CHUNG
+
+Dữ liệu DM_NHANVIEN chỉ bổ sung thêm, không được xóa các mục cũ.
+Nếu đang dùng bản ngay trước: chỉ thay KPI.html và 70_KPI.gs.
+Save -> Deploy New version -> Ctrl+F5.

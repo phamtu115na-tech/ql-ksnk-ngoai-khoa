@@ -1,0 +1,43 @@
+KSNK - BẢN HOÀN THIỆN THEO ĐỀ XUẤT
+====================================
+Nền: cấu trúc cũ đã khôi phục, chỉ bổ sung chức năng.
+
+BỔ SUNG:
+1. Giao việc: mặc định Từ ngày/Đến ngày = tháng hiện tại.
+2. Giao việc: chọn nhiều người, nhiều trạng thái, tìm theo tiêu đề.
+3. Bảng Giao việc: tiêu đề + Nội dung/Mô tả; đánh giá + Ghi chú/Phản hồi quản lý.
+4. Kế hoạch: thêm cột cuối 'Nội dung / Mô tả' (không dịch 15 cột cũ).
+5. Báo cáo: chọn ẩn/hiện từng mục báo cáo.
+6. Báo cáo: trạng thái có thể sửa trực tiếp ở các dòng có mã nguồn.
+7. Báo cáo: công việc sửa trực tiếp Trạng thái, Đánh giá, Ghi chú quản lý.
+8. Báo cáo: kế hoạch tuần hiển thị tiêu đề + mô tả + ghi chú quản lý.
+9. Mục kế hoạch tuần sau: hiển thị mô tả và cho sửa ghi chú/kiến nghị khi có mã nguồn.
+10. Vi phạm: thêm cột M 'Hình ảnh'; báo cáo có nút Xem ảnh.
+
+THỨ TỰ COPY:
+00_Config.gs
+10_NhanSu.gs
+20_GiaoViec.gs
+30_ViPham.gs
+40_BangKiem.gs
+50_KeHoach.gs
+60_BaoCao.gs
+70_KPI.gs
+Index.html
+NhanSu.html
+GiaoViec.html
+ViPham.html
+BangKiem.html
+KeHoach.html
+BaoCao.html
+KPI.html
+99_KiemTraHeThong.gs
+appsscript.json
+
+Sau khi Save:
+- Chạy setupSystemSheets()
+- Chạy setupKeHoachSystem()
+- Mở mục Lỗi đột xuất một lần để tự thêm cột Hình ảnh.
+- Cấp quyền Sheets + Drive nếu Google hỏi.
+- Chạy KSNK_TEST_GIAO_VIEC()
+- Deploy > Manage deployments > Edit > New version.

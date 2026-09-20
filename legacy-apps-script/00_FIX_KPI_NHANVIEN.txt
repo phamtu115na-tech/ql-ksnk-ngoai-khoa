@@ -1,0 +1,21 @@
+FIX NHÂN VIÊN - 8. KPI 100 ĐIỂM
+================================
+Nguyên nhân giao diện cũ: ô Nhân viên chỉ kiểm tra khi người dùng gõ ĐÚNG TOÀN BỘ tên.
+Nó không render danh sách nhân viên để tìm/chọn.
+
+Đã sửa:
+- Click ô Nhân viên: hiện danh sách từ DM_NHANVIEN.
+- Gõ một phần tên: lọc ngay.
+- Tìm không dấu cũng được.
+- Hiện Bộ phận + Chức vụ dưới tên.
+- Chọn Bộ phận trước: danh sách Nhân viên chỉ còn nhân viên thuộc Bộ phận đó.
+- Chọn tên bằng click; không cần gõ đúng toàn bộ.
+- Không thay cấu trúc sheet DM_NHANVIEN.
+
+Nếu danh sách vẫn rỗng:
+chạy KSNK_TEST_NHANVIEN_KPI() trong Apps Script.
+Nếu count = 0 thì nguồn DM_NHANVIEN/trạng thái nhân viên cần kiểm tra.
+
+Nếu đang dùng bản ngay trước:
+chỉ thay KPI.html và 70_KPI.gs.
+Save -> Deploy New version -> Ctrl+F5.

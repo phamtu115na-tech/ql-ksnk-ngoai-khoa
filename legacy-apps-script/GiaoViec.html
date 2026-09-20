@@ -1,0 +1,1380 @@
+<!-- GIAO VIỆC + NHẮC VIỆC/GHI CHÚ - BẢN HOÀN CHỈNH -->
+<style>
+  .gv-filter { background:#fff; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,.07); padding:18px; }
+  .gv-table tbody tr { cursor:pointer; }
+  .gv-table tbody tr:hover { background:#eaf1ff; }
+  .gv-badge { display:inline-block; padding:5px 8px; border-radius:5px; font-weight:700; font-size:11px; white-space:nowrap; }
+  .gv-image-box { min-height:190px; border:2px dashed #cbd3df; border-radius:8px; background:#f8f9fa; display:flex; align-items:center; justify-content:center; text-align:center; padding:10px; }
+  .gv-image-box img { max-width:100%; max-height:340px; object-fit:contain; border-radius:6px; }
+  .gv-detail-label { color:var(--blue-115); font-weight:700; }
+  .gv-smart-staff { position:relative; }
+  .gv-smart-staff-input { padding-right:44px; }
+  .gv-smart-staff-toggle { position:absolute; top:1px; right:1px; width:42px; height:calc(100% - 2px); border:0; border-left:1px solid #dee2e6; border-radius:0 .375rem .375rem 0; background:#fff; color:#495057; font-size:20px; line-height:1; }
+  .gv-smart-staff-toggle:hover { background:#f1f4f8; }
+  .gv-smart-staff-menu { display:none; position:absolute; z-index:1080; top:calc(100% + 4px); left:0; right:0; max-height:240px; overflow-y:auto; padding:5px; background:#fff; border:1px solid #cbd3df; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.18); }
+  .gv-smart-staff-menu.show { display:block; }
+  .gv-smart-staff-option { display:block; width:100%; padding:10px 12px; border:0; border-radius:6px; background:#fff; color:#202b3c; text-align:left; font-weight:600; }
+  .gv-smart-staff-option:hover,
+  .gv-smart-staff-option.active { background:#e8f1ff; color:#1246a0; }
+  .gv-smart-staff-option.selected { background:#e8f1ff; color:#1246a0; font-weight:700; }
+  .gv-smart-staff-option.selected::after { content:'✓'; float:right; font-weight:900; }
+
+  .gv-smart-staff-empty { padding:12px; color:#6c757d; text-align:center; }
+  .gv-performance-card { background:#fff; border-top:4px solid var(--red-115); border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,.07); padding:22px; }
+  .gv-performance-title { color:var(--blue-115); font-weight:700; font-size:18px; text-transform:uppercase; }
+  .gv-matrix-table { min-width:1150px; margin-bottom:0; }
+  .gv-matrix-table thead { background:#1a3a8f; color:#fff; text-align:center; font-size:12px; }
+  .gv-matrix-table th { vertical-align:middle; padding:9px 5px; }
+  .gv-matrix-table td { text-align:center; vertical-align:middle; font-size:13px; font-weight:500; padding:10px 8px; }
+  .gv-matrix-table .gv-score-cell { color:#0d6efd; font-size:15px; font-weight:700; }
+  .gv-matrix-table tbody tr:nth-child(even) td:not(.table-success):not(.table-warning) { background:#f2f2f2; }
+  .gv-reminder-shortcut { background:#9c1c2b; border-color:#9c1c2b; color:#fff; }
+  .gv-reminder-shortcut:hover { background:#7f1421; border-color:#7f1421; color:#fff; }
+  .gv-reminder-filter { background:#f7f9fc; border:1px solid #dce3ed; border-radius:10px; padding:14px; }
+  .gv-reminder-summary { display:grid; grid-template-columns:repeat(4,minmax(120px,1fr)); gap:12px; }
+  .gv-reminder-stat { border:1px solid #dfe5ed; border-left:5px solid #9c1c2b; border-radius:8px; background:#fff; padding:12px 14px; }
+  .gv-reminder-stat strong { display:block; color:#163b7a; font-size:24px; line-height:1.1; }
+  .gv-reminder-stat span { color:#697586; font-size:12px; font-weight:700; text-transform:uppercase; }
+  .gv-reminder-form { display:none; border:1px solid #f0c5ca; border-left:5px solid #9c1c2b; border-radius:9px; background:#fff9fa; padding:16px; }
+  .gv-reminder-form.show { display:block; }
+  .gv-reminder-table { min-width:920px; }
+  .gv-reminder-table thead { background:#1a3a8f; color:#fff; }
+  .gv-reminder-table tbody tr { cursor:pointer; }
+  .gv-reminder-table tbody tr:hover { background:#fff3f4; }
+  @media (max-width:768px) {
+    .gv-performance-card { padding:14px; }
+    .gv-performance-header { align-items:stretch !important; flex-direction:column; gap:12px; }
+    .gv-reminder-summary { grid-template-columns:repeat(2,minmax(120px,1fr)); }
+    #gv-export-performance { width:100%; }
+  }
+</style>
+
+<div id="gv-root" class="content-shell">
+  <div class="gv-filter mb-3">
+    <div class="row g-3 align-items-end">
+      <div class="col-lg-2 col-md-4"><label class="form-label small fw-bold">Từ ngày</label><input id="gv-filter-start" type="date" class="form-control" onchange="GiaoViecApp.drawPerformance()"></div>
+      <div class="col-lg-2 col-md-4"><label class="form-label small fw-bold">Đến ngày</label><input id="gv-filter-end" type="date" class="form-control" onchange="GiaoViecApp.drawPerformance()"></div>
+      <div class="col-lg-2 col-md-4">
+        <label class="form-label small fw-bold" for="gv-filter-assignee-input">Người thực hiện</label>
+        <div class="gv-smart-staff">
+          <input id="gv-filter-assignee-input" class="form-control gv-smart-staff-input" type="text" autocomplete="off" placeholder="Gõ tên để lọc" aria-autocomplete="list" aria-controls="gv-filter-assignee-menu" aria-expanded="false">
+          <input id="gv-filter-assignee" type="hidden">
+          <button id="gv-filter-assignee-toggle" class="gv-smart-staff-toggle" type="button" aria-label="Mở danh sách nhân viên">⌄</button>
+          <div id="gv-filter-assignee-menu" class="gv-smart-staff-menu" role="listbox"></div>
+        </div>
+      </div>
+</div>
+      <div class="col-lg-3 col-md-6">
+        <label class="form-label small fw-bold">Tìm theo tiêu đề công việc</label>
+        <input id="gv-filter-title" class="form-control" placeholder="Nhập tên tiêu đề..." oninput="GiaoViecApp.applyFilters()">
+      </div>
+      <div class="col-lg-2 col-md-4"><label class="form-label small fw-bold">Mức ưu tiên</label><select id="gv-filter-priority" class="form-select"></select></div>
+      <div class="col-lg-2 col-md-4">
+        <label class="form-label small fw-bold" for="gv-filter-status-input">Trạng thái</label>
+        <div class="gv-smart-staff">
+          <input id="gv-filter-status-input" class="form-control gv-smart-staff-input" type="text" autocomplete="off"
+                 placeholder="Gõ/chọn nhiều trạng thái" aria-autocomplete="list"
+                 aria-controls="gv-filter-status-menu" aria-expanded="false">
+          <input id="gv-filter-status" type="hidden">
+          <button id="gv-filter-status-toggle" class="gv-smart-staff-toggle" type="button" aria-label="Mở danh sách trạng thái">⌄</button>
+          <div id="gv-filter-status-menu" class="gv-smart-staff-menu" role="listbox"></div>
+        </div>
+      </div>
+      <div class="col-lg-2 col-md-4"><button class="btn btn-primary w-100 fw-bold" onclick="GiaoViecApp.applyFilters()">TÌM KIẾM</button></div>
+    </div>
+    <div class="d-flex flex-wrap justify-content-between gap-2 mt-3">
+      <button class="btn btn-info text-white fw-bold" onclick="GiaoViecApp.openAppSheet()">MỞ APPSHEET</button>
+      <button class="btn btn-success fw-bold" onclick="GiaoViecApp.openCreate()">+ TẠO CÔNG VIỆC MỚI</button>
+      <button class="btn gv-reminder-shortcut fw-bold" onclick="GiaoViecApp.openReminder()">📌 NHẮC VIỆC - GHI CHÚ
+      </button>
+      <button class="btn btn-outline-secondary" onclick="GiaoViecApp.resetFilters()">XÓA BỘ LỌC</button>
+    </div>
+  </div>
+
+  <div class="panel-card mb-3">
+    <div class="table-wrap">
+      <table class="table table-bordered table-striped table-app gv-table">
+        <thead><tr><th>Người thực hiện</th><th>Mức ưu tiên</th><th>Tiêu đề công việc</th><th>Ngày bắt đầu</th><th>Ngày kết thúc</th><th>Trạng thái NV</th><th>Đánh giá quản lý</th></tr></thead>
+        <tbody id="gv-table-body"><tr><td colspan="7" class="text-center p-4">Đang tải dữ liệu...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="gv-performance-card">
+    <div class="gv-performance-header d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <div class="gv-performance-title">📊 BẢNG TỔNG HỢP HIỆU SUẤT NHÂN SỰ TOÀN PHÒNG (MỐC 100 ĐIỂM)</div>
+        <div id="gv-performance-period" class="small text-muted mt-1">Kỳ đánh giá: Đầu kỳ ➔ Hiện tại</div>
+      </div>
+      <button id="gv-export-performance" type="button" class="btn btn-danger fw-bold shadow-sm" onclick="GiaoViecApp.exportPerformance()">
+        💾 LƯU &amp; XUẤT TẤT CẢ SANG BANG_KE_QUA_GIAO_VIEC
+      </button>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table table-bordered table-hover align-middle gv-matrix-table">
+        <thead>
+          <tr>
+            <th rowspan="2" class="text-start ps-3" style="min-width:150px">STT / Nhân viên</th>
+            <th colspan="3" class="bg-primary text-white">1. Tổng hợp công việc</th>
+            <th colspan="5" class="bg-secondary text-white">2. Ma trận Đánh giá Quản lý (Cột L)</th>
+            <th rowspan="2" class="bg-dark text-white" style="min-width:100px">Tổng điểm KPI</th>
+            <th rowspan="2" class="bg-dark text-white" style="min-width:110px">Xếp loại</th>
+          </tr>
+          <tr>
+            <th style="width:80px">Tổng CV</th>
+            <th class="table-success" style="width:90px">Hoàn thành</th>
+            <th class="table-warning" style="width:100px">Quá hạn / Chưa làm</th>
+            <th style="width:85px">Xuất sắc<br><small>(+10)</small></th>
+            <th style="width:85px">Tốt<br><small>(+5)</small></th>
+            <th style="width:85px">Khá<br><small>(0)</small></th>
+            <th style="width:85px">Chưa đạt<br><small>(-5)</small></th>
+            <th style="width:85px">Kém<br><small>(-10)</small></th>
+          </tr>
+        </thead>
+        <tbody id="gv-performance-body">
+          <tr><td colspan="11" class="text-center text-muted p-4">Đang tính toán dữ liệu ma trận hiệu suất...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="gv-create-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white"><h5 class="modal-title">GIAO VIỆC MỚI</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div class="mb-3"><label class="form-label fw-bold small">Tiêu đề công việc (*)</label><input id="gv-create-title" class="form-control"></div>
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold small" for="gv-create-assignee-input">Người thực hiện (*)</label>
+            <div class="gv-smart-staff">
+              <input id="gv-create-assignee-input" class="form-control gv-smart-staff-input" type="text" autocomplete="off" placeholder="Gõ tên nhân viên, ví dụ: Tú" aria-autocomplete="list" aria-controls="gv-create-assignee-menu" aria-expanded="false">
+              <input id="gv-create-assignee" type="hidden">
+              <button id="gv-create-assignee-toggle" class="gv-smart-staff-toggle" type="button" aria-label="Mở danh sách nhân viên">⌄</button>
+              <div id="gv-create-assignee-menu" class="gv-smart-staff-menu" role="listbox"></div>
+            </div>
+            <div class="form-text">Có thể gõ tên có dấu hoặc không dấu, sau đó chọn trong danh sách.</div>
+          </div>
+          <div class="col-md-6"><label class="form-label fw-bold small">Mức ưu tiên</label><select id="gv-create-priority" class="form-select"><option>CHẬM</option><option selected>TRUNG BÌNH</option><option>NHANH</option><option>HOÀN THÀNH</option><option>TRONG TUẦN</option></select></div>
+        </div>
+        <div class="mb-3"><label class="form-label fw-bold small">Nội dung / Mô tả</label><textarea id="gv-create-description" class="form-control" rows="3"></textarea></div>
+        <div class="row g-3 mb-3">
+          <div class="col-md-6"><label class="form-label fw-bold small">Ngày bắt đầu</label><input id="gv-create-start" type="date" class="form-control"></div>
+          <div class="col-md-6"><label class="form-label fw-bold small">Ngày kết thúc</label><input id="gv-create-end" type="date" class="form-control"></div>
+        </div>
+        <div class="row g-3 mb-3">
+          <div class="col-md-6"><label class="form-label fw-bold small">Trạng thái NV</label><select id="gv-create-status" class="form-select"><option>CHƯA BẮT ĐẦU</option><option>ĐANG LÀM</option><option>ĐÃ HOÀN THÀNH</option></select></div>
+          <div class="col-md-6"><label class="form-label fw-bold small">Đánh giá quản lý</label><select id="gv-create-eval" class="form-select"><option>CHƯA BẮT ĐẦU</option><option>XUẤT SẮC</option><option>TỐT</option><option>KHÁ</option><option>CHƯA ĐẠT_LÀM LẠI</option><option>KÉM</option></select></div>
+        </div>
+        <div><label class="form-label fw-bold small">Ghi chú quản lý</label><textarea id="gv-create-ql-note" class="form-control" rows="2"></textarea></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button><button id="gv-create-save" class="btn btn-success fw-bold" onclick="GiaoViecApp.createTask()">LƯU & GIAO VIỆC</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="gv-edit-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white"><h5 id="gv-edit-modal-title" class="modal-title">CHI TIẾT CÔNG VIỆC</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div class="mb-3"><label class="form-label gv-detail-label">Tiêu đề (*)</label><input id="gv-edit-title" class="form-control"></div>
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label gv-detail-label" for="gv-edit-assignee-input">Người thực hiện (*)</label>
+            <div class="gv-smart-staff">
+              <input id="gv-edit-assignee-input" class="form-control gv-smart-staff-input" type="text" autocomplete="off" placeholder="Gõ tên nhân viên" aria-autocomplete="list" aria-controls="gv-edit-assignee-menu" aria-expanded="false">
+              <input id="gv-edit-assignee" type="hidden">
+              <button id="gv-edit-assignee-toggle" class="gv-smart-staff-toggle" type="button" aria-label="Mở danh sách nhân viên">⌄</button>
+              <div id="gv-edit-assignee-menu" class="gv-smart-staff-menu" role="listbox"></div>
+            </div>
+            <div class="form-text">Gõ tên có dấu hoặc không dấu, sau đó chọn trong danh sách.</div>
+          </div>
+          <div class="col-md-6"><label class="form-label gv-detail-label">Mức ưu tiên</label><select id="gv-edit-priority" class="form-select"><option>CHẬM</option><option>TRUNG BÌNH</option><option>NHANH</option><option>HOÀN THÀNH</option><option>TRONG TUẦN</option></select></div>
+        </div>
+        <div class="mb-3"><label class="form-label gv-detail-label">Nội dung / Mô tả</label><textarea id="gv-edit-description" class="form-control" rows="3"></textarea></div>
+        <div class="row g-3 mb-3">
+          <div class="col-md-6"><label class="form-label gv-detail-label">Ngày bắt đầu</label><input id="gv-edit-start" type="date" class="form-control"></div>
+          <div class="col-md-6"><label class="form-label gv-detail-label">Ngày kết thúc</label><input id="gv-edit-end" type="date" class="form-control"></div>
+        </div>
+        <div class="row g-3 mb-3">
+          <div class="col-md-6"><label class="form-label gv-detail-label">Trạng thái NV</label><select id="gv-edit-status" class="form-select"><option>CHƯA BẮT ĐẦU</option><option>ĐANG LÀM</option><option>ĐÃ HOÀN THÀNH</option><option>QUÁ HẠN</option></select></div>
+          <div class="col-md-6"><label class="form-label gv-detail-label text-danger">Đánh giá quản lý</label><select id="gv-edit-eval" class="form-select border-danger"><option>CHƯA BẮT ĐẦU</option><option>XUẤT SẮC</option><option>TỐT</option><option>KHÁ</option><option>CHƯA ĐẠT_LÀM LẠI</option><option>KÉM</option><option>QUÁ HẠN</option></select></div>
+        </div>
+        <div class="mb-3"><label class="form-label gv-detail-label">Ghi chú / Phản hồi NV</label><textarea id="gv-edit-note" class="form-control" rows="2"></textarea></div>
+        <div class="mb-3"><label class="form-label gv-detail-label text-danger">Ghi chú / Phản hồi quản lý</label><textarea id="gv-edit-ql-note" class="form-control border-danger" rows="2"></textarea></div>
+        <div class="mb-2 fw-bold text-secondary">HÌNH ẢNH MINH CHỨNG</div>
+        <div class="d-flex flex-wrap gap-2 mb-2">
+          <input id="gv-file-input" class="d-none" type="file" accept="image/*" onchange="GiaoViecApp.selectImage(event)">
+          <input id="gv-camera-input" class="d-none" type="file" accept="image/*" capture="environment" onchange="GiaoViecApp.selectImage(event)">
+          <button class="btn btn-outline-primary btn-sm" onclick="document.getElementById('gv-file-input').click()">Tải ảnh lên</button>
+          <button class="btn btn-outline-success btn-sm" onclick="document.getElementById('gv-camera-input').click()">Chụp ảnh</button>
+          <span id="gv-image-status" class="small text-muted align-self-center"></span>
+        </div>
+        <div id="gv-image-box" class="gv-image-box">Chưa có hình ảnh.</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger me-auto" onclick="GiaoViecApp.removeCurrent()">Xóa công việc</button>
+        <button id="gv-edit-save" class="btn btn-primary" onclick="GiaoViecApp.saveCurrent()">Cập nhật thay đổi</button>
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="gv-reminder-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header text-white" style="background:#9c1c2b">
+        <div>
+          <h5 class="modal-title fw-bold">📌 NHẮC VIỆC - GHI CHÚ</h5>
+          <div class="small opacity-75">Ghi nhớ và theo dõi công việc; không tham gia đánh giá KPI.</div>
+        </div>
+        <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="gv-reminder-filter mb-3">
+          <div class="row g-3 align-items-end">
+            <div class="col-lg-2 col-md-4">
+              <label class="form-label small fw-bold">Từ ngày nhắc</label>
+              <input id="gv-reminder-filter-start" type="date" class="form-control" onchange="GiaoViecApp.renderReminders()">
+            </div>
+            <div class="col-lg-2 col-md-4">
+              <label class="form-label small fw-bold">Đến ngày nhắc</label>
+              <input id="gv-reminder-filter-end" type="date" class="form-control" onchange="GiaoViecApp.renderReminders()">
+            </div>
+            <div class="col-lg-3 col-md-4">
+              <label class="form-label small fw-bold" for="gv-reminder-filter-person-input">Người liên quan</label>
+              <div class="gv-smart-staff">
+                <input id="gv-reminder-filter-person-input" class="form-control gv-smart-staff-input" type="text" autocomplete="off" placeholder="Gõ tên để lọc" aria-autocomplete="list" aria-controls="gv-reminder-filter-person-menu" aria-expanded="false">
+                <input id="gv-reminder-filter-person" type="hidden">
+                <button id="gv-reminder-filter-person-toggle" class="gv-smart-staff-toggle" type="button" aria-label="Mở danh sách người liên quan">⌄</button>
+                <div id="gv-reminder-filter-person-menu" class="gv-smart-staff-menu" role="listbox"></div>
+              </div>
+            </div>
+            <div class="col-lg-2 col-md-4">
+              <label class="form-label small fw-bold">Trạng thái</label>
+              <select id="gv-reminder-filter-status" class="form-select" onchange="GiaoViecApp.renderReminders()"></select>
+            </div>
+            <div class="col-lg-3 col-md-8">
+              <label class="form-label small fw-bold">Tìm nội dung</label>
+              <input id="gv-reminder-filter-search" class="form-control" placeholder="Tiêu đề hoặc ghi chú..." oninput="GiaoViecApp.renderReminders()">
+            </div>
+          </div>
+          <div class="d-flex flex-wrap justify-content-between gap-2 mt-3">
+            <button class="btn btn-danger fw-bold" onclick="GiaoViecApp.openReminderForm()">+ TẠO NHẮC VIỆC</button>
+            <button class="btn btn-outline-secondary" onclick="GiaoViecApp.resetReminderFilters()">XÓA BỘ LỌC</button>
+          </div>
+        </div>
+
+        <div class="gv-reminder-summary mb-3">
+          <div class="gv-reminder-stat"><strong id="gv-reminder-total">0</strong><span>Tổng nhắc việc</span></div>
+          <div class="gv-reminder-stat"><strong id="gv-reminder-pending">0</strong><span>Chưa thực hiện</span></div>
+          <div class="gv-reminder-stat"><strong id="gv-reminder-doing">0</strong><span>Đang thực hiện</span></div>
+          <div class="gv-reminder-stat"><strong id="gv-reminder-done">0</strong><span>Đã xong</span></div>
+        </div>
+
+        <div id="gv-reminder-form" class="gv-reminder-form mb-3">
+          <input id="gv-reminder-row-id" type="hidden">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 id="gv-reminder-form-title" class="m-0 fw-bold text-danger">TẠO NHẮC VIỆC MỚI</h6>
+            <button type="button" class="btn-close" aria-label="Đóng biểu mẫu" onclick="GiaoViecApp.cancelReminderForm()"></button>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label small fw-bold">Ngày nhắc (*)</label>
+              <input id="gv-reminder-date" type="date" class="form-control">
+            </div>
+            <div class="col-md-5">
+              <label class="form-label small fw-bold">Tiêu đề nhắc việc (*)</label>
+              <input id="gv-reminder-title" class="form-control" maxlength="300" placeholder="Nội dung cần ghi nhớ">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold">Trạng thái</label>
+              <select id="gv-reminder-status" class="form-select">
+                <option>CHƯA THỰC HIỆN</option>
+                <option>ĐANG THỰC HIỆN</option>
+                <option>ĐÃ XONG</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold" for="gv-reminder-person-input">Người liên quan</label>
+              <div class="gv-smart-staff">
+                <input id="gv-reminder-person-input" class="form-control gv-smart-staff-input" type="text" autocomplete="off" placeholder="Gõ tên để chọn" aria-autocomplete="list" aria-controls="gv-reminder-person-menu" aria-expanded="false">
+                <input id="gv-reminder-person" type="hidden">
+                <button id="gv-reminder-person-toggle" class="gv-smart-staff-toggle" type="button" aria-label="Mở danh sách người liên quan">⌄</button>
+                <div id="gv-reminder-person-menu" class="gv-smart-staff-menu" role="listbox"></div>
+              </div>
+              <div class="form-text">Không bắt buộc. Gõ có dấu/không dấu rồi chọn tên.</div>
+            </div>
+            <div class="col-md-8">
+              <label class="form-label small fw-bold">Nội dung / Ghi chú</label>
+              <textarea id="gv-reminder-note" class="form-control" rows="3" placeholder="Ghi rõ việc cần theo dõi, mốc nhắc hoặc thông tin liên quan..."></textarea>
+            </div>
+          </div>
+          <div class="d-flex flex-wrap justify-content-between gap-2 mt-3">
+            <button id="gv-reminder-delete" class="btn btn-outline-danger d-none" onclick="GiaoViecApp.removeReminder()">XÓA NHẮC VIỆC</button>
+            <div class="d-flex gap-2 ms-auto">
+              <button class="btn btn-secondary" onclick="GiaoViecApp.cancelReminderForm()">HỦY</button>
+              <button id="gv-reminder-save" class="btn btn-danger fw-bold" onclick="GiaoViecApp.saveReminder()">LƯU NHẮC VIỆC</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive border rounded">
+          <table class="table table-bordered align-middle mb-0 gv-reminder-table">
+            <thead>
+              <tr>
+                <th style="width:115px">Ngày nhắc</th>
+                <th style="min-width:220px">Tiêu đề nhắc việc</th>
+                <th style="min-width:300px">Nội dung / Ghi chú</th>
+                <th style="min-width:160px">Người liên quan</th>
+                <th style="width:155px">Trạng thái</th>
+                <th style="width:145px">Cập nhật lúc</th>
+              </tr>
+            </thead>
+            <tbody id="gv-reminder-body">
+              <tr><td colspan="6" class="text-center text-muted p-4">Nhấn mục Nhắc việc để tải dữ liệu.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <span id="gv-reminder-sheet-name" class="small text-muted me-auto"></span>
+        <button class="btn btn-secondary" data-bs-dismiss="modal">ĐÓNG</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const GiaoViecApp = (() => {
+    let tasks = [];
+    let staffs = [];
+    let appSheetUrl = '';
+    let createModal;
+    let editModal;
+    let currentTask = null;
+    let pendingImage = null;
+    let performanceResults = [];
+    let filterAssigneePicker = null;
+    let filterStatusPicker = null;
+    let createAssigneePicker = null;
+    let editAssigneePicker = null;
+    let reminders = [];
+    let reminderModal = null;
+    let currentReminder = null;
+    let reminderFilterPersonPicker = null;
+    let reminderPersonPicker = null;
+
+    async function init() {
+      createModal = createModal || new bootstrap.Modal(document.getElementById('gv-create-modal'));
+      editModal = editModal || new bootstrap.Modal(document.getElementById('gv-edit-modal'));
+      reminderModal = reminderModal || new bootstrap.Modal(document.getElementById('gv-reminder-modal'));
+      bindStaffPickers();
+      await load();
+    }
+
+    async function load() {
+      AppUtil.loading(true, 'Đang tải danh sách công việc...');
+      try {
+        const response = await AppUtil.server('getTaskInitialData');
+        if (response.error) throw new Error(response.error);
+        tasks = response.data || [];
+        staffs = response.staffs || [];
+        appSheetUrl = response.appSheetUrl || '';
+        populateStaffSelects();
+        populateFilters(response.filters || {});
+        setCurrentMonthFilter();
+        renderTable(filteredTasks());
+        drawPerformance();
+      } catch (error) {
+        alert('Lỗi tải dữ liệu giao việc: ' + error.message);
+      } finally {
+        AppUtil.loading(false);
+      }
+    }
+
+    function optionList(values, firstLabel) {
+      return '<option value="">' + AppUtil.escape(firstLabel) + '</option>' +
+        (values || []).map(value => '<option value="' + AppUtil.escape(value) + '">' + AppUtil.escape(value) + '</option>').join('');
+    }
+
+    function populateStaffSelects() {
+      createAssigneePicker.setItems(staffs);
+      editAssigneePicker.setItems(staffs);
+      reminderPersonPicker.setItems(staffs);
+      reminderFilterPersonPicker.setItems(staffs);
+
+      const selectedValue = createAssigneePicker.getValue();
+      if (selectedValue && !hasStaffName(staffs, selectedValue)) {
+        createAssigneePicker.clear();
+      }
+    }
+
+    function normalizeStaffSearch(value) {
+      return String(value || '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd');
+    }
+
+    function staffMatchScore(name, query) {
+      const normalizedName = normalizeStaffSearch(name);
+      if (!query) return 4;
+      if (normalizedName === query) return 0;
+      if (normalizedName.startsWith(query)) return 1;
+      if (normalizedName.split(/\s+/).some(part => part.startsWith(query))) return 2;
+      if (normalizedName.includes(query)) return 3;
+      return 99;
+    }
+
+    function hasStaffName(list, value) {
+      const key = normalizeStaffSearch(value);
+      return (list || []).some(name => normalizeStaffSearch(name) === key);
+    }
+
+    function bindSmartStaffPicker(config) {
+      const input = document.getElementById(config.inputId);
+      const hidden = document.getElementById(config.hiddenId);
+      const menu = document.getElementById(config.menuId);
+      const toggle = document.getElementById(config.toggleId);
+      let items = [];
+      let matches = [];
+      let activeIndex = -1;
+
+      function uniqueSorted(values) {
+        const seen = {};
+        return (values || [])
+          .map(value => String(value || '').trim())
+          .filter(value => {
+            if (!value) return false;
+            const key = normalizeStaffSearch(value);
+            if (seen[key]) return false;
+            seen[key] = true;
+            return true;
+          })
+          .sort((a, b) => a.localeCompare(b, 'vi'));
+      }
+
+      function findMatches(queryText) {
+        const query = normalizeStaffSearch(queryText);
+        return items
+          .map(name => ({name: name, score: staffMatchScore(name, query)}))
+          .filter(item => item.score < 99)
+          .sort((a, b) => a.score - b.score || a.name.localeCompare(b.name, 'vi'))
+          .slice(0, 20)
+          .map(item => item.name);
+      }
+
+      function updateActiveOption() {
+        const options = menu.querySelectorAll('.gv-smart-staff-option');
+        options.forEach((option, index) => {
+          option.classList.toggle('active', index === activeIndex);
+          option.setAttribute('aria-selected', index === activeIndex ? 'true' : 'false');
+        });
+        if (options[activeIndex]) {
+          options[activeIndex].scrollIntoView({block:'nearest'});
+        }
+      }
+
+      function hide() {
+        menu.classList.remove('show');
+        input.setAttribute('aria-expanded', 'false');
+      }
+
+      function select(name, silent) {
+        const selected = String(name || '').trim();
+        hidden.value = selected;
+        input.value = selected;
+        hide();
+        if (!silent && typeof config.onSelect === 'function') {
+          config.onSelect(selected);
+        }
+      }
+
+      function render() {
+        matches = findMatches(input.value);
+        activeIndex = matches.length ? 0 : -1;
+
+        if (!matches.length) {
+          menu.innerHTML = '<div class="gv-smart-staff-empty">Không tìm thấy nhân viên phù hợp.</div>';
+        } else {
+          menu.innerHTML = matches.map((name, index) =>
+            '<button type="button" class="gv-smart-staff-option' +
+              (index === activeIndex ? ' active' : '') +
+              '" data-staff-index="' + index + '" role="option" aria-selected="' +
+              (index === activeIndex ? 'true' : 'false') + '">' +
+              AppUtil.escape(name) +
+            '</button>'
+          ).join('');
+        }
+
+        menu.classList.add('show');
+        input.setAttribute('aria-expanded', 'true');
+      }
+
+      input.addEventListener('input', function() {
+        hidden.value = '';
+        render();
+      });
+      input.addEventListener('focus', render);
+      input.addEventListener('blur', function() {
+        window.setTimeout(function() {
+          if (!hidden.value) {
+            const exact = items.find(name =>
+              normalizeStaffSearch(name) === normalizeStaffSearch(input.value)
+            );
+            if (exact) select(exact, true);
+          }
+          hide();
+        }, 150);
+      });
+      input.addEventListener('keydown', function(event) {
+        if (event.key === 'ArrowDown') {
+          event.preventDefault();
+          if (!menu.classList.contains('show')) render();
+          else if (matches.length) {
+            activeIndex = (activeIndex + 1) % matches.length;
+            updateActiveOption();
+          }
+        } else if (event.key === 'ArrowUp') {
+          event.preventDefault();
+          if (!menu.classList.contains('show')) render();
+          else if (matches.length) {
+            activeIndex = (activeIndex - 1 + matches.length) % matches.length;
+            updateActiveOption();
+          }
+        } else if (event.key === 'Enter') {
+          event.preventDefault();
+          if (!menu.classList.contains('show')) render();
+          else if (activeIndex >= 0 && matches[activeIndex]) {
+            select(matches[activeIndex]);
+          }
+        } else if (event.key === 'Escape') {
+          hide();
+        }
+      });
+
+      toggle.addEventListener('click', function() {
+        if (menu.classList.contains('show')) hide();
+        else {
+          input.focus();
+          render();
+        }
+      });
+      menu.addEventListener('mousedown', event => event.preventDefault());
+      menu.addEventListener('click', function(event) {
+        const option = event.target.closest('[data-staff-index]');
+        if (!option) return;
+        const index = Number(option.dataset.staffIndex);
+        if (matches[index]) select(matches[index]);
+      });
+
+      return {
+        setItems(values) {
+          items = uniqueSorted(values);
+          const selected = hidden.value;
+          if (selected && !hasStaffName(items, selected)) {
+            hidden.value = '';
+            input.value = '';
+          }
+        },
+        setValue(value, preserveUnknown) {
+          const text = String(value || '').trim();
+          if (!text) {
+            hidden.value = '';
+            input.value = '';
+            hide();
+            return;
+          }
+          const canonical = items.find(name =>
+            normalizeStaffSearch(name) === normalizeStaffSearch(text)
+          );
+          if (canonical) select(canonical, true);
+          else if (preserveUnknown) {
+            items = uniqueSorted(items.concat([text]));
+            select(text, true);
+          } else {
+            hidden.value = '';
+            input.value = '';
+          }
+        },
+        getValue() {
+          return String(hidden.value || '').trim();
+        },
+        clear() {
+          hidden.value = '';
+          input.value = '';
+          matches = [];
+          activeIndex = -1;
+          hide();
+        }
+      };
+    }
+
+    function bindSmartMultiPicker(config) {
+      const input = document.getElementById(config.inputId);
+      const hidden = document.getElementById(config.hiddenId);
+      const menu = document.getElementById(config.menuId);
+      const toggle = document.getElementById(config.toggleId);
+      let items = [];
+      let matches = [];
+      let selected = [];
+
+      function norm(v){ return normalizeStaffSearch(String(v || '')); }
+      function uniqueSorted(values) {
+        const seen = {};
+        return (values || []).map(v=>String(v||'').trim()).filter(v=>{
+          if(!v) return false;
+          const k=norm(v); if(seen[k]) return false; seen[k]=true; return true;
+        }).sort((a,b)=>a.localeCompare(b,'vi'));
+      }
+      function syncHidden(){
+        hidden.value = selected.join('||');
+      }
+      function selectedText(){
+        return selected.length ? selected.join(', ') : '';
+      }
+      function findMatches(q){
+        const query=norm(q);
+        if(!query) return items.slice(0,50);
+        return items.filter(x=>norm(x).includes(query)).slice(0,50);
+      }
+      function hide(){
+        menu.classList.remove('show');
+        input.setAttribute('aria-expanded','false');
+        input.value = selectedText();
+      }
+      function render(queryOverride){
+        const q = queryOverride !== undefined ? queryOverride : input.value;
+        matches=findMatches(q);
+        if(!matches.length){
+          menu.innerHTML='<div class="gv-smart-staff-empty">Không tìm thấy mục phù hợp.</div>';
+        }else{
+          menu.innerHTML=matches.map((name,index)=>{
+            const isSelected=selected.some(x=>norm(x)===norm(name));
+            return '<button type="button" class="gv-smart-staff-option'+(isSelected?' selected':'')+
+              '" data-multi-index="'+index+'" role="option" aria-selected="'+(isSelected?'true':'false')+'">'+
+              AppUtil.escape(name)+'</button>';
+          }).join('');
+        }
+        menu.classList.add('show');
+        input.setAttribute('aria-expanded','true');
+      }
+      function toggleValue(name, silent){
+        const i=selected.findIndex(x=>norm(x)===norm(name));
+        if(i>=0) selected.splice(i,1); else selected.push(name);
+        syncHidden();
+        input.value=selectedText();
+        render('');
+        if(!silent && typeof config.onChange==='function') config.onChange(selected.slice());
+      }
+
+      input.addEventListener('focus', function(){
+        input.value='';
+        render('');
+      });
+      input.addEventListener('input', function(){ render(input.value); });
+      input.addEventListener('keydown', function(e){
+        if(e.key==='Escape'){ hide(); }
+        if(e.key==='Backspace' && !input.value && selected.length){
+          selected.pop(); syncHidden(); input.value=''; render('');
+          if(typeof config.onChange==='function') config.onChange(selected.slice());
+        }
+      });
+      input.addEventListener('blur', function(){ setTimeout(hide,180); });
+      toggle.addEventListener('click', function(){
+        if(menu.classList.contains('show')) hide();
+        else { input.focus(); input.value=''; render(''); }
+      });
+      menu.addEventListener('mousedown', e=>e.preventDefault());
+      menu.addEventListener('click', function(e){
+        const op=e.target.closest('[data-multi-index]');
+        if(!op) return;
+        const i=Number(op.dataset.multiIndex);
+        if(matches[i]) toggleValue(matches[i], false);
+      });
+
+      return {
+        setItems(values){
+          items=uniqueSorted(values);
+          selected=selected.filter(v=>items.some(x=>norm(x)===norm(v)));
+          syncHidden(); input.value=selectedText();
+        },
+        setValues(values, preserveUnknown){
+          const wanted=uniqueSorted(values || []);
+          selected=[];
+          wanted.forEach(v=>{
+            const canonical=items.find(x=>norm(x)===norm(v));
+            if(canonical) selected.push(canonical);
+            else if(preserveUnknown){ items=uniqueSorted(items.concat([v])); selected.push(v); }
+          });
+          syncHidden(); input.value=selectedText(); hide();
+        },
+        getValues(){ return selected.slice(); },
+        clear(){ selected=[]; syncHidden(); input.value=''; hide(); }
+      };
+    }
+
+    function bindStaffPickers() {
+      if (filterAssigneePicker) return;
+
+      filterAssigneePicker = bindSmartMultiPicker({
+        inputId:'gv-filter-assignee-input',
+        hiddenId:'gv-filter-assignee',
+        menuId:'gv-filter-assignee-menu',
+        toggleId:'gv-filter-assignee-toggle',
+        onChange:function() { applyFilters(); }
+      });
+
+      filterStatusPicker = bindSmartMultiPicker({
+        inputId:'gv-filter-status-input',
+        hiddenId:'gv-filter-status',
+        menuId:'gv-filter-status-menu',
+        toggleId:'gv-filter-status-toggle',
+        onChange:function() { applyFilters(); }
+      });
+
+      createAssigneePicker = bindSmartStaffPicker({
+        inputId:'gv-create-assignee-input',
+        hiddenId:'gv-create-assignee',
+        menuId:'gv-create-assignee-menu',
+        toggleId:'gv-create-assignee-toggle'
+      });
+
+      editAssigneePicker = bindSmartStaffPicker({
+        inputId:'gv-edit-assignee-input',
+        hiddenId:'gv-edit-assignee',
+        menuId:'gv-edit-assignee-menu',
+        toggleId:'gv-edit-assignee-toggle'
+      });
+
+      reminderFilterPersonPicker = bindSmartStaffPicker({
+        inputId:'gv-reminder-filter-person-input',
+        hiddenId:'gv-reminder-filter-person',
+        menuId:'gv-reminder-filter-person-menu',
+        toggleId:'gv-reminder-filter-person-toggle',
+        onSelect:function() {
+          renderReminders();
+        }
+      });
+
+      reminderPersonPicker = bindSmartStaffPicker({
+        inputId:'gv-reminder-person-input',
+        hiddenId:'gv-reminder-person',
+        menuId:'gv-reminder-person-menu',
+        toggleId:'gv-reminder-person-toggle'
+      });
+    }
+
+    function setCurrentMonthFilter() {
+      const a = document.getElementById('gv-filter-start');
+      const b = document.getElementById('gv-filter-end');
+      if (!a || !b) return;
+      const d = new Date();
+      const pad = n => String(n).padStart(2,'0');
+      if (!a.value) a.value = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-01';
+      if (!b.value) {
+        const last = new Date(d.getFullYear(), d.getMonth()+1, 0);
+        b.value = last.getFullYear() + '-' + pad(last.getMonth()+1) + '-' + pad(last.getDate());
+      }
+    }
+
+    function populateFilters(filters) {
+      const currentAssignees = filterAssigneePicker ? filterAssigneePicker.getValues() : [];
+      const currentStatuses = filterStatusPicker ? filterStatusPicker.getValues() : [];
+      const currentPriority = document.getElementById('gv-filter-priority').value;
+
+      filterAssigneePicker.setItems(filters.assignees || staffs || []);
+      filterStatusPicker.setItems(filters.statuses || []);
+      document.getElementById('gv-filter-priority').innerHTML =
+        optionList(filters.priorities || [], '-- Tất cả --');
+
+      filterAssigneePicker.setValues(currentAssignees, true);
+      filterStatusPicker.setValues(currentStatuses, true);
+      document.getElementById('gv-filter-priority').value = currentPriority;
+    }
+
+    function badgeClass(value, type) {
+      const text = String(value || '').toUpperCase();
+      if (type === 'priority') {
+        if (text.includes('NHANH') || text.includes('CAO')) return 'bg-danger text-white';
+        if (text.includes('CHẬM') || text.includes('THẤP')) return 'bg-success text-white';
+        return 'bg-warning text-dark';
+      }
+      if (type === 'eval') {
+        if (text === 'XUẤT SẮC') return 'bg-primary text-white';
+        if (text === 'TỐT') return 'bg-success text-white';
+        if (text === 'KHÁ') return 'bg-primary text-white';
+        if (text.includes('CHƯA ĐẠT')) return 'bg-warning text-dark';
+        if (text === 'KÉM' || text.includes('QUÁ HẠN')) return 'bg-danger text-white';
+        return 'bg-secondary text-white';
+      }
+      if (text.includes('HOÀN THÀNH')) return 'bg-success text-white';
+      if (text.includes('ĐANG LÀM')) return 'bg-warning text-dark';
+      if (text.includes('QUÁ HẠN')) return 'bg-danger text-white';
+      return 'bg-secondary text-white';
+    }
+
+    function renderTable(list) {
+      const body = document.getElementById('gv-table-body');
+      if (!list.length) return body.innerHTML = '<tr><td colspan="7" class="text-center p-4">Không có công việc phù hợp.</td></tr>';
+      body.innerHTML = list.map(item => '<tr onclick="GiaoViecApp.openDetail(' + Number(item.rowId) + ')">' +
+        '<td><strong>' + AppUtil.escape(item.assignee) + '</strong></td>' +
+        '<td><span class="gv-badge ' + badgeClass(item.priority, 'priority') + '">' + AppUtil.escape(item.priority) + '</span></td>' +
+        '<td><strong>' + AppUtil.escape(item.title) + '</strong>' +
+        '<div class="small text-muted mt-1"><b>Nội dung / Mô tả:</b> ' + AppUtil.escape(item.description || '') + '</div></td>' +
+        '<td class="text-center">' + AppUtil.escape(item.startDate) + '</td>' +
+        '<td class="text-center">' + AppUtil.escape(item.endDate) + '</td>' +
+        '<td class="text-center"><span class="gv-badge ' + badgeClass(item.status, 'status') + '">' + AppUtil.escape(item.status) + '</span></td>' +
+        '<td class="text-center"><span class="gv-badge ' + badgeClass(item.evalStatus, 'eval') + '">' + AppUtil.escape(item.evalStatus) + '</span>' +
+        '<div class="small text-muted mt-1 text-start"><b>Ghi chú / Phản hồi quản lý:</b> ' + AppUtil.escape(item.qlNote || '') + '</div></td></tr>').join('');
+    }
+
+    function filteredTasks() {
+      const start = document.getElementById('gv-filter-start').value;
+      const end = document.getElementById('gv-filter-end').value;
+      const assignees = filterAssigneePicker ? filterAssigneePicker.getValues() : [];
+      const priority = document.getElementById('gv-filter-priority').value;
+      const statuses = filterStatusPicker ? filterStatusPicker.getValues() : [];
+      const titleSearch = String((document.getElementById('gv-filter-title') || {}).value || '').trim().toLowerCase();
+      const startDate = ymdToDate(start, false);
+      const endDate = ymdToDate(end, true);
+
+      return tasks.filter(item => {
+        if (assignees.length && !assignees.includes(item.assignee)) return false;
+        if (priority && item.priority !== priority) return false;
+        if (statuses.length && !statuses.includes(item.status)) return false;
+        if (titleSearch && String(item.title || '').toLowerCase().indexOf(titleSearch) === -1) return false;
+        if (startDate || endDate) {
+          const date = AppUtil.parseDisplayDate(item.startDate);
+          if (!date || (startDate && date < startDate) || (endDate && date > endDate)) return false;
+        }
+        return true;
+      });
+    }
+
+    function applyFilters() {
+      renderTable(filteredTasks());
+      drawPerformance();
+    }
+    function resetFilters() {
+      ['gv-filter-start','gv-filter-end','gv-filter-priority'].forEach(id => document.getElementById(id).value = '');
+      const ts=document.getElementById('gv-filter-title'); if(ts) ts.value='';
+      if(filterAssigneePicker) filterAssigneePicker.clear();
+      if(filterStatusPicker) filterStatusPicker.clear();
+      setCurrentMonthFilter();
+      renderTable(filteredTasks());
+      drawPerformance();
+    }
+    function openAppSheet() { appSheetUrl ? window.open(appSheetUrl, '_blank') : alert('Chưa cấu hình liên kết AppSheet.'); }
+
+    function openCreate() {
+      document.getElementById('gv-create-title').value = '';
+      createAssigneePicker.clear();
+      document.getElementById('gv-create-priority').value = 'TRUNG BÌNH';
+      document.getElementById('gv-create-description').value = '';
+      document.getElementById('gv-create-start').value = AppUtil.todayYmd();
+      document.getElementById('gv-create-end').value = '';
+      document.getElementById('gv-create-status').value = 'CHƯA BẮT ĐẦU';
+      document.getElementById('gv-create-eval').value = 'CHƯA BẮT ĐẦU';
+      document.getElementById('gv-create-ql-note').value = '';
+      createModal.show();
+    }
+
+    async function createTask() {
+      const formData = {
+        title: document.getElementById('gv-create-title').value.trim(),
+        assignee: createAssigneePicker.getValue(),
+        priority: document.getElementById('gv-create-priority').value,
+        description: document.getElementById('gv-create-description').value.trim(),
+        startDate: document.getElementById('gv-create-start').value,
+        endDate: document.getElementById('gv-create-end').value,
+        status: document.getElementById('gv-create-status').value,
+        evalStatus: document.getElementById('gv-create-eval').value,
+        qlNote: document.getElementById('gv-create-ql-note').value.trim()
+      };
+      if (!formData.title) return alert('Vui lòng nhập tiêu đề công việc.');
+      if (!formData.assignee) return alert('Vui lòng gõ tên và chọn đúng người thực hiện trong danh sách.');
+      AppUtil.loading(true, 'Đang tạo công việc...');
+      try {
+        const result = await AppUtil.server('addTask', formData);
+        if (!result.success) throw new Error(result.error);
+        createModal.hide();
+        await load();
+      } catch (error) {
+        alert('Không thể tạo công việc: ' + error.message);
+      } finally {
+        AppUtil.loading(false);
+      }
+    }
+
+    async function openDetail(rowId) {
+      currentTask = tasks.find(item => Number(item.rowId) === Number(rowId));
+      if (!currentTask) return;
+      pendingImage = null;
+      document.getElementById('gv-file-input').value = '';
+      document.getElementById('gv-camera-input').value = '';
+      document.getElementById('gv-image-status').textContent = '';
+      document.getElementById('gv-edit-modal-title').textContent = 'CHI TIẾT CÔNG VIỆC - DÒNG ' + rowId;
+      document.getElementById('gv-edit-title').value = currentTask.title;
+      editAssigneePicker.setItems(staffs);
+      editAssigneePicker.setValue(currentTask.assignee, true);
+      document.getElementById('gv-edit-priority').value = currentTask.priority || 'TRUNG BÌNH';
+      document.getElementById('gv-edit-description').value = currentTask.description;
+      document.getElementById('gv-edit-start').value = AppUtil.displayToYmd(currentTask.startDate);
+      document.getElementById('gv-edit-end').value = AppUtil.displayToYmd(currentTask.endDate);
+      document.getElementById('gv-edit-status').value = currentTask.status;
+      document.getElementById('gv-edit-note').value = currentTask.note;
+      document.getElementById('gv-edit-eval').value = currentTask.evalStatus || 'CHƯA BẮT ĐẦU';
+      document.getElementById('gv-edit-ql-note').value = currentTask.qlNote;
+      const imageBox = document.getElementById('gv-image-box');
+      imageBox.textContent = currentTask.imageName ? 'Đang tải ảnh...' : 'Chưa có hình ảnh.';
+      editModal.show();
+      if (currentTask.imageName) {
+        try {
+          const base64 = await AppUtil.server('getTaskImageBase64', currentTask.imageName);
+          imageBox.innerHTML = base64 ? '<img src="' + base64 + '" alt="Ảnh minh chứng">' : '<span class="text-danger">Không tìm thấy ảnh trong thư mục Drive.</span>';
+        } catch (error) {
+          imageBox.textContent = 'Không tải được ảnh.';
+        }
+      }
+    }
+
+    function selectImage(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file || !file.type.startsWith('image/')) return alert('Vui lòng chọn tệp hình ảnh.');
+      if (file.size > 8 * 1024 * 1024) return alert('Ảnh quá lớn. Vui lòng chọn ảnh dưới 8 MB.');
+      const reader = new FileReader();
+      reader.onload = loadEvent => {
+        const fullBase64 = loadEvent.target.result;
+        pendingImage = { fileName: file.name, mimeType: file.type, base64: fullBase64.split(',')[1] };
+        document.getElementById('gv-image-status').textContent = 'Đã chọn: ' + file.name;
+        document.getElementById('gv-image-box').innerHTML = '<img src="' + fullBase64 + '" alt="Ảnh mới">';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function saveCurrent() {
+      if (!currentTask) return;
+      const formData = {
+        rowId: currentTask.rowId,
+        title: document.getElementById('gv-edit-title').value.trim(),
+        assignee: editAssigneePicker.getValue(),
+        currentAssignee: currentTask.assignee || '',
+        priority: document.getElementById('gv-edit-priority').value,
+        description: document.getElementById('gv-edit-description').value.trim(),
+        startDate: document.getElementById('gv-edit-start').value,
+        endDate: document.getElementById('gv-edit-end').value,
+        status: document.getElementById('gv-edit-status').value,
+        note: document.getElementById('gv-edit-note').value.trim(),
+        evalStatus: document.getElementById('gv-edit-eval').value,
+        qlNote: document.getElementById('gv-edit-ql-note').value.trim(),
+        currentImageName: currentTask.imageName || '',
+        imageObject: pendingImage
+      };
+      if (!formData.title) return alert('Tiêu đề không được để trống.');
+      if (!formData.assignee) return alert('Vui lòng gõ tên và chọn đúng người thực hiện trong danh sách.');
+      AppUtil.loading(true, 'Đang cập nhật công việc...');
+      try {
+        const result = await AppUtil.server('updateTask', formData);
+        if (!result.success) throw new Error(result.error);
+        editModal.hide();
+        await load();
+      } catch (error) {
+        alert('Không thể cập nhật: ' + error.message);
+      } finally {
+        AppUtil.loading(false);
+      }
+    }
+
+    async function removeCurrent() {
+      if (!currentTask || !confirm('Bạn chắc chắn muốn xóa công việc này?')) return;
+      AppUtil.loading(true, 'Đang xóa công việc...');
+      try {
+        const result = await AppUtil.server('deleteTask', currentTask.rowId);
+        if (!result.success) throw new Error(result.error);
+        editModal.hide();
+        await load();
+      } catch (error) {
+        alert('Không thể xóa: ' + error.message);
+      } finally {
+        AppUtil.loading(false);
+      }
+    }
+
+    async function openReminder() {
+      cancelReminderForm();
+      reminderModal.show();
+      await loadReminders();
+    }
+
+    async function loadReminders() {
+      AppUtil.loading(true, 'Đang tải nhắc việc và tạo sheet nếu chưa có...');
+      try {
+        const response = await AppUtil.server('getReminderInitialData');
+        if (!response || response.error) {
+          throw new Error(response && response.error ? response.error : 'Không nhận được dữ liệu.');
+        }
+
+        reminders = response.data || [];
+        const reminderStaffs = (response.filters && response.filters.people) || response.staffs || staffs || [];
+        reminderFilterPersonPicker.setItems(reminderStaffs);
+        reminderPersonPicker.setItems(reminderStaffs);
+
+        const statusSelect = document.getElementById('gv-reminder-filter-status');
+        const oldStatus = statusSelect.value;
+        statusSelect.innerHTML = optionList(
+          (response.filters && response.filters.statuses) || [],
+          '-- Tất cả --'
+        );
+        statusSelect.value = oldStatus;
+        document.getElementById('gv-reminder-sheet-name').textContent =
+          'Dữ liệu lưu tại sheet: ' + (response.sheetName || 'NHAC_VIEC_GHI_CHU');
+        renderReminders();
+      } catch (error) {
+        document.getElementById('gv-reminder-body').innerHTML =
+          '<tr><td colspan="6" class="text-center text-danger p-4">' +
+          AppUtil.escape(error.message) + '</td></tr>';
+        alert('Không thể tải nhắc việc: ' + error.message);
+      } finally {
+        AppUtil.loading(false);
+      }
+    }
+
+    function filteredReminders() {
+      const startDate = ymdToDate(document.getElementById('gv-reminder-filter-start').value, false);
+      const endDate = ymdToDate(document.getElementById('gv-reminder-filter-end').value, true);
+      const person = reminderFilterPersonPicker.getValue();
+      const status = document.getElementById('gv-reminder-filter-status').value;
+      const query = normalizeStaffSearch(document.getElementById('gv-reminder-filter-search').value);
+
+      return reminders.filter(item => {
+        if (person && normalizeStaffSearch(item.person) !== normalizeStaffSearch(person)) return false;
+        if (status && String(item.status || '') !== status) return false;
+
+        const reminderDate = AppUtil.parseDisplayDate(item.reminderDate);
+        if (startDate && (!reminderDate || reminderDate < startDate)) return false;
+        if (endDate && (!reminderDate || reminderDate > endDate)) return false;
+
+        if (query) {
+          const text = normalizeStaffSearch(
+            [item.title, item.note, item.person, item.status].join(' ')
+          );
+          if (!text.includes(query)) return false;
+        }
+        return true;
+      }).sort((a, b) => {
+        const dateA = AppUtil.parseDisplayDate(a.reminderDate);
+        const dateB = AppUtil.parseDisplayDate(b.reminderDate);
+        const timeA = dateA ? dateA.getTime() : Number.MAX_SAFE_INTEGER;
+        const timeB = dateB ? dateB.getTime() : Number.MAX_SAFE_INTEGER;
+        return timeA - timeB || Number(b.rowId) - Number(a.rowId);
+      });
+    }
+
+    function reminderBadgeClass(status) {
+      const text = String(status || '').toUpperCase();
+      if (text === 'ĐÃ XONG') return 'bg-success text-white';
+      if (text === 'ĐANG THỰC HIỆN') return 'bg-warning text-dark';
+      return 'bg-secondary text-white';
+    }
+
+    function renderReminders() {
+      const list = filteredReminders();
+      document.getElementById('gv-reminder-total').textContent = list.length;
+      document.getElementById('gv-reminder-pending').textContent = list.filter(item => item.status === 'CHƯA THỰC HIỆN').length;
+      document.getElementById('gv-reminder-doing').textContent = list.filter(item => item.status === 'ĐANG THỰC HIỆN').length;
+      document.getElementById('gv-reminder-done').textContent = list.filter(item => item.status === 'ĐÃ XONG').length;
+
+      const body = document.getElementById('gv-reminder-body');
+      if (!list.length) {
+        body.innerHTML = '<tr><td colspan="6" class="text-center text-muted p-4">Không có nhắc việc phù hợp.</td></tr>';
+        return;
+      }
+
+      body.innerHTML = list.map(item =>
+        '<tr onclick="GiaoViecApp.editReminder(' + Number(item.rowId) + ')">' +
+          '<td class="text-center fw-bold">' + AppUtil.escape(item.reminderDate) + '</td>' +
+          '<td><strong>' + AppUtil.escape(item.title) + '</strong></td>' +
+          '<td style="white-space:pre-line">' + AppUtil.escape(item.note || '') + '</td>' +
+          '<td>' + AppUtil.escape(item.person || '') + '</td>' +
+          '<td class="text-center"><span class="gv-badge ' + reminderBadgeClass(item.status) + '">' + AppUtil.escape(item.status) + '</span></td>' +
+          '<td class="small text-center">' + AppUtil.escape(item.updatedAt || item.createdAt || '') + '</td>' +
+        '</tr>'
+      ).join('');
+    }
+
+    function resetReminderFilters() {
+      [
+        'gv-reminder-filter-start',
+        'gv-reminder-filter-end',
+        'gv-reminder-filter-status',
+        'gv-reminder-filter-search'
+      ].forEach(id => document.getElementById(id).value = '');
+      reminderFilterPersonPicker.clear();
+      renderReminders();
+    }
+
+    function openReminderForm() {
+      currentReminder = null;
+      document.getElementById('gv-reminder-row-id').value = '';
+      document.getElementById('gv-reminder-form-title').textContent = 'TẠO NHẮC VIỆC MỚI';
+      document.getElementById('gv-reminder-date').value = AppUtil.todayYmd();
+      document.getElementById('gv-reminder-title').value = '';
+      document.getElementById('gv-reminder-note').value = '';
+      document.getElementById('gv-reminder-status').value = 'CHƯA THỰC HIỆN';
+      reminderPersonPicker.clear();
+      document.getElementById('gv-reminder-delete').classList.add('d-none');
+      showReminderForm_();
+    }
+
+    function editReminder(rowId) {
+      currentReminder = reminders.find(item => Number(item.rowId) === Number(rowId));
+      if (!currentReminder) return;
+
+      document.getElementById('gv-reminder-row-id').value = currentReminder.rowId;
+      document.getElementById('gv-reminder-form-title').textContent =
+        'SỬA NHẮC VIỆC - ' + (currentReminder.reminderId || 'DÒNG ' + rowId);
+      document.getElementById('gv-reminder-date').value = AppUtil.displayToYmd(currentReminder.reminderDate);
+      document.getElementById('gv-reminder-title').value = currentReminder.title || '';
+      document.getElementById('gv-reminder-note').value = currentReminder.note || '';
+      document.getElementById('gv-reminder-status').value = currentReminder.status || 'CHƯA THỰC HIỆN';
+      reminderPersonPicker.setValue(currentReminder.person || '', true);
+      document.getElementById('gv-reminder-delete').classList.remove('d-none');
+      showReminderForm_();
+    }
+
+    function showReminderForm_() {
+      const form = document.getElementById('gv-reminder-form');
+      form.classList.add('show');
+      window.setTimeout(function() {
+        form.scrollIntoView({behavior:'smooth', block:'start'});
+        document.getElementById('gv-reminder-title').focus();
+      }, 100);
+    }
+
+    function cancelReminderForm() {
+      currentReminder = null;
+      const form = document.getElementById('gv-reminder-form');
+      if (form) form.classList.remove('show');
+      if (reminderPersonPicker) reminderPersonPicker.clear();
+    }
+
+    async function saveReminder() {
+      const rowId = Number(document.getElementById('gv-reminder-row-id').value) || 0;
+      const formData = {
+        rowId: rowId,
+        reminderDate: document.getElementById('gv-reminder-date').value,
+        title: document.getElementById('gv-reminder-title').value.trim(),
+        note: document.getElementById('gv-reminder-note').value.trim(),
+        person: reminderPersonPicker.getValue(),
+        status: document.getElementById('gv-reminder-status').value
+      };
+
+      if (!formData.reminderDate) return alert('Vui lòng chọn ngày nhắc.');
+      if (!formData.title) return alert('Vui lòng nhập tiêu đề nhắc việc.');
+
+      const button = document.getElementById('gv-reminder-save');
+      const oldText = button.textContent;
+      button.disabled = true;
+      button.textContent = 'ĐANG LƯU...';
+      AppUtil.loading(true, rowId ? 'Đang cập nhật nhắc việc...' : 'Đang lưu nhắc việc...');
+      try {
+        const result = await AppUtil.server(rowId ? 'updateReminder' : 'addReminder', formData);
+        if (!result || !result.success) {
+          throw new Error(result && result.error ? result.error : 'Không thể lưu dữ liệu.');
+        }
+        cancelReminderForm();
+        await loadReminders();
+      } catch (error) {
+        alert('Không thể lưu nhắc việc: ' + error.message);
+      } finally {
+        button.disabled = false;
+        button.textContent = oldText;
+        AppUtil.loading(false);
+      }
+    }
+
+    async function removeReminder() {
+      const rowId = Number(document.getElementById('gv-reminder-row-id').value) || 0;
+      if (!rowId || !confirm('Bạn chắc chắn muốn xóa nhắc việc này?')) return;
+
+      AppUtil.loading(true, 'Đang xóa nhắc việc...');
+      try {
+        const result = await AppUtil.server('deleteReminder', rowId);
+        if (!result || !result.success) {
+          throw new Error(result && result.error ? result.error : 'Không thể xóa dữ liệu.');
+        }
+        cancelReminderForm();
+        await loadReminders();
+      } catch (error) {
+        alert('Không thể xóa nhắc việc: ' + error.message);
+      } finally {
+        AppUtil.loading(false);
+      }
+    }
+
+    function ymdToDate(value, endOfDay) {
+      if (!value) return null;
+      const parts = String(value).split('-');
+      if (parts.length !== 3) return null;
+      const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      if (isNaN(date.getTime())) return null;
+      date.setHours(endOfDay ? 23 : 0, endOfDay ? 59 : 0, endOfDay ? 59 : 0, endOfDay ? 999 : 0);
+      return date;
+    }
+
+    function formatYmd(value) {
+      if (!value) return '';
+      const parts = String(value).split('-');
+      return parts.length === 3 ? parts[2] + '/' + parts[1] + '/' + parts[0] : value;
+    }
+
+    function rankingFor(score) {
+      if (score >= 110) return { name:'XUẤT SẮC', badge:'bg-primary text-white' };
+      if (score >= 95) return { name:'TỐT', badge:'bg-success text-white' };
+      if (score >= 80) return { name:'KHÁ', badge:'bg-info text-dark' };
+      if (score >= 65) return { name:'TRUNG BÌNH', badge:'bg-warning text-dark' };
+      return { name:'CHƯA ĐẠT', badge:'bg-danger text-white' };
+    }
+
+    function drawPerformance() {
+      const startValue = document.getElementById('gv-filter-start').value;
+      const endValue = document.getElementById('gv-filter-end').value;
+      const startDate = ymdToDate(startValue, false);
+      const endDate = ymdToDate(endValue, true);
+      const periodText = (startValue ? formatYmd(startValue) : 'Đầu kỳ') + ' ➔ ' + (endValue ? formatYmd(endValue) : 'Hiện tại');
+      document.getElementById('gv-performance-period').textContent = 'Kỳ đánh giá: ' + periodText;
+
+      const activeStaffs = staffs.length ? staffs : Array.from(new Set(tasks.map(item => item.assignee).filter(Boolean)));
+      performanceResults = [];
+      let rowNumber = 1;
+      let html = '';
+
+      activeStaffs.forEach(staffName => {
+        const staffTasks = tasks.filter(task => {
+          if (String(task.assignee || '').trim() !== String(staffName || '').trim()) return false;
+          const taskDate = AppUtil.parseDisplayDate(task.endDate) || AppUtil.parseDisplayDate(task.startDate);
+          if (startDate && taskDate && taskDate < startDate) return false;
+          if (endDate && taskDate && taskDate > endDate) return false;
+          return true;
+        });
+        if (!staffTasks.length) return;
+
+        let completed = 0;
+        let overdue = 0;
+        let excellent = 0;
+        let good = 0;
+        let fair = 0;
+        let notMet = 0;
+        let poor = 0;
+
+        staffTasks.forEach(task => {
+          const status = String(task.status || '').trim().toUpperCase();
+          const evaluation = String(task.evalStatus || '').trim().toUpperCase();
+          if (status.includes('HOÀN THÀNH')) completed++;
+          if (status.includes('QUÁ HẠN') || evaluation.includes('QUÁ HẠN')) overdue++;
+
+          if (evaluation === 'XUẤT SẮC') excellent++;
+          else if (evaluation === 'TỐT') good++;
+          else if (evaluation === 'KHÁ') fair++;
+          else if (evaluation.includes('CHƯA ĐẠT')) notMet++;
+          else if (evaluation === 'KÉM') poor++;
+          else if (evaluation === 'QUÁ HẠN') notMet++;
+        });
+
+        const finalScore = Math.max(0, 100 + excellent * 10 + good * 5 - notMet * 5 - poor * 10);
+        const ranking = rankingFor(finalScore);
+        performanceResults.push({
+          period: periodText,
+          assignee: staffName,
+          totalTasks: staffTasks.length,
+          completedTasks: completed,
+          overduePendingTasks: overdue,
+          countXuatSac: excellent,
+          countTot: good,
+          countKha: fair,
+          countChuaDat: notMet,
+          countKem: poor,
+          finalScore: finalScore,
+          ranking: ranking.name
+        });
+
+        html += '<tr>' +
+          '<td class="text-start ps-3"><strong>' + rowNumber++ + '. ' + AppUtil.escape(staffName) + '</strong></td>' +
+          '<td>' + staffTasks.length + '</td>' +
+          '<td class="table-success text-success fw-bold">' + completed + '</td>' +
+          '<td class="table-warning text-danger fw-bold">' + overdue + '</td>' +
+          '<td class="text-primary fw-bold">' + (excellent ? '+' + excellent : '0') + '</td>' +
+          '<td class="text-success fw-bold">' + (good ? '+' + good : '0') + '</td>' +
+          '<td>' + fair + '</td>' +
+          '<td class="text-warning fw-bold">' + (notMet ? '-' + notMet : '0') + '</td>' +
+          '<td class="text-danger fw-bold">' + (poor ? '-' + poor : '0') + '</td>' +
+          '<td class="gv-score-cell">' + finalScore + '</td>' +
+          '<td><span class="gv-badge ' + ranking.badge + '">' + ranking.name + '</span></td>' +
+          '</tr>';
+      });
+
+      document.getElementById('gv-performance-body').innerHTML = html || '<tr><td colspan="11" class="text-center text-muted p-4">Không có nhân viên nào phát sinh công việc trong khoảng thời gian này.</td></tr>';
+    }
+
+    async function exportPerformance() {
+      if (!performanceResults.length) return alert('Không có dữ liệu đánh giá nhân sự nào để xuất.');
+      const button = document.getElementById('gv-export-performance');
+      const oldText = button.innerHTML;
+      button.disabled = true;
+      button.innerHTML = '⌛ Đang ghi ' + performanceResults.length + ' bản ghi...';
+      AppUtil.loading(true, 'Đang lưu bảng tổng hợp hiệu suất...');
+      try {
+        const result = await AppUtil.server('saveTaskPerformanceResults', performanceResults);
+        if (!result || !result.success) throw new Error(result && result.error ? result.error : 'Không thể lưu dữ liệu.');
+        alert(result.message || 'Đã lưu kết quả KPI thành công.');
+      } catch (error) {
+        alert('Không thể xuất bảng KPI: ' + error.message);
+      } finally {
+        button.disabled = false;
+        button.innerHTML = oldText;
+        AppUtil.loading(false);
+      }
+    }
+
+    async function openFromAlert(rowId) {
+      // Cảnh báo mở thẳng công việc để người dùng đổi trạng thái/đánh giá.
+      if (!tasks || !tasks.length) await load();
+      const found = tasks.find(item => Number(item.rowId) === Number(rowId));
+      if (!found) return alert('Không tìm thấy công việc cần mở.');
+      await openDetail(rowId);
+    }
+
+    return {
+      init,
+      openFromAlert,
+      applyFilters,
+      resetFilters,
+      openAppSheet,
+      openCreate,
+      createTask,
+      openDetail,
+      selectImage,
+      saveCurrent,
+      removeCurrent,
+      drawPerformance,
+      exportPerformance,
+      openReminder,
+      renderReminders,
+      resetReminderFilters,
+      openReminderForm,
+      editReminder,
+      cancelReminderForm,
+      saveReminder,
+      removeReminder
+    };
+  })();
+  window.GiaoViecApp = GiaoViecApp;
+</script>

@@ -21,18 +21,24 @@ export async function GET(){
   if(typeof error.code==='string')supabaseErrorCode=error.code;
  }
  const sessionSecret=process.env.SESSION_SECRET||'';
+ const projectConfigured=Boolean(config.configuredProjectRef);
+ const projectMatches=config.projectRefMatches;
+ const sessionSecretConfigured=sessionSecret.length>=32;
  return NextResponse.json({
-  ok:true,
+  ok:supabaseDatabaseReachable&&sessionSecretConfigured&&projectMatches,
   app:'QL-KSNK-NGOAIKHOA',
-  deploymentVersion:'supabase-config-qmhv-v1',
+  deploymentVersion:'script-parity-v2',
   supabaseConfiguredProjectRef:config.configuredProjectRef,
   supabaseProjectRef:config.effectiveProjectRef,
+  supabaseExpectedProjectRef:config.expectedProjectRef,
+  supabaseProjectRefMatches:projectMatches,
+  supabaseUrlConfigured:projectConfigured,
   supabaseServerConfigured:dbs.length>0,
   supabaseDatabaseReachable,
   supabaseErrorCode,
   settingsRowFound,
   serverKeyCandidateCount:dbs.length,
-  sessionSecretConfigured:sessionSecret.length>=32,
+  sessionSecretConfigured,
   defaultPasswordConfigured:Boolean(process.env.APP_DEFAULT_PASSWORD)
  });
 }

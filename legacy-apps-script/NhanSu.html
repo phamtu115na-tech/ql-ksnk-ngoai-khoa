@@ -1,0 +1,192 @@
+<div class="content-shell">
+  <div class="panel-card">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <div>
+        <h5 class="mb-1 fw-bold text-primary">DANH MỤC NHÂN SỰ CHUNG</h5>
+        <div class="small text-muted">Mọi tên người thực hiện của Giao việc và Vi phạm đều lấy từ sheet DM_NHANVIEN.</div>
+      </div>
+      <div class="d-flex gap-2">
+        <input id="ns-search" class="form-control form-control-sm" style="min-width:220px"
+          placeholder="Tìm tên, mã, bộ phận..." oninput="NhanSuApp.render()">
+        <button class="btn btn-success btn-sm text-nowrap" onclick="NhanSuApp.openAdd()">+ THÊM NHÂN VIÊN</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table table-bordered table-striped table-app" id="ns-table"></table>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="ns-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="ns-modal-title">THÊM NHÂN VIÊN</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label fw-bold small">Mã nhân viên</label>
+          <input id="ns-id" class="form-control" placeholder="Để trống sẽ tự tạo mã">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold small">Họ và tên (*)</label>
+          <input id="ns-name" class="form-control">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold small">Bộ phận (*)</label>
+          <select id="ns-department" class="form-select"></select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold small">Chức vụ</label>
+          <input id="ns-position" class="form-control">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold small">Số điện thoại</label>
+          <input id="ns-phone" class="form-control">
+        </div>
+        <div>
+          <label class="form-label fw-bold small">Trạng thái</label>
+          <select id="ns-status" class="form-select">
+            <option>Đang làm việc</option>
+            <option>Tạm nghỉ</option>
+            <option>Đã nghỉ việc</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button class="btn btn-success fw-bold" onclick="NhanSuApp.save()">LƯU NHÂN SỰ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const NhanSuApp = (() => {
+  let rows = [];
+  let departments = [];
+  let modal;
+  let editing = false;
+
+  async function init() {
+    modal = modal || new bootstrap.Modal(document.getElementById('ns-modal'));
+    await load();
+  }
+
+  async function load() {
+    AppUtil.loading(true, 'Đang tải danh mục nhân sự...');
+    try {
+      const response = await AppUtil.server('getStaffData');
+      rows = response.rows || [];
+      departments = response.departments || [];
+      document.getElementById('ns-department').innerHTML =
+        '<option value="">-- Chọn bộ phận --</option>' +
+        departments.map(value =>
+          '<option value="' + AppUtil.escape(value) + '">' + AppUtil.escape(value) + '</option>'
+        ).join('');
+      render();
+    } catch (error) {
+      alert('Lỗi tải nhân sự: ' + error.message);
+    } finally {
+      AppUtil.loading(false);
+    }
+  }
+
+  function render() {
+    const table = document.getElementById('ns-table');
+    if (!rows.length) {
+      table.innerHTML = '<tbody><tr><td class="text-center p-4">Chưa có dữ liệu. Hãy chạy setupSystemSheets().</td></tr></tbody>';
+      return;
+    }
+
+    const keyword = (document.getElementById('ns-search').value || '').trim().toLowerCase();
+    const header = rows[0];
+    const data = rows.slice(1).filter(row => !keyword || row.join(' ').toLowerCase().includes(keyword));
+
+    table.innerHTML =
+      '<thead><tr>' +
+      header.map(cell => '<th>' + AppUtil.escape(cell) + '</th>').join('') +
+      '<th>Thao tác</th></tr></thead><tbody>' +
+      data.map(row =>
+        '<tr>' + row.map(cell => '<td>' + AppUtil.escape(cell) + '</td>').join('') +
+        '<td class="text-nowrap">' +
+        '<button class="btn btn-outline-primary btn-sm me-1" onclick="NhanSuApp.openEdit(\'' + encodeURIComponent(row[0]) + '\')">Sửa</button>' +
+        '<button class="btn btn-outline-danger btn-sm" onclick="NhanSuApp.remove(\'' + encodeURIComponent(row[0]) + '\')">Xóa</button>' +
+        '</td></tr>'
+      ).join('') +
+      (data.length ? '' : '<tr><td colspan="' + (header.length + 1) + '" class="text-center p-4">Không tìm thấy nhân sự phù hợp.</td></tr>') +
+      '</tbody>';
+  }
+
+  function openAdd() {
+    editing = false;
+    document.getElementById('ns-modal-title').textContent = 'THÊM NHÂN VIÊN';
+    ['ns-id','ns-name','ns-position','ns-phone'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('ns-id').readOnly = false;
+    document.getElementById('ns-department').value = '';
+    document.getElementById('ns-status').value = 'Đang làm việc';
+    modal.show();
+  }
+
+  function openEdit(encodedId) {
+    const staffId = decodeURIComponent(encodedId);
+    const row = rows.slice(1).find(item => String(item[0]) === String(staffId));
+    if (!row) return;
+
+    editing = true;
+    document.getElementById('ns-modal-title').textContent = 'CẬP NHẬT NHÂN VIÊN';
+    document.getElementById('ns-id').value = row[0] || '';
+    document.getElementById('ns-id').readOnly = true;
+    document.getElementById('ns-name').value = row[1] || '';
+    document.getElementById('ns-department').value = row[2] || '';
+    document.getElementById('ns-position').value = row[3] || '';
+    document.getElementById('ns-phone').value = row[4] || '';
+    document.getElementById('ns-status').value = row[5] || 'Đang làm việc';
+    modal.show();
+  }
+
+  async function save() {
+    const formData = {
+      maNV: document.getElementById('ns-id').value.trim(),
+      ten: document.getElementById('ns-name').value.trim(),
+      boPhan: document.getElementById('ns-department').value,
+      chucVu: document.getElementById('ns-position').value.trim(),
+      sdt: document.getElementById('ns-phone').value.trim(),
+      trangThai: document.getElementById('ns-status').value
+    };
+
+    if (!formData.ten || !formData.boPhan) return alert('Vui lòng nhập họ tên và bộ phận.');
+
+    AppUtil.loading(true, 'Đang lưu nhân sự...');
+    try {
+      const message = await AppUtil.server(editing ? 'updateSharedStaff' : 'addSharedStaff', formData);
+      modal.hide();
+      alert(message);
+      await load();
+    } catch (error) {
+      alert('Không thể lưu: ' + error.message);
+    } finally {
+      AppUtil.loading(false);
+    }
+  }
+
+  async function remove(encodedId) {
+    const staffId = decodeURIComponent(encodedId);
+    if (!confirm('Xóa nhân sự này khỏi DM_NHANVIEN? Dữ liệu lịch sử giao việc và vi phạm không bị xóa.')) return;
+
+    AppUtil.loading(true, 'Đang xóa nhân sự...');
+    try {
+      alert(await AppUtil.server('deleteSharedStaff', staffId));
+      await load();
+    } catch (error) {
+      alert('Không thể xóa: ' + error.message);
+    } finally {
+      AppUtil.loading(false);
+    }
+  }
+
+  return { init, render, openAdd, openEdit, save, remove };
+})();
+</script>

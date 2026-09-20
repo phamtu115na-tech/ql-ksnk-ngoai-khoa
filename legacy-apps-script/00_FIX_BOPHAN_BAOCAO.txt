@@ -1,0 +1,11 @@
+FIX BỘ PHẬN TRONG BÁO CÁO
+=========================
+- Trả lại dropdown Bộ phận theo cấu trúc cũ.
+- Giữ nguyên danh sách APP_CONFIG.DEPARTMENTS.
+- Nếu dữ liệu khởi tạo thiếu danh sách, tự lấy thêm Bộ phận thực tế từ DM_NHANVIEN.
+- Không xóa bất kỳ chức năng hiện tại nào.
+- Smart multi Người thực hiện + Trạng thái trong Giao việc vẫn giữ nguyên.
+
+Nếu đang dùng KSNK_HOAN_THIEN_SMART_MULTI:
+chỉ cần thay 60_BaoCao.gs và BaoCao.html.
+Sau đó Save -> Deploy New version.

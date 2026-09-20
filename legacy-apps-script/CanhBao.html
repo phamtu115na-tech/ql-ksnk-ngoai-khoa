@@ -1,0 +1,71 @@
+<style>
+.cb-wrap{max-width:1450px;margin:0 auto;padding:12px}.cb-summary{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.cb-card{background:#fff;border:1px solid #e4e7ec;border-radius:12px;padding:12px;text-align:center}.cb-card b{display:block;font-size:25px}
+.cb-overdue{border-left:5px solid #d92d20}.cb-today{border-left:5px solid #f79009}.cb-urgent{border-left:5px solid #fdb022}.cb-upcoming{border-left:5px solid #2e90fa}
+.cb-filter{background:#fff;border:1px solid #e4e7ec;border-radius:12px;padding:12px;margin-bottom:12px}.cb-table{width:100%;border-collapse:collapse;background:#fff}.cb-table th,.cb-table td{border:1px solid #e4e7ec;padding:8px;vertical-align:top}.cb-table th{background:#f9fafb}
+.cb-badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800}.cb-b-red{background:#fee4e2;color:#b42318}.cb-b-orange{background:#ffead5;color:#b54708}.cb-b-yellow{background:#fef0c7;color:#93370d}.cb-b-blue{background:#d1e9ff;color:#175cd3}
+@media(max-width:800px){.cb-summary{grid-template-columns:repeat(2,1fr)}.cb-scroll{overflow:auto}.cb-table{min-width:900px}}
+</style>
+<div class="cb-wrap">
+  <div class="alert alert-info"><b>🔔 CẢNH BÁO TỔNG THỂ</b> — tự động lấy từ <b>Giao việc + Kế hoạch tuần/tháng</b>. Bấm <b>MỞ & CẬP NHẬT</b> để chuyển đúng sang công việc/kế hoạch và thay đổi trạng thái trực tiếp.</div>
+  <div id="cb-summary" class="cb-summary"></div>
+  <div class="cb-filter row g-2">
+    <div class="col-md-4"><select id="cb-dept" class="form-select" onchange="CanhBaoApp.load()"><option value="">-- Tất cả bộ phận --</option></select></div>
+    <div class="col-md-4"><select id="cb-person" class="form-select" onchange="CanhBaoApp.load()"><option value="">-- Tất cả nhân viên --</option></select></div>
+    <div class="col-md-2"><select id="cb-level" class="form-select" onchange="CanhBaoApp.render()"><option value="">-- Tất cả cảnh báo --</option><option value="OVERDUE">Quá hạn</option><option value="TODAY">Hôm nay</option><option value="URGENT">1–3 ngày tới</option><option value="UPCOMING">4–7 ngày tới</option></select></div>
+    <div class="col-md-2"><button class="btn btn-primary w-100" onclick="CanhBaoApp.load()">🔄 LÀM MỚI</button></div>
+  </div>
+  <div class="cb-scroll"><table class="cb-table"><thead><tr><th>Mức cảnh báo</th><th>Nhân viên</th><th>Bộ phận</th><th>Nguồn</th><th>Nội dung</th><th>Hạn</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="cb-body"></tbody></table></div>
+</div>
+<script>
+const CanhBaoApp=(()=>{
+ let data=[], initializedFilters=false;
+ const esc=v=>AppUtil.escape(v);
+ function badge(x){
+   const map={OVERDUE:['QUÁ HẠN','cb-b-red'],TODAY:['HÔM NAY','cb-b-orange'],URGENT:['1–3 NGÀY','cb-b-yellow'],UPCOMING:['4–7 NGÀY','cb-b-blue'],PENDING:['CHƯA CÓ HẠN','cb-b-blue']};
+   const m=map[x]||[x,'cb-b-blue']; return '<span class="cb-badge '+m[1]+'">'+m[0]+'</span>';
+ }
+ async function init(){ await load(); }
+ async function load(){
+   AppUtil.loading(true,'Đang tổng hợp cảnh báo...');
+   try{
+     const r=await AppUtil.server('getSystemAlerts',{department:document.getElementById('cb-dept').value,person:document.getElementById('cb-person').value});
+     data=(r&&r.alerts)||[];
+     if(!initializedFilters){
+       const d=document.getElementById('cb-dept'),p=document.getElementById('cb-person');
+       (r.departments||[]).forEach(x=>d.insertAdjacentHTML('beforeend','<option value="'+esc(x)+'">'+esc(x)+'</option>'));
+       (r.people||[]).forEach(x=>p.insertAdjacentHTML('beforeend','<option value="'+esc(x)+'">'+esc(x)+'</option>'));
+       initializedFilters=true;
+     }
+     document.getElementById('cb-summary').innerHTML=
+       '<div class="cb-card"><small>TỔNG CẢNH BÁO</small><b>'+data.length+'</b></div>'+
+       '<div class="cb-card cb-overdue"><small>QUÁ HẠN</small><b>'+data.filter(x=>x.level==='OVERDUE').length+'</b></div>'+
+       '<div class="cb-card cb-today"><small>HÔM NAY</small><b>'+data.filter(x=>x.level==='TODAY').length+'</b></div>'+
+       '<div class="cb-card cb-urgent"><small>1–3 NGÀY TỚI</small><b>'+data.filter(x=>x.level==='URGENT').length+'</b></div>'+
+       '<div class="cb-card cb-upcoming"><small>4–7 NGÀY TỚI</small><b>'+data.filter(x=>x.level==='UPCOMING').length+'</b></div>';
+     render();
+   }catch(e){document.getElementById('cb-body').innerHTML='<tr><td colspan="8" class="text-danger">Lỗi cảnh báo: '+esc(e.message)+'</td></tr>';}
+   finally{AppUtil.loading(false);}
+ }
+ function render(){
+   const lv=document.getElementById('cb-level').value;
+   const rows=lv?data.filter(x=>x.level===lv):data;
+   document.getElementById('cb-body').innerHTML=rows.length?rows.map(x=>
+     '<tr><td>'+badge(x.level)+'</td><td><b>'+esc(x.person)+'</b></td><td>'+esc(x.department)+'</td><td>'+esc(x.sourceLabel)+'</td>'+
+     '<td><b>'+esc(x.title)+'</b>'+(x.description?'<div class="text-muted small mt-1">'+esc(x.description)+'</div>':'')+'</td>'+
+     '<td>'+esc(x.due)+(x.days<0?'<div class="text-danger small">Quá '+Math.abs(x.days)+' ngày</div>':x.days===0?'<div class="text-warning small">Đến hạn hôm nay</div>':'<div class="small">Còn '+x.days+' ngày</div>')+'</td>'+
+     '<td>'+esc(x.status)+'</td><td><button class="btn btn-sm btn-primary" data-source="'+esc(x.source)+'" data-id="'+esc(x.rowId||x.id)+'" data-type="'+esc(x.planType||'')+'" onclick="CanhBaoApp.openItem(this.dataset.source,this.dataset.id,this.dataset.type)">MỞ & CẬP NHẬT</button></td></tr>'
+   ).join(''):'<tr><td colspan="8" class="text-center text-muted p-4">Không có cảnh báo phù hợp.</td></tr>';
+ }
+ function openItem(source,id,type){
+   if(source==='TASK'){
+     AppShell.open('tasks');
+     setTimeout(()=>GiaoViecApp.openFromAlert(id),250);
+   }else{
+     AppShell.open('plans');
+     setTimeout(()=>KeHoachApp.openFromAlert(id,type),250);
+   }
+ }
+ return {init,load,render,openItem};
+})();
+</script>

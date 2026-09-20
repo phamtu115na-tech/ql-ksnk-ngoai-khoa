@@ -1,0 +1,25 @@
+BẢN HOÀN THIỆN CẢNH BÁO TỔNG THỂ
+================================
+1. GIAO VIỆC
+- Bộ lọc Từ ngày/Đến ngày mặc định từ ngày 01 đến ngày cuối tháng hiện tại.
+- Vẫn sửa ngày thủ công được.
+
+6. KẾ HOẠCH
+- Bộ lọc danh sách mặc định trọn tháng hiện tại.
+- Cảnh báo lấy cả Kế hoạch tuần và Kế hoạch tháng.
+
+7. BÁO CÁO TỔNG HỢP MỚI
+- Mục 3: Tiêu đề + Nội dung/Mô tả phía dưới.
+- Đánh giá + Ghi chú/Phản hồi quản lý phía dưới.
+- Trạng thái/Đánh giá dùng màu trực quan đồng bộ.
+
+9. CẢNH BÁO & LỊCH CÔNG VIỆC
+- Tổng hợp Giao việc + Kế hoạch tuần/tháng.
+- Cảnh báo: quá hạn, hôm nay, 1-3 ngày, 4-7 ngày.
+- Lọc Bộ phận/Nhân viên.
+- Nút MỞ & CẬP NHẬT chuyển thẳng sang Giao việc hoặc Kế hoạch và mở bản ghi để đổi trạng thái.
+
+LƯU Ý:
+- Bản đã kiểm tra cú pháp toàn bộ .gs và JavaScript trong HTML bằng Node --check.
+- Chưa thể chạy thử trực tiếp trong tài khoản Google Apps Script/Spreadsheet của người dùng.
+- Sau khi thay toàn bộ file: Save -> Deploy New version -> mở /exec mới -> Ctrl+F5.
