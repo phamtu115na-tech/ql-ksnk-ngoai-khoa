@@ -1,8 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-export const SUPABASE_PROJECT_REF='swgpwbrtxvezkykablws';
-export const SUPABASE_FALLBACK_URL='https://swgpwbrtxvezkykablws.supabase.co';
-const fallbackAnon='sb_publishable_9r1va6JjYbcbXmnDn7Z6CQ_-VrBW0Yu';
+export const SUPABASE_PROJECT_REF='qmhvdedsztmuplfmsrqz';
+export const SUPABASE_FALLBACK_URL='https://qmhvdedsztmuplfmsrqz.supabase.co';
 
 function normalize(value?:string){
  const text=value?.trim()||'';
@@ -55,11 +54,9 @@ export function supabaseAdminCandidates(){
 }
 
 export function supabaseBrowser(){
- const configured=projectRefFromUrl(configuredUrl())===SUPABASE_PROJECT_REF;
- return createClient(
-  effectiveSupabaseUrl(),
-  configured?normalize(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)||fallbackAnon:fallbackAnon
- );
+ const key=normalize(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+ if(!key)throw new Error('Thiếu NEXT_PUBLIC_SUPABASE_ANON_KEY');
+ return createClient(effectiveSupabaseUrl(),key);
 }
 
 export function supabaseAdmin(){
