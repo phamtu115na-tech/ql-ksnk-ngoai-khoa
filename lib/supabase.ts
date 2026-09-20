@@ -5,7 +5,9 @@ export const SUPABASE_FALLBACK_URL='https://swgpwbrtxvezkykablws.supabase.co';
 const fallbackAnon='sb_publishable_9r1va6JjYbcbXmnDn7Z6CQ_-VrBW0Yu';
 
 function normalize(value?:string){
- return value?.trim().replace(/^(['"])(.*)\\1$/,'$2')||'';
+ const text=value?.trim()||'';
+ if(text.length>=2&&((text.startsWith('"')&&text.endsWith('"'))||(text.startsWith("'")&&text.endsWith("'"))))return text.slice(1,-1).trim();
+ return text;
 }
 
 function projectRefFromUrl(value:string){
