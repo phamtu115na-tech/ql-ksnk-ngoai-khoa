@@ -1,4 +1,5 @@
 import './globals.css';
+import './report-responsive.css';
 import './task.css';
 import './login.css';
 import type { Metadata } from 'next';

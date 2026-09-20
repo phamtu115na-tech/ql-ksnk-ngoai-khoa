@@ -1,0 +1,88 @@
+/* Báo cáo: bám sát BaoCao.html của Script và thích ứng desktop/mobile. */
+body{font-size:16px;line-height:1.45}
+button,input,select,textarea{font-size:1rem}
+.module-toolbar h2{font-size:1.5rem}
+.module-filters{gap:12px;padding:15px}
+.module-filters label{font-size:15px;min-width:160px}
+.module-filters input,.module-filters select{min-height:42px;padding:10px 12px}
+.report-section-picker{flex:1 1 100%;order:20;min-width:100%;margin:0;padding:10px 4px 2px;border:0;border-top:1px solid #e5eaf2;background:#fff}
+.report-section-picker legend{padding:0;color:#123b8f;font-size:15px;font-weight:900}
+.report-section-options{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:6px}
+.report-section-options label{display:flex;flex:0 0 auto;flex-direction:row;align-items:center;gap:5px;min-width:0;padding:2px 0;color:#17335f;font-size:14px;font-weight:700;white-space:normal}
+.report-section-options input{width:16px;height:16px;margin:0;accent-color:#1677ff}
+.report-section-actions{display:flex;align-items:center;gap:12px;margin-top:9px}
+.report-section-actions button{border:1px solid #1677ff;border-radius:6px;background:#fff;color:#0b5ed7;padding:6px 10px;font-size:14px;font-weight:800;cursor:pointer}
+.report-section-actions small{color:#64748b;font-size:14px}
+.filter-submit,.filter-reset{min-height:42px;font-size:15px}
+table{font-size:15px}
+th{font-size:15px}
+th,td{padding:10px 11px;line-height:1.4}
+.summary-cards span{font-size:14px}
+.summary-cards b{font-size:27px}
+.panel-card h3{font-size:1.2rem;line-height:1.35}
+.report-hero{position:relative;display:grid;grid-template-columns:minmax(0,1.45fr) minmax(310px,.85fr);gap:24px;align-items:stretch;overflow:hidden;min-height:300px;padding:24px 26px 42px;border-top:7px solid #123b8f;border-bottom:7px solid #123b8f;border-radius:14px;background:linear-gradient(108deg,#fff 0%,#fff 56%,#eaf2ff 56%,#f7faff 100%);box-shadow:0 5px 16px rgba(18,59,143,.12)}
+.report-hero::after{content:"";position:absolute;right:0;bottom:0;left:64%;height:7px;background:linear-gradient(90deg,#e63946 0 82%,#f4a261 82% 100%)}
+.report-hero-main{min-width:0;display:flex;flex-direction:column;justify-content:center;color:#123b8f}
+.report-hero-brand{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.report-hero-brand>b{display:block;color:#123b8f;font-family:Georgia,serif;font-size:1.05rem;letter-spacing:.02em}
+.report-hero-brand small{display:block;color:#e63946;font-family:Georgia,serif;font-size:.78rem;font-style:italic}
+.report-hero-brand strong{display:block;width:max-content;margin-top:4px;padding:4px 17px;border-bottom:2px solid #174ea6;font-family:Georgia,serif;font-size:1rem}
+.report-hero-logo{display:grid;place-items:center;width:52px;height:52px;flex:0 0 52px;border:3px solid #1769d1;border-radius:50%;background:#fff;color:#e63946;font-size:1.1rem;font-weight:900}
+.report-hero-title{color:#174ea6;font-size:clamp(2rem,3.2vw,3rem);font-weight:900;line-height:1.08;text-transform:uppercase}
+.report-hero-department{color:#2366be;font-size:clamp(1.55rem,2.4vw,2.35rem);font-weight:900;line-height:1.15}
+.report-hero-subtitle{margin-top:10px;color:#243042;font-size:1rem;font-weight:900;letter-spacing:.02em}
+.report-hero-period{align-self:flex-start;margin-top:15px;padding:8px 14px;border-radius:7px;background:#123b8f;color:#fff;font-size:.95rem;font-weight:800;box-shadow:0 3px 7px rgba(18,59,143,.2)}
+.report-hero-main em{align-self:center;margin-top:10px;color:#e63946;font-family:Georgia,serif;font-size:1.05rem;font-weight:700}
+.report-focus-card{position:relative;display:flex;flex-direction:column;justify-content:center;min-width:0;padding:18px 18px 14px;border:1px solid #d5e2f4;border-radius:18px;background:rgba(255,255,255,.72);box-shadow:0 6px 18px rgba(18,59,143,.12)}
+.report-focus-icon{position:absolute;top:-18px;right:4px;display:grid;place-items:center;width:58px;height:58px;border-radius:16px;background:#1d5dbb;color:#fff;font-size:1.8rem;box-shadow:0 7px 15px rgba(18,59,143,.22)}
+.report-focus-card h4{margin:0 48px 12px 0;color:#174ea6;font-size:1rem;letter-spacing:.04em}
+.report-focus-item{display:flex;align-items:flex-start;gap:8px;margin:5px 0;color:#17335f;font-size:.9rem;line-height:1.25}
+.report-focus-item span{display:grid;place-items:center;width:19px;height:19px;flex:0 0 19px;border-radius:50%;background:#2563c7;color:#fff;font-size:.72rem;font-weight:900}
+.report-focus-item b{font-weight:800}
+.report-focus-slogan{margin-top:13px;padding:7px 10px;border:1px solid #d9e3f0;border-radius:8px;background:#fff;color:#174ea6;text-align:center;font-size:.82rem;font-weight:800}
+.report-hero-footer{position:absolute;right:28%;bottom:7px;left:18%;z-index:1;color:#e63946;font-family:Georgia,serif;font-size:1rem;font-style:italic;font-weight:700;text-align:center}
+.report-conclusion{margin:14px 0 0;padding:11px 13px;border-left:4px solid #1677ff;border-radius:5px;background:#f1f6ff;color:#17335f;font-size:15px;font-weight:700}
+.report-subsection{margin-top:18px;padding-top:14px;border-top:2px solid #dbe7f5}
+.report-subsection h4{color:#123b8f;font-size:1.1rem}
+
+@media (min-width:1200px){
+ .module-filters label{font-size:16px}
+ .module-filters input,.module-filters select{min-height:44px}
+ .report-section-options label{font-size:15px}
+}
+
+@media (max-width:780px){
+ body{font-size:16px}
+ .content-shell{padding:12px}
+ .module-toolbar{padding:0 14px;align-items:flex-start}
+ .module-toolbar h2{font-size:1.25rem;line-height:1.3}
+ .module-filters{align-items:stretch;padding:12px}
+ .module-filters label,.module-filters .filter-wide,.smart-picker{width:100%;min-width:100%}
+ .report-section-picker{width:100%;min-width:100%;padding-left:0;padding-right:0}
+ .report-section-options{display:grid;grid-template-columns:1fr;gap:7px}
+ .report-section-options label{font-size:14px}
+ .report-section-actions{justify-content:space-between}
+ .report-section-actions button{font-size:14px}
+ .report-hero{grid-template-columns:1fr;gap:16px;min-height:0;padding:20px 16px 38px;background:linear-gradient(145deg,#fff 0%,#fff 62%,#eaf2ff 62%,#f7faff 100%)}
+ .report-hero-brand{align-items:flex-start;margin-bottom:14px}
+ .report-hero-brand>b{font-size:.9rem}
+ .report-hero-brand strong{font-size:.9rem}
+ .report-hero-logo{width:45px;height:45px;flex-basis:45px;font-size:1rem}
+ .report-hero-title{font-size:1.85rem}
+ .report-hero-department{font-size:1.45rem}
+ .report-hero-period{font-size:.86rem}
+ .report-hero-main em{font-size:.95rem}
+ .report-focus-card{padding:16px 14px 12px}
+ .report-focus-item{font-size:.88rem}
+ .report-hero-footer{right:10%;left:10%;font-size:.85rem}
+ .panel-card{padding:14px}
+ .panel-card h3{font-size:1.1rem}
+ table{font-size:14px}
+ th{font-size:14px}
+ th,td{padding:9px 10px}
+ .summary-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .summary-cards>div{padding:13px 11px}
+ .summary-cards b{font-size:23px}
+ .summary-cards span{font-size:13px}
+ .table-wrap{max-height:none}
+}
