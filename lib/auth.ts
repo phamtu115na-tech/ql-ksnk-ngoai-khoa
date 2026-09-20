@@ -1,19 +1,27 @@
 import {createHmac,timingSafeEqual} from 'crypto';
 import {cookies} from 'next/headers';
 import {compare} from 'bcryptjs';
-import {supabaseAdmin} from './supabase';
+import {supabaseAdminCandidates} from './supabase';
 
 const COOKIE='ksnk_session';
 function secret(){return process.env.SESSION_SECRET||''}
 function signature(payload:string){return createHmac('sha256',secret()).update(payload).digest('hex')}
 export async function storedPassword(){
- const db=supabaseAdmin();if(!db)throw new Error('Thiếu cấu hình Supabase');
- const {data,error}=await db.from('ksnk_settings').select('password_hash').eq('id',1).maybeSingle();
- if(error){
-  const code=typeof error.code==='string'?' ['+error.code+']':'';
-  throw new Error('Không đọc được cấu hình đăng nhập'+code);
+ const dbs=supabaseAdminCandidates();
+ if(!dbs.length)throw new Error('Thiếu cấu hình Supabase');
+ let successfulQuery=false;
+ let lastCode='';
+ for(const db of dbs){
+  const {data,error}=await db.from('ksnk_settings').select('password_hash').eq('id',1).maybeSingle();
+  if(!error){
+   successfulQuery=true;
+   if(data?.password_hash)return data.password_hash as string;
+   continue;
+  }
+  if(typeof error.code==='string')lastCode=error.code;
  }
- return data?.password_hash as string|null|undefined;
+ if(successfulQuery)return undefined;
+ throw new Error('Không đọc được cấu hình đăng nhập'+(lastCode?' ['+lastCode+']':''));
 }
 export async function verifyPassword(password:string,hash:string|null|undefined){
  if(hash)return compare(password,hash);
