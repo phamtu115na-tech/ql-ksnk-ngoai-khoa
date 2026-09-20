@@ -24,6 +24,7 @@ export async function GET(){
  return NextResponse.json({
   ok:true,
   app:'QL-KSNK-NGOAIKHOA',
+  deploymentVersion:'supabase-config-v4',
   supabaseConfiguredProjectRef:config.configuredProjectRef,
   supabaseProjectRef:config.effectiveProjectRef,
   supabaseServerConfigured:dbs.length>0,
