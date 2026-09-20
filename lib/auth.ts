@@ -9,7 +9,10 @@ function signature(payload:string){return createHmac('sha256',secret()).update(p
 export async function storedPassword(){
  const db=supabaseAdmin();if(!db)throw new Error('Thiếu cấu hình Supabase');
  const {data,error}=await db.from('ksnk_settings').select('password_hash').eq('id',1).maybeSingle();
- if(error)throw new Error('Không đọc được cấu hình đăng nhập');
+ if(error){
+  const code=typeof error.code==='string'?' ['+error.code+']':'';
+  throw new Error('Không đọc được cấu hình đăng nhập'+code);
+ }
  return data?.password_hash as string|null|undefined;
 }
 export async function verifyPassword(password:string,hash:string|null|undefined){
