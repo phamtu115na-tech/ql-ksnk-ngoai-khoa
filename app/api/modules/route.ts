@@ -173,6 +173,7 @@ async function buildAlerts(f:Filters,staff:AnyRecord[],departments:string[],map:
  const alerts:AnyRecord[]=[];
  const currentDay=today();
  const currentMonth=currentDay.slice(0,7);
+ const approvalScope=Boolean(f.manager||f.approvalStatus);
  const matchesPerson=(person:unknown)=>!f.person||same(person,f.person);
  const matchesDepartment=(department:unknown)=>!f.department||same(department,f.department);
  const matchesTask=(x:AnyRecord)=>matchesDepartment(x.department)&&matchesPerson(x.assignee)&&(!f.manager||same(x.managerName,f.manager))&&(!f.approvalStatus||same(x.approvalStatus,f.approvalStatus)||(isWaitingManager(f.approvalStatus)&&isWaitingManager(x.approvalStatus)));
@@ -204,8 +205,8 @@ async function buildAlerts(f:Filters,staff:AnyRecord[],departments:string[],map:
   if(distinctManagerOpinion)alerts.push({kind:'Ý KIẾN QUẢN LÝ',level:'PHẢN HỒI MỚI',date:x.approvalReviewedAt||currentDay,title:`Ý kiến quản lý mới: ${x.title}`,instruction:'Mở chi tiết giao việc, đọc chỉ đạo mới và cập nhật phản hồi hoặc trạng thái thực hiện.',person:x.assignee,department:x.department,managerName:x.managerName,managerOpinion:x.managerOpinion,target:'tasks',row_no:x.row_no,id:x.id});
  }
 
- for(const x of [...weekRows.map(row=>plan(row,'TUẦN')),...monthRows.map(row=>plan(row,'THÁNG'))]){const level=alertLevel(x.toDate);if(level&&!done(x.status)&&matchesDepartment(x.department)&&matchesPerson(x.owner))alerts.push({kind:x.type==='TUẦN'?'KẾ HOẠCH TUẦN':'KẾ HOẠCH THÁNG',level,date:x.toDate,title:x.content,instruction:'Mở mục Kế hoạch, cập nhật tiến độ, kết quả hoặc chuyển tiếp kế hoạch nếu chưa hoàn thành.',person:x.owner,department:x.department,target:'plans',row_no:x.row_no,id:x.id,type:x.type});}
- for(const x of reminderRows.map(reminder)){const level=alertLevel(x.date)||'NHẮC';if(!done(x.status)&&matchesPerson(x.person))alerts.push({kind:'NHẮC VIỆC',level,date:x.date,title:x.title,instruction:'Mở mục Nhắc việc và cập nhật trạng thái sau khi thực hiện.',person:x.person,department:'',target:'reminders',row_no:x.row_no,id:x.id});}
+ for(const x of [...weekRows.map(row=>plan(row,'TUẦN')),...monthRows.map(row=>plan(row,'THÁNG'))]){const level=alertLevel(x.toDate);if(!approvalScope&&level&&!done(x.status)&&matchesDepartment(x.department)&&matchesPerson(x.owner))alerts.push({kind:x.type==='TUẦN'?'KẾ HOẠCH TUẦN':'KẾ HOẠCH THÁNG',level,date:x.toDate,title:x.content,instruction:'Mở mục Kế hoạch, cập nhật tiến độ, kết quả hoặc chuyển tiếp kế hoạch nếu chưa hoàn thành.',person:x.owner,department:x.department,target:'plans',row_no:x.row_no,id:x.id,type:x.type});}
+ for(const x of reminderRows.map(reminder)){const level=alertLevel(x.date)||'NHẮC';if(!approvalScope&&!done(x.status)&&matchesPerson(x.person))alerts.push({kind:'NHẮC VIỆC',level,date:x.date,title:x.title,instruction:'Mở mục Nhắc việc và cập nhật trạng thái sau khi thực hiện.',person:x.person,department:'',target:'reminders',row_no:x.row_no,id:x.id});}
  const managerStaff=managerDirectory(staff);const managers=managerStaff.map(x=>text(x.name)).filter(Boolean).sort((a,b)=>a.localeCompare(b,'vi'));
  return {rows:alerts.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))),total:alerts.length,departments,staff,managerStaff,options:{approvalStatuses:TASK_APPROVAL_STATUSES,managers}};
 }
