@@ -136,3 +136,22 @@ th,td{padding:10px 11px;line-height:1.4}
  .report-matrix-summary{min-width:900px}
  .report-error-detail-table{min-width:850px}
 }
+
+/* Bảng kiểm: lọc và xem lại trọn vẹn từng phiếu giám sát. */
+.checklist-review-panel{border:2px solid #d5e2f4;border-top:5px solid #174ea6}
+.checklist-review-panel h3{margin:0;color:#174ea6}
+.checklist-review-meta{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:9px;margin:14px 0}
+.checklist-review-meta>div{min-height:58px;padding:9px 11px;border:1px solid #dbe3ee;border-radius:7px;background:#f7faff}
+.checklist-review-meta small{display:block;color:#64748b;font-size:12px;font-weight:700}
+.checklist-review-meta b{display:block;margin-top:3px;color:#17335f;white-space:normal}
+.checklist-review-note{padding:10px 12px;border-left:4px solid #ff9800;border-radius:5px;background:#fff9e8;color:#17335f;white-space:normal}
+.checklist-review-evidence{display:flex;gap:10px;flex-wrap:wrap;margin-top:7px}
+.checklist-review-table{max-height:58vh;margin-top:14px}
+.checklist-review-table table{min-width:1200px}
+.checklist-review-table td{white-space:normal;vertical-align:top}
+.checklist-review-table td:first-child{width:58px;text-align:center;font-weight:800}
+.checklist-review-table .status-badge{white-space:nowrap}
+@media (max-width:780px){
+ .checklist-review-meta{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .checklist-review-table{max-height:none}
+}
