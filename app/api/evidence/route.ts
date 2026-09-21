@@ -9,6 +9,18 @@ const BUCKET=process.env.SUPABASE_STORAGE_BUCKET||'documents';
 
 function safeName(name:string){return name.normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/-+/g,'-').slice(-100)}
 
+async function ensureEvidenceBucket(db:ReturnType<typeof supabaseAdmin>){
+ if(!db)throw new Error('SUPABASE_SERVICE_ROLE_KEY chưa cấu hình');
+ const existing=await db.storage.getBucket(BUCKET);
+ if(existing.data)return;
+ const created=await db.storage.createBucket(BUCKET,{public:false,fileSizeLimit:MAX_FILE_SIZE,allowedMimeTypes:[...ALLOWED]});
+ if(!created.error)return;
+ // Concurrent first uploads can race while creating the same bucket. Re-read
+ // before surfacing the error so an already-created bucket remains usable.
+ const after=await db.storage.getBucket(BUCKET);
+ if(!after.data)throw created.error;
+}
+
 export async function POST(req:Request){
  if(!await hasSession())return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});
  try{
@@ -17,6 +29,7 @@ export async function POST(req:Request){
   const module=String(form.get('module')||'');const legacyId=String(form.get('legacy_id')||'');
   if(!(file instanceof File)||!module||!legacyId)return NextResponse.json({ok:false,error:'Thiếu tệp hoặc mã công việc'},{status:400});
   if(file.size>MAX_FILE_SIZE||!ALLOWED.has(file.type))return NextResponse.json({ok:false,error:'Chỉ nhận JPG, PNG, WEBP, PDF, DOC, DOCX, XLS, XLSX tối đa 8 MB'},{status:400});
+  await ensureEvidenceBucket(db);
   const path=`${module}/${legacyId}/${crypto.randomUUID()}-${safeName(file.name)}`;
   const {error:uploadError}=await db.storage.from(BUCKET).upload(path,file,{contentType:file.type,cacheControl:'3600',upsert:false});
   if(uploadError)throw new Error(`Không lưu được tài liệu minh chứng vào Storage bucket "${BUCKET}": ${uploadError.message}`);
