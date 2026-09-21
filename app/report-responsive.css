@@ -257,6 +257,7 @@ th,td{padding:10px 11px;line-height:1.4}
 .home-alert-card b{color:#b42318}
 .home-alert-card.ok b{color:#166534}
 .home-alert-detail{display:block;overflow:hidden;margin-top:5px;color:#991b1b;font-size:12px;font-style:normal;line-height:1.35;text-overflow:ellipsis;white-space:nowrap}
+.home-alert-detail.alert-instruction{overflow:visible;color:#7c2d12;font-weight:800;white-space:normal}
 .task-toolbar{align-items:center}
 .task-approval-summary{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px}
 .task-approval-summary .status-badge{font-size:12px}
@@ -270,6 +271,7 @@ th,td{padding:10px 11px;line-height:1.4}
 .approval-queue-item b,.approval-queue-item small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .approval-queue-item small{margin-top:3px;color:#64748b}
 .approval-queue-item em{display:block;max-width:100%;margin-top:5px;overflow:hidden;color:#7c2d12;font-size:12px;font-style:normal;text-overflow:ellipsis;white-space:nowrap}
+.approval-queue-item em:first-of-type{overflow:visible;white-space:normal;font-weight:800}
 .approval-queue-gate{display:grid;gap:5px;margin-top:12px;padding:14px;border:1px dashed #f59e0b;border-radius:8px;background:#fff7df;color:#7c2d12}
 .approval-queue-gate span{color:#92400e;font-size:13px}
 .approval-queue-filter:disabled{border-color:#cbd5e1;background:#f1f5f9;color:#94a3b8;cursor:not-allowed}
@@ -322,9 +324,27 @@ th,td{padding:10px 11px;line-height:1.4}
 .approval-queue-filter{border:1px solid #174ea6;background:#eef5ff;color:#174ea6;cursor:pointer}
 .alert-manager-link{border:0;padding:0;background:transparent;color:#174ea6;font:inherit;font-weight:800;text-decoration:underline;cursor:pointer}
 .alert-manager-link:hover{color:#0b5ed7}
+.approval-steps{display:grid;gap:6px;margin:10px 0;padding:12px 14px;border:2px solid #f59e0b;border-left:6px solid #dc2626;border-radius:8px;background:#fff7df;color:#542006;font-size:15px;line-height:1.5}
+.approval-steps strong{color:#991b1b;font-size:16px;letter-spacing:.02em}
+.approval-steps ol{display:grid;gap:4px;margin:0;padding-left:23px}
+.approval-steps li{font-weight:700}
+.approval-steps.compact{margin:6px 0;padding:8px 10px;border-width:1px;border-left-width:4px;font-size:13px;line-height:1.4}
+.approval-steps.compact strong{font-size:13px}
+.approval-steps.compact ol{gap:2px;padding-left:20px}
+.task-summary-panel{border-top:4px solid #174ea6}
+.task-summary-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px}
+.task-summary-heading h3{margin:0;color:#174ea6;font-size:18px}
+.task-summary-heading p{margin:4px 0 0;color:#64748b;font-size:13px}
+.task-summary-scope{border-radius:999px;background:#e9f2ff;color:#174ea6;padding:7px 11px;font-size:12px;font-weight:900;white-space:nowrap}
+.task-summary-cards{grid-template-columns:repeat(6,minmax(125px,1fr));gap:12px}
+.task-summary-cards>div{min-height:76px;padding:13px 14px;border-top-width:4px}
+.task-summary-cards b{font-size:28px}
+.task-summary-cards span{font-size:13px;font-weight:700}
+.task-summary-start{border-top-color:#64748b!important}.task-summary-progress{border-top-color:#f59e0b!important}.task-summary-done{border-top-color:#16a34a!important}.task-summary-overdue{border-top-color:#dc2626!important}.task-summary-approval{border-top-color:#7c3aed!important}
 
 @media (max-width:1100px){
  .main-menu-grid{grid-template-columns:repeat(2,minmax(190px,1fr))}
+ .task-summary-cards{grid-template-columns:repeat(3,minmax(140px,1fr))}
 }
 @media (max-width:780px){
  .menu-is-open .app-header{padding-left:14px}
@@ -341,4 +361,10 @@ th,td{padding:10px 11px;line-height:1.4}
  .checklist-editor-fields label.wide{grid-column:auto}
  .task-view-tabs{display:grid;grid-template-columns:1fr 1fr}
  .task-view-tabs button{font-size:13px;padding:9px 8px}
+ .task-summary-heading{align-items:stretch;flex-direction:column}
+ .task-summary-scope{align-self:flex-start}
+ .task-summary-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .task-summary-cards>div{min-height:68px;padding:11px}
+ .task-summary-cards b{font-size:24px}
+ .approval-steps{font-size:14px}
 }
