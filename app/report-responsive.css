@@ -155,3 +155,43 @@ th,td{padding:10px 11px;line-height:1.4}
  .checklist-review-meta{grid-template-columns:repeat(2,minmax(0,1fr))}
  .checklist-review-table{max-height:none}
 }
+
+/* Bảng kiểm: điều hướng giống BangKiem.html, chỉ mở chi tiết sau khi chọn mẫu. */
+.checklist-tabs{display:flex;gap:10px;flex-wrap:wrap;padding:4px 0 0}
+.checklist-tabs button{border:2px solid #174ea6;border-radius:8px;background:#fff;color:#174ea6;padding:11px 16px;font-size:16px;font-weight:900;cursor:pointer}
+.checklist-tabs button.active{background:#174ea6;color:#fff;box-shadow:0 3px 8px rgba(23,78,166,.2)}
+.checklist-run-start{border-top:5px solid #174ea6}
+.checklist-run-start h3,.checklist-definition-detail h3{margin:0;color:#174ea6}
+.checklist-run-select{display:grid;grid-template-columns:minmax(260px,1fr) minmax(240px,1fr);gap:12px;align-items:end;margin-top:16px;padding:14px;border:1px solid #cbdcf3;border-radius:8px;background:#f7faff}
+.checklist-run-select label{display:flex;flex-direction:column;gap:6px;color:#17335f;font-weight:800}
+.checklist-run-select select{min-height:44px;padding:9px 11px;border:1px solid #b9c8dc;border-radius:7px;background:#fff;color:#243042;font:inherit}
+.checklist-selected-form{display:flex;flex-direction:column;gap:3px;min-height:44px;padding:8px 11px;border-left:4px solid #16a34a;border-radius:5px;background:#ecfdf3;color:#17335f}
+.checklist-selected-form small{color:#64748b;font-weight:700}
+.checklist-selected-form span{color:#475569;font-size:13px}
+.checklist-run-note{border-left:4px solid #0ea5e9;color:#17335f;background:#f0f9ff}
+.checklist-definition-detail{border:2px solid #c8daf1;border-top:5px solid #16a34a}
+.checklist-definition-meta{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:9px;margin:15px 0;padding:12px;border:1px solid #dbe7f5;border-radius:8px;background:#f7faff}
+.checklist-definition-meta>div{min-height:52px;padding:7px 9px;border:1px solid #dbe3ee;border-radius:6px;background:#fff}
+.checklist-definition-meta>div.wide{grid-column:span 2}
+.checklist-definition-meta small{display:block;color:#64748b;font-size:12px;font-weight:700}
+.checklist-definition-meta b{display:block;margin-top:3px;color:#17335f;white-space:normal}
+.checklist-definition-table{max-height:58vh}
+.checklist-definition-table table{min-width:1050px}
+.checklist-definition-table th{background:#174ea6;text-align:center}
+.checklist-definition-table td{white-space:normal;vertical-align:top}
+.checklist-form-catalog{max-height:58vh}
+.checklist-form-catalog table{min-width:1050px}
+.checklist-form-catalog td{vertical-align:middle}
+.checklist-link-button{border:0;padding:0;background:transparent;color:#174ea6;font:inherit;font-weight:900;text-align:left;text-decoration:underline;cursor:pointer}
+.checklist-link-button:hover{color:#0b5ed7}
+.checklist-form-name{font-weight:800;text-decoration:none}
+.checklist-form-catalog .actions-cell{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+
+@media (max-width:780px){
+ .checklist-tabs{display:grid;grid-template-columns:1fr;gap:8px}
+ .checklist-tabs button{width:100%;text-align:left;font-size:15px}
+ .checklist-run-select{grid-template-columns:1fr}
+ .checklist-definition-meta{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .checklist-definition-meta>div.wide{grid-column:1/-1}
+ .checklist-definition-table,.checklist-form-catalog{max-height:none}
+}
