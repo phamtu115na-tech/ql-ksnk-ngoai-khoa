@@ -207,6 +207,18 @@ async function buildAlerts(f:Filters,staff:AnyRecord[],departments:string[],map:
 
  for(const x of [...weekRows.map(row=>plan(row,'TUẦN')),...monthRows.map(row=>plan(row,'THÁNG'))]){const level=alertLevel(x.toDate);if(!approvalScope&&level&&!done(x.status)&&matchesDepartment(x.department)&&matchesPerson(x.owner))alerts.push({kind:x.type==='TUẦN'?'KẾ HOẠCH TUẦN':'KẾ HOẠCH THÁNG',level,date:x.toDate,title:x.content,instruction:'Mở mục Kế hoạch, cập nhật tiến độ, kết quả hoặc chuyển tiếp kế hoạch nếu chưa hoàn thành.',person:x.owner,department:x.department,target:'plans',row_no:x.row_no,id:x.id,type:x.type});}
  for(const x of reminderRows.map(reminder)){const level=alertLevel(x.date)||'NHẮC';if(!approvalScope&&!done(x.status)&&matchesPerson(x.person))alerts.push({kind:'NHẮC VIỆC',level,date:x.date,title:x.title,instruction:'Mở mục Nhắc việc và cập nhật trạng thái sau khi thực hiện.',person:x.person,department:'',target:'reminders',row_no:x.row_no,id:x.id});}
+ for(const alert of alerts){
+  if(alert.target!=='tasks')continue;
+  if(alert.kind==='CÔNG VIỆC MỚI GIAO'){
+   alert.notificationTitle=`CÔNG VIỆC MỚI GIAO: ${alert.title}`;alert.title=alert.notificationTitle;alert.message='Bạn có công việc mới. Mở chi tiết để xem yêu cầu, thời hạn và cập nhật trạng thái.';alert.notificationAudience='EMPLOYEE';alert.notificationType='NEW_TASK';
+  }else if(alert.kind==='PHÊ DUYỆT'){
+   alert.notificationTitle=`XIN PHÊ DUYỆT: ${alert.title.replace(/^Xin phê duyệt:\s*/i,'')}`;alert.title=alert.notificationTitle;alert.message=`${alert.person||'Nhân viên'} đã gửi nội dung xin phê duyệt cho ${alert.managerName||'quản lý'}.`;alert.notificationAudience='MANAGER';alert.notificationType='APPROVAL_REQUEST';
+  }else if(alert.kind==='PHẢN HỒI'){
+   alert.notificationTitle=`PHẢN HỒI PHÊ DUYỆT: ${alert.title.replace(/^Phản hồi quản lý:\s*/i,'')}`;alert.title=alert.notificationTitle;alert.message=`${alert.managerName||'Quản lý'} đã phản hồi công việc. ${alert.approvalResponse||'Mở chi tiết để xem kết quả phê duyệt và ý kiến quản lý.'}`;alert.notificationAudience='EMPLOYEE';alert.notificationType='MANAGER_RESPONSE';
+  }else if(alert.kind==='Ý KIẾN QUẢN LÝ'){
+   alert.notificationTitle=`PHẢN HỒI QUẢN LÝ: ${alert.title.replace(/^Ý kiến quản lý mới:\s*/i,'')}`;alert.title=alert.notificationTitle;alert.message=`${alert.managerName||'Quản lý'} đã gửi ý kiến: ${alert.managerOpinion||'Mở chi tiết để xem.'}`;alert.notificationAudience='EMPLOYEE';alert.notificationType='MANAGER_OPINION';
+  }
+ }
  const managerStaff=managerDirectory(staff);const managers=managerStaff.map(x=>text(x.name)).filter(Boolean).sort((a,b)=>a.localeCompare(b,'vi'));
  return {rows:alerts.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))),total:alerts.length,departments,staff,managerStaff,options:{approvalStatuses:TASK_APPROVAL_STATUSES,managers}};
 }
