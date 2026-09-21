@@ -269,6 +269,10 @@ th,td{padding:10px 11px;line-height:1.4}
 .approval-queue-item span{display:flex;min-width:0;flex-direction:column}
 .approval-queue-item b,.approval-queue-item small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .approval-queue-item small{margin-top:3px;color:#64748b}
+.approval-queue-item em{display:block;max-width:100%;margin-top:5px;overflow:hidden;color:#7c2d12;font-size:12px;font-style:normal;text-overflow:ellipsis;white-space:nowrap}
+.approval-queue-gate{display:grid;gap:5px;margin-top:12px;padding:14px;border:1px dashed #f59e0b;border-radius:8px;background:#fff7df;color:#7c2d12}
+.approval-queue-gate span{color:#92400e;font-size:13px}
+.approval-queue-filter:disabled{border-color:#cbd5e1;background:#f1f5f9;color:#94a3b8;cursor:not-allowed}
 .approval-btn{border:0;border-radius:7px;background:#f59e0b;color:#fff;padding:8px 11px;font-weight:900;cursor:pointer}
 .task-approval-detail{margin:10px 0;padding:10px 12px;border:1px solid #f4c56b;border-left:4px solid #f59e0b;border-radius:7px;background:#fffbeb;color:#334155}
 .task-approval-detail>div{display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -281,6 +285,20 @@ th,td{padding:10px 11px;line-height:1.4}
 .approval-context{padding:12px;border-left:4px solid #f59e0b;border-radius:6px;background:#fffbeb;color:#17335f}
 .approval-context b,.approval-context small{display:block}
 .approval-context small{margin-top:4px;color:#64748b}
+.task-approval-record{display:grid;gap:11px;padding:14px;border:1px solid #c7d8ee;border-left:5px solid #174ea6;border-radius:9px;background:#f8fbff}
+.task-approval-record-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-bottom:10px;border-bottom:1px solid #d9e5f4}
+.task-approval-record-head b{display:block;color:#174ea6;font-size:16px}
+.task-approval-record-head small{display:block;margin-top:4px;color:#64748b;font-weight:500}
+.task-approval-record-grid{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:9px}
+.task-approval-record-grid>div{min-width:0;padding:9px;border:1px solid #dbe6f3;border-radius:6px;background:#fff}
+.task-approval-record-grid small{display:block;margin-bottom:4px;color:#64748b;font-size:11px;font-weight:800;text-transform:uppercase}
+.task-approval-record-grid b{display:block;overflow-wrap:anywhere;color:#17335f}
+.task-approval-record-block{padding:10px 12px;border-radius:6px;background:#fff;border:1px solid #e1e8f2}
+.task-approval-record-block b{display:block;color:#17335f;font-size:12px;text-transform:uppercase}
+.task-approval-record-block p{margin:5px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;color:#334155}
+.task-approval-record-evidence{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.task-approval-record-evidence>div{display:grid;gap:5px;padding:10px;border:1px dashed #8aa5dd;border-radius:7px;background:#fff}
+.task-approval-record-evidence b{color:#174ea6;font-size:12px;text-transform:uppercase}
 .workload-panel{border-top:4px solid #174ea6}
 .alert-table-wrap{max-height:70vh}
 .alert-table-wrap td{white-space:normal;vertical-align:top}
@@ -297,6 +315,14 @@ th,td{padding:10px 11px;line-height:1.4}
 .checklist-definition-editor-table td{vertical-align:top;min-width:100px}
 .checklist-definition-editor-table td:nth-child(3),.checklist-definition-editor-table td:nth-child(4){min-width:250px}
 
+/* Giao việc: mỗi vùng nội dung hiển thị theo tab để màn hình không bị dồn quá nhiều dữ liệu. */
+.task-view-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px;padding:8px;border:1px solid #d5e2f4;border-radius:8px;background:#f7faff}
+.task-view-tabs button{min-height:42px;padding:9px 13px;border:2px solid #174ea6;border-radius:7px;background:#fff;color:#174ea6;font-size:14px;font-weight:900;cursor:pointer}
+.task-view-tabs button.active{background:#174ea6;color:#fff;box-shadow:0 3px 8px rgba(23,78,166,.2)}
+.approval-queue-filter{border:1px solid #174ea6;background:#eef5ff;color:#174ea6;cursor:pointer}
+.alert-manager-link{border:0;padding:0;background:transparent;color:#174ea6;font:inherit;font-weight:800;text-decoration:underline;cursor:pointer}
+.alert-manager-link:hover{color:#0b5ed7}
+
 @media (max-width:1100px){
  .main-menu-grid{grid-template-columns:repeat(2,minmax(190px,1fr))}
 }
@@ -309,6 +335,10 @@ th,td{padding:10px 11px;line-height:1.4}
  .alert-open-all{width:100%}
  .approval-queue-item{align-items:flex-start;flex-direction:column}
  .task-approval-detail>div{align-items:flex-start;flex-direction:column}
+ .task-approval-record-grid{grid-template-columns:1fr 1fr}
+ .task-approval-record-evidence{grid-template-columns:1fr}
  .checklist-editor-fields{grid-template-columns:1fr}
  .checklist-editor-fields label.wide{grid-column:auto}
+ .task-view-tabs{display:grid;grid-template-columns:1fr 1fr}
+ .task-view-tabs button{font-size:13px;padding:9px 8px}
 }
