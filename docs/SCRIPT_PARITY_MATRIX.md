@@ -5,7 +5,7 @@ Bản sao đầy đủ của mã nguồn Apps Script được lưu tại `legacy
 | Module Script | Sheet/nguồn chính | Phân hệ Vercel | Trạng thái ánh xạ |
 |---|---|---|---|
 | `00_Config.gs` | `DM_NHANVIEN`, `GIAO VIỆC`, `DM_LOI`, `DM_CAUHINH_PHIEU` | cấu hình API + `lib/supabase.ts` | Đã giữ tên bảng và alias cũ/mới |
-| `10_NhanSu.gs` | `DM_NHANVIEN` | `/api/modules?module=staff` | Đọc/thêm/sửa/xóa/tìm kiếm |
+| `10_NhanSu.gs` | `DM_NHANVIEN` | `/api/modules?module=staff` | Đọc/thêm/sửa/xóa/tìm kiếm; phép năm, lịch sử nghỉ, tổng hợp phân bổ theo bộ phận và cảnh báo lịch nghỉ |
 | `20_GiaoViec.gs` | `GIAO VIỆC`, `NHAC_VIEC_GHI_CHU` | `tasks`, `reminders` | Bộ phận, nhân sự, ưu tiên, trạng thái, quá hạn, đánh giá, ý kiến và minh chứng |
 | `30_ViPham.gs` | `THEODOI_VIPHAM`, `DM_LOI`, `tong_hop` | `violations`, `violationError` | Đọc cả `TONG_HOP_VI_PHAM` và `tong_hop`, điểm trừ, báo cáo, minh chứng |
 | `40_BangKiem.gs` | `PHIEU_GIAMSAT`, `CT_PHIEU_GIAMSAT`, `DM_BANGKIEM` | `checklists`, `checklistForm`, `checklistCriterion` | Phiếu, tiêu chí, kết quả, ghi chú, tỷ lệ, KPI và minh chứng |

@@ -34,3 +34,7 @@ Quy trình:
 Migration dùng khóa `sheet_name + row_no`, chỉ upsert, không truncate và không xóa dữ liệu nguồn/đích. Chạy lại an toàn khi cần đồng bộ thay đổi.
 
 Prompt nghiệm thu đầy đủ nằm tại `docs/MIGRATION_PROMPT.md`.
+
+## Phân bổ nghỉ phép năm
+
+Phân hệ `NHÂN SỰ & HỢP ĐỒNG` giữ nguyên dữ liệu phép năm và lịch sử nghỉ trong `DM_NHANVIEN`, đồng thời tổng hợp theo bộ phận: số nhân sự đang làm, số người còn phép, tổng ngày phép còn lại, số tháng còn lại trong năm, số người tối thiểu nên bố trí nghỉ mỗi tháng và bình quân ngày phép cần sắp xếp mỗi tháng. Cảnh báo `CẦN LẬP KẾ HOẠCH` hoặc `CAO` chỉ là mốc theo dõi tham chiếu (1 ngày/người/tháng), không thay thế quy định nhân sự nội bộ.

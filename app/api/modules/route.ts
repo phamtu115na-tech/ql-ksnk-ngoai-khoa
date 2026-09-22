@@ -1,5 +1,6 @@
 import {NextResponse} from 'next/server';
 import {hasSession} from '../../../lib/auth';
+import {buildLeavePlanning} from '../../../lib/leave-policy';
 import {supabaseAdmin} from '../../../lib/supabase';
 
 export const runtime='nodejs';
@@ -142,7 +143,12 @@ async function buildModule(moduleName:string,f:Filters){
  const [staffRows,departmentRows]=await Promise.all([readSheet(S.staff),readSheet(S.departments)]);const staff=getStaff(staffRows);const managers=managerDirectory(staff);const departments=departmentOptions(departmentRows,staff);const map=staffMap(staff);
  if(moduleName==='checklists')return buildChecklistParity(f,staff,departments);
  if(moduleName==='reports')return buildReportsParity(f,staff,departments,map);
- if(moduleName==='staff'){const rows=staff.filter(x=>(!f.department||same(x.department,f.department))&&(!f.person||norm(x.name).includes(norm(f.person))));const leaveSummary={annualLeave:rows.reduce((sum,x)=>sum+Number(x.annualLeaveEntitlement||0),0),taken:rows.reduce((sum,x)=>sum+Number(x.leaveTaken||0),0),remaining:rows.reduce((sum,x)=>sum+Number(x.leaveRemaining||0),0)};return {rows,total:rows.length,departments,staff,managerStaff:managers,contractAlerts:rows.filter(x=>Boolean(x.contractAlert)),leaveSummary};}
+ if(moduleName==='staff'){
+  const rows=staff.filter(x=>(!f.department||same(x.department,f.department))&&(!f.person||norm(x.name).includes(norm(f.person))));
+  const leavePlanning=buildLeavePlanning(rows,departments);
+  const leaveSummary={annualLeave:leavePlanning.summary.annualLeave,taken:leavePlanning.summary.taken,remaining:leavePlanning.summary.remaining,activeEmployees:leavePlanning.summary.activeEmployees,employeesWithLeaveRemaining:leavePlanning.summary.employeesWithLeaveRemaining,employeesUsedUp:leavePlanning.summary.employeesUsedUp};
+  return {rows,total:rows.length,departments,staff,managerStaff:managers,contractAlerts:rows.filter(x=>Boolean(x.contractAlert)),leaveSummary,leavePlan:leavePlanning.departments,leavePlanSummary:leavePlanning.summary,leavePlanMeta:{year:leavePlanning.year,currentMonth:leavePlanning.currentMonth,currentMonthLabel:leavePlanning.currentMonthLabel,monthsRemaining:leavePlanning.monthsRemaining,referenceDaysPerEmployeePerMonth:leavePlanning.referenceDaysPerEmployeePerMonth}};
+ }
  if(moduleName==='tasks'){const [taskRows,reminderRows]=await Promise.all([readSheet(S.tasks),readSheet(S.reminders)]);const all=taskRows.map(x=>task(x,map));await persistOverdueTasks(taskRows,all);const rows=taskFilter(all,f);const reminders=reminderFilter(reminderRows.map(reminder),f);const approvalCandidates=rows.filter(x=>isWaitingManager(x.approvalStatus)||(['da phe duyet','yeu cau bo sung','tu choi'].includes(norm(x.approvalStatus))&&!x.employeeFeedback));const approvalItems=f.manager?approvalCandidates:[];const approvalSummary={waitingManager:f.manager?rows.filter(x=>isWaitingManager(x.approvalStatus)).length:0,waitingEmployee:f.manager?rows.filter(x=>['da phe duyet','yeu cau bo sung','tu choi'].includes(norm(x.approvalStatus))&&!x.employeeFeedback).length:0};return {rows,total:rows.length,taskSummary:taskSummary(rows,f),reminders,reminderTotal:reminders.length,staff,managerStaff:managers,departments,options:{priorities:[...new Set([...TASK_PRIORITIES,...all.map(x=>x.priority).filter(Boolean)])].sort(),statuses:[...new Set([...TASK_STATUSES,...all.map(x=>x.status).filter(Boolean)])].sort(),evalStatuses:[...new Set([...TASK_EVAL_STATUSES,...all.map(x=>x.evalStatus).filter(Boolean)])].sort(),approvalStatuses:[...new Set([...TASK_APPROVAL_STATUSES,...all.map(x=>x.approvalStatus).filter(Boolean)])].sort(),managers:managers.map(x=>x.name).filter(Boolean).sort((a,b)=>a.localeCompare(b,'vi')),reminderStatuses:[...new Set(reminderRows.map(x=>reminder(x).status).filter(Boolean))].sort(),assignees:[...new Set(staff.map(x=>x.name).filter(Boolean))]},approvalItems,approvalSummary,workload:workload(rows,staff)};}
  if(moduleName==='reminders'){const rows=reminderFilter((await readSheet(S.reminders)).map(reminder),f);return {rows,total:rows.length,staff,departments,options:{statuses:[...new Set(rows.map(x=>x.status).filter(Boolean))].sort()}};}
  if(moduleName==='violations'){const [source,errorRows,summaryRows]=await Promise.all([readSheet(S.violations),readSheet(S.errors),readSheets([S.violationSummary,S.violationSummaryLegacy])]);const rows=source.map(violation).filter(x=>inRange(x.date,f)&&(!f.department||same(x.department,f.department))&&(!f.person||same(x.person,f.person)));const errorCatalog=errorRows.map(r=>{const d=r.data;return {row_no:r.row_no,id:pick(d,['Mã lỗi']),name:pick(d,['Tên lỗi']),department:pick(d,['Bộ phận']),level:pick(d,['Mức độ']),score:num(d['Điểm trừ']),note:pick(d,['Ghi chú']),status:pick(d,['Trạng thái']),data:d};});return {rows,total:rows.length,errors:errorRows.map(rowData),errorCatalog,monthlySummary:summaryRows.map(rowData),summary:staff.map(s=>({name:s.name,department:s.department,score:rows.filter(x=>same(x.person,s.name)).reduce((n,x)=>n+num(x.score),0)})).filter(x=>x.score>0),staff,departments};}
@@ -181,6 +187,15 @@ async function buildAlerts(f:Filters,staff:AnyRecord[],departments:string[],map:
  for(const x of staff){
   const level=contractAlertLevel(x.contractEndDate);
   if(level&&!f.manager&&!f.approvalStatus&&matchesDepartment(x.department)&&matchesPerson(x.name))alerts.push({kind:'HỢP ĐỒNG',level,date:x.contractEndDate,title:`Hợp đồng của ${x.name} sắp đến hạn`,instruction:'Mở mục Nhân sự, kiểm tra ngày hết hạn và thực hiện gia hạn hoặc cập nhật hồ sơ.',person:x.name,department:x.department,target:'staff',row_no:x.row_no,id:x.id,contractStartDate:x.contractStartDate,contractEndDate:x.contractEndDate,contractDays:x.contractDays});
+ }
+
+ const leavePlanning=buildLeavePlanning(staff,departments);
+ if(!approvalScope){
+  for(const plan of leavePlanning.departments){
+   const hasPerson=!f.person||plan.staff.some(row=>same(row.name,f.person));
+   if(plan.remainingDays<=0||plan.warningLevel==='TRONG GIỚI HẠN'||!matchesDepartment(plan.department)||!hasPerson)continue;
+   alerts.push({kind:'NGHỈ PHÉP',level:plan.warningLevel,date:currentDay,title:`${plan.department}: còn ${plan.remainingDays} ngày phép`,instruction:`Bố trí tối thiểu ${plan.minimumEmployeesPerMonth} nhân sự nghỉ mỗi tháng; bình quân cần xếp khoảng ${plan.averageDaysPerMonth} ngày phép/tháng trong ${plan.monthsRemaining} tháng còn lại.`,department:plan.department,target:'staff',leavePlan:plan});
+  }
  }
 
  for(const row of taskRows){
