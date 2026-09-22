@@ -226,6 +226,88 @@
     }
     body.ui-desktop .panel-card { padding:18px !important; }
 
+    /* =========================================================
+       CHẾ ĐỘ XEM THÔNG MINH TRÊN MÁY TÍNH
+       Không thu nhỏ toàn trang; dùng toàn bộ vùng nội dung còn lại
+       và chỉ cuộn ngang ở những bảng thật sự có nhiều cột.
+       ========================================================= */
+    body.ui-auto .content-shell,
+    body.ui-desktop .content-shell {
+      width:100%;
+      max-width:2200px !important;
+      margin-left:auto;
+      margin-right:auto;
+      padding-left:clamp(16px,2vw,36px) !important;
+      padding-right:clamp(16px,2vw,36px) !important;
+    }
+    body.ui-auto .module-toolbar,
+    body.ui-desktop .module-toolbar {
+      width:100%;
+      max-width:2200px !important;
+      margin-left:auto;
+      margin-right:auto;
+      padding-left:clamp(16px,2vw,36px) !important;
+      padding-right:clamp(16px,2vw,36px) !important;
+    }
+    body.ui-auto .bc-filter-card,
+    body.ui-auto #bc-section-picker,
+    body.ui-auto #bc-content,
+    body.ui-desktop .bc-filter-card,
+    body.ui-desktop #bc-section-picker,
+    body.ui-desktop #bc-content {
+      width:100%;
+      max-width:2200px;
+      margin-left:auto;
+      margin-right:auto;
+    }
+    body.ui-auto .bc-report,
+    body.ui-desktop .bc-report,
+    body.ui-auto .bc-table-wrap,
+    body.ui-desktop .bc-table-wrap {
+      width:100%;
+      max-width:none;
+    }
+    body.ui-auto .bc-report,
+    body.ui-desktop .bc-report {
+      font-size:16px;
+      line-height:1.5;
+    }
+    body.ui-auto .bc-table th,
+    body.ui-desktop .bc-table th {
+      font-size:15px;
+      padding:12px 11px;
+    }
+    body.ui-auto .bc-table td,
+    body.ui-desktop .bc-table td {
+      font-size:15px;
+      padding:11px;
+    }
+    body.ui-auto .bc-table:not(.bc-matrix),
+    body.ui-desktop .bc-table:not(.bc-matrix) {
+      min-width:920px;
+    }
+    body.ui-auto .bc-matrix,
+    body.ui-desktop .bc-matrix {
+      min-width:1800px;
+    }
+    @media(min-width:1600px){
+      body.ui-auto .bc-report,
+      body.ui-desktop .bc-report { padding:24px 28px; }
+      body.ui-auto .bc-filter-card,
+      body.ui-desktop .bc-filter-card,
+      body.ui-auto #bc-section-picker,
+      body.ui-desktop #bc-section-picker { padding-left:22px; padding-right:22px; }
+    }
+    @media(max-width:780px){
+      /* Khi tự động nhận diện điện thoại, giữ lại bố cục gọn của giao diện mobile. */
+      body.ui-auto .content-shell,
+      body.ui-auto .module-toolbar { max-width:540px !important; }
+      body.ui-auto .content-shell { padding-left:12px !important; padding-right:12px !important; }
+      body.ui-auto .module-toolbar { padding-left:12px !important; padding-right:12px !important; }
+      body.ui-auto .bc-table:not(.bc-matrix),
+      body.ui-auto .bc-matrix { min-width:0; }
+    }
+
     @media(max-width:600px) {
       .view-mode-box { margin-left:12px; margin-right:12px; }
       .view-mode-btn { font-size:13px; padding:9px 10px; }
@@ -246,6 +328,15 @@
   <section id="page-menu" class="app-page"><div class="content-shell">
     <div class="view-mode-box no-print">
       <div class="view-mode-title">CHỌN GIAO DIỆN:</div>
+
+      <button
+        type="button"
+        id="btn-ui-auto"
+        class="view-mode-btn"
+        onclick="InterfaceMode.set('auto')"
+      >
+        ⚙ TỰ ĐỘNG
+      </button>
 
       <button
         type="button"
@@ -329,11 +420,19 @@ const SmartSelect = (() => {
 
 const InterfaceMode = (() => {
   const STORAGE_KEY = 'KSNK_115_INTERFACE_MODE';
+  let preference = 'auto';
+  let resizeTimer = 0;
 
   function updateButtons(mode) {
+    const autoBtn = document.getElementById('btn-ui-auto');
     const mobileBtn = document.getElementById('btn-ui-mobile');
     const desktopBtn = document.getElementById('btn-ui-desktop');
     const status = document.getElementById('view-mode-status');
+
+    if (autoBtn) {
+      autoBtn.classList.toggle('active', mode === 'auto');
+      autoBtn.setAttribute('aria-pressed', mode === 'auto' ? 'true' : 'false');
+    }
 
     if (mobileBtn) {
       mobileBtn.classList.toggle('active', mode === 'mobile');
@@ -346,9 +445,14 @@ const InterfaceMode = (() => {
     }
 
     if (status) {
-      status.textContent = mode === 'mobile'
-        ? 'Đang dùng giao diện ĐIỆN THOẠI'
-        : 'Đang dùng giao diện MÁY TÍNH';
+      if (mode === 'auto') {
+        status.textContent = 'Đang tự động theo kích thước màn hình: ' +
+          (detectMode() === 'mobile' ? 'ĐIỆN THOẠI' : 'MÁY TÍNH');
+      } else {
+        status.textContent = mode === 'mobile'
+          ? 'Đang dùng giao diện ĐIỆN THOẠI'
+          : 'Đang dùng giao diện MÁY TÍNH';
+      }
     }
   }
 
@@ -365,11 +469,18 @@ const InterfaceMode = (() => {
     }, 150);
   }
 
-  function set(mode) {
-    if (mode !== 'mobile' && mode !== 'desktop') return;
+  function applyClasses(mode) {
+    const actualMode = mode === 'auto' ? detectMode() : mode;
+    document.body.classList.remove('ui-mobile', 'ui-desktop', 'ui-auto');
+    document.body.classList.add(actualMode === 'mobile' ? 'ui-mobile' : 'ui-desktop');
+    if (mode === 'auto') document.body.classList.add('ui-auto');
+  }
 
-    document.body.classList.remove('ui-mobile', 'ui-desktop');
-    document.body.classList.add(mode === 'mobile' ? 'ui-mobile' : 'ui-desktop');
+  function set(mode) {
+    if (mode !== 'auto' && mode !== 'mobile' && mode !== 'desktop') return;
+    preference = mode;
+
+    applyClasses(mode);
 
     try {
       localStorage.setItem(STORAGE_KEY, mode);
@@ -384,7 +495,7 @@ const InterfaceMode = (() => {
   function getSavedMode() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved === 'mobile' || saved === 'desktop') return saved;
+      if (saved === 'auto' || saved === 'mobile' || saved === 'desktop') return saved;
     } catch (e) {}
     return '';
   }
@@ -394,12 +505,20 @@ const InterfaceMode = (() => {
   }
 
   function init() {
-    const saved = getSavedMode();
-    set(saved || detectMode());
+    const saved = getSavedMode() || 'auto';
+    set(saved);
+    window.addEventListener('resize', () => {
+      if (preference !== 'auto') return;
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        applyClasses('auto');
+        updateButtons('auto');
+      }, 120);
+    }, { passive:true });
   }
 
   function current() {
-    return document.body.classList.contains('ui-mobile') ? 'mobile' : 'desktop';
+    return preference === 'auto' ? detectMode() : preference;
   }
 
   return { set, init, current };
