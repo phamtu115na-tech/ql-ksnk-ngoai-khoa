@@ -173,9 +173,24 @@
         </select>
       </div>
 
+      <div id="kh-weekday-wrap" class="col-lg-2 col-md-4">
+        <label class="form-label fw-bold">Thứ trong tuần (*)</label>
+        <select id="kh-weekday" class="form-select" onchange="KeHoachApp.weekdayChanged()">
+          <option value="">-- Chọn Thứ --</option>
+          <option value="1">Thứ 2</option>
+          <option value="2">Thứ 3</option>
+          <option value="3">Thứ 4</option>
+          <option value="4">Thứ 5</option>
+          <option value="5">Thứ 6</option>
+          <option value="6">Thứ 7</option>
+          <option value="7">Chủ nhật</option>
+        </select>
+        <small class="text-muted">Chọn Thứ, hệ thống tự đặt ngày thực hiện.</small>
+      </div>
+
       <div class="col-lg-2 col-md-4">
         <label class="form-label fw-bold">Từ ngày (*)</label>
-        <input id="kh-from" type="date" class="form-control">
+        <input id="kh-from" type="date" class="form-control" onchange="KeHoachApp.fromDateChanged()">
       </div>
 
       <div class="col-lg-2 col-md-4">
@@ -549,6 +564,8 @@ const KeHoachApp = (() => {
     const type = document.getElementById('kh-type').value;
     const fromEl = document.getElementById('kh-from');
     const toEl = document.getElementById('kh-to');
+    const weekdayEl = document.getElementById('kh-weekday');
+    const weekdayWrap = document.getElementById('kh-weekday-wrap');
 
     if (!fromEl.value) {
       fromEl.value = AppUtil.today
@@ -561,6 +578,7 @@ const KeHoachApp = (() => {
     if (isNaN(base.getTime())) return;
 
     if (type === 'MONTH') {
+      if (weekdayWrap) weekdayWrap.style.display = 'none';
       const first = new Date(
         base.getFullYear(),
         base.getMonth(),
@@ -577,21 +595,40 @@ const KeHoachApp = (() => {
       toEl.value = ymd(last);
 
     } else {
-      /*
-       * Tuần Thứ 2 -> Chủ nhật chứa ngày đang chọn.
-       */
-      const day = base.getDay();
-      const back = day === 0 ? 6 : day - 1;
-
-      const monday = new Date(base);
-      monday.setDate(base.getDate() - back);
-
-      const sunday = new Date(monday);
-      sunday.setDate(monday.getDate() + 6);
-
-      fromEl.value = ymd(monday);
-      toEl.value = ymd(sunday);
+      if (weekdayWrap) weekdayWrap.style.display = '';
+      if (weekdayEl) weekdayEl.value = String(base.getDay() === 0 ? 7 : base.getDay());
+      weekdayChanged();
     }
+  }
+
+  function weekdayChanged() {
+    const type = document.getElementById('kh-type').value;
+    if (type !== 'WEEK') return;
+    const fromEl = document.getElementById('kh-from');
+    const toEl = document.getElementById('kh-to');
+    const weekdayEl = document.getElementById('kh-weekday');
+    if (!fromEl || !toEl || !weekdayEl) return;
+    if (!fromEl.value) fromEl.value = AppUtil.today ? AppUtil.today() : AppUtil.todayYmd();
+    const base = new Date(fromEl.value + 'T00:00:00');
+    const selected = Number(weekdayEl.value);
+    if (isNaN(base.getTime()) || !selected) return;
+    const current = base.getDay() === 0 ? 7 : base.getDay();
+    const target = new Date(base);
+    target.setDate(base.getDate() + selected - current);
+    fromEl.value = ymd(target);
+    toEl.value = ymd(target);
+  }
+
+  function fromDateChanged() {
+    const type = document.getElementById('kh-type').value;
+    if (type !== 'WEEK') return;
+    const fromEl = document.getElementById('kh-from');
+    const weekdayEl = document.getElementById('kh-weekday');
+    if (!fromEl || !weekdayEl || !fromEl.value) return;
+    const date = new Date(fromEl.value + 'T00:00:00');
+    if (isNaN(date.getTime())) return;
+    weekdayEl.value = String(date.getDay() === 0 ? 7 : date.getDay());
+    weekdayChanged();
   }
 
   function ymd(date) {
@@ -807,6 +844,7 @@ const KeHoachApp = (() => {
     const payload = {
       id: document.getElementById('kh-edit-id').value,
       type: document.getElementById('kh-type').value,
+      weekday: document.getElementById('kh-weekday').value,
       from: document.getElementById('kh-from').value,
       to: document.getElementById('kh-to').value,
       department: document.getElementById('kh-dept').value,
@@ -824,6 +862,14 @@ const KeHoachApp = (() => {
 
     if (!payload.content) {
       return alert('Phải nhập Nội dung kế hoạch.');
+    }
+
+    if (!payload.from || !payload.to || payload.to < payload.from) {
+      return alert('Ngày kế hoạch không hợp lệ.');
+    }
+
+    if (payload.type === 'WEEK' && !payload.weekday) {
+      return alert('Phải chọn Thứ cho kế hoạch tuần.');
     }
 
     AppUtil.loading(true, 'Đang lưu kế hoạch...');
@@ -1009,6 +1055,15 @@ const KeHoachApp = (() => {
     document.getElementById('kh-type').value = x.type;
     document.getElementById('kh-from').value = x.fromYmd || '';
     document.getElementById('kh-to').value = x.toYmd || '';
+    const weekdayEl = document.getElementById('kh-weekday');
+    const weekdayWrap = document.getElementById('kh-weekday-wrap');
+    if (weekdayEl) {
+      const date = new Date((x.fromYmd || '') + 'T00:00:00');
+      weekdayEl.value = x.type === 'WEEK' && !isNaN(date.getTime())
+        ? String(date.getDay() === 0 ? 7 : date.getDay())
+        : '';
+    }
+    if (weekdayWrap) weekdayWrap.style.display = x.type === 'WEEK' ? '' : 'none';
     document.getElementById('kh-dept').value = x.department || '';
     document.getElementById('kh-content').value = x.content || '';
     document.getElementById('kh-description').value = x.description || '';
@@ -1294,6 +1349,8 @@ const KeHoachApp = (() => {
     init,
     openFromAlert,
     typeChanged,
+    weekdayChanged,
+    fromDateChanged,
     departmentChanged,
     issueDepartmentChanged,
     savePlan,
