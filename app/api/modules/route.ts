@@ -278,7 +278,7 @@ function sheetFor(moduleName:string,body:AnyRecord){return ({staff:S.staff,tasks
 function findById(rows:LegacyRow[],id:string){return rows.find(r=>same(r.legacy_id,id)||same(pick(r.data,['ID','Mã công việc','Mã VP','Mã phiếu','Mã KH','Mã TT','MÃ NHẮC VIỆC','Mã NV']),id));}
 function nextDate(value:string,days:number){const d=new Date(`${value}T00:00:00`);d.setDate(d.getDate()+days);return d.toISOString().slice(0,10);}
 function carryDates(from:string,to:string,type:string){if(type==='THÁNG'){const d=new Date(`${from||to}T00:00:00`);const first=new Date(d.getFullYear(),d.getMonth()+1,1);const last=new Date(d.getFullYear(),d.getMonth()+2,0);return {from:first.toISOString().slice(0,10),to:last.toISOString().slice(0,10)};}return {from:nextDate(from||to,7),to:nextDate(to||from,7)};}
-function resolveTaskStaffName(staff:AnyRecord[],value:unknown,label:string,existing?:unknown){const input=text(value);if(!input&&label==='Người giao việc')return '';if(!input)throw new Error(`${label} không được để trống.`);const matched=staff.find(x=>same(x.name,input));if(matched)return text(matched.name);if(existing&&same(existing,input))return text(existing);throw new Error(`${label} phải được chọn từ danh sách nhân sự.`);}
+function resolveTaskStaffName(staff:AnyRecord[],value:unknown,label:string,existing?:unknown){const input=text(value);if(!input)throw new Error(`${label} không được để trống. Vui lòng chọn từ danh sách nhân sự.`);const matched=staff.find(x=>same(x.name,input));if(matched)return text(matched.name);if(existing&&same(existing,input))return text(existing);throw new Error(`${label} phải được chọn từ danh sách nhân sự.`);}
 
 async function saveChecklistParity(raw:AnyRecord){
  const details=Array.isArray(raw.details)?raw.details as AnyRecord[]:[];
