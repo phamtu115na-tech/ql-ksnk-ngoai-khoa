@@ -45,13 +45,14 @@ function text(value:unknown){return value==null?'':String(value).trim();}
 function norm(value:unknown){return text(value).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/\s+/g,' ');}
 function flag(value:unknown){if(typeof value==='boolean')return value;return ['true','1','yes','on','bat','bật','co','có','nhắc hàng ngày','nhac hang ngay'].includes(norm(value));}
 function same(a:unknown,b:unknown){return norm(a)===norm(b);}
-function pick(data:AnyRecord,keys:string[]){for(const key of keys){if(data[key]!=null&&text(data[key]))return text(data[key]);}return '';}
+function pick(data:AnyRecord,keys:string[]){for(const key of keys){if(data[key]!=null&&text(data[key]))return text(data[key]);}const normalizedKeys=keys.map(norm);for(const [key,value] of Object.entries(data)){if(normalizedKeys.includes(norm(key))&&value!=null&&text(value))return text(value);}return '';}
 function num(value:unknown){const n=Number(String(value??'').replace(',','.'));return Number.isFinite(n)?n:0;}
 function ymd(value:unknown){
  const raw=text(value);if(!raw)return '';
  const iso=raw.match(/(\d{4}-\d{2}-\d{2})/);if(iso)return iso[1];
  const dmy=raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);if(dmy)return `${dmy[3]}-${String(dmy[2]).padStart(2,'0')}-${String(dmy[1]).padStart(2,'0')}`;
- if(typeof value==='number'&&value>20000&&value<80000){const d=new Date(Date.UTC(1899,11,30)+value*86400000);return d.toISOString().slice(0,10);}
+ const compact=raw.match(/^(\d{4})(\d{2})(\d{2})$/);if(compact)return `${compact[1]}-${compact[2]}-${compact[3]}`;
+ const serial=typeof value==='number'?value:/^\d+(?:\.\d+)?$/.test(raw)?Number(raw):NaN;if(Number.isFinite(serial)&&serial>20000&&serial<80000){const d=new Date(Date.UTC(1899,11,30)+serial*86400000);return d.toISOString().slice(0,10);}
  const d=new Date(raw);return Number.isNaN(d.getTime())?'':d.toISOString().slice(0,10);
 }
 function today(){const d=new Date();return d.toISOString().slice(0,10);}
@@ -106,7 +107,7 @@ function rowData(row:LegacyRow){return {row_no:row.row_no,legacy_id:row.legacy_i
 
 function parseLeaveHistory(value:unknown):AnyRecord[]{if(Array.isArray(value))return value.filter(x=>x&&typeof x==='object') as AnyRecord[];const raw=text(value);if(!raw)return [];try{const parsed=JSON.parse(raw);return Array.isArray(parsed)?parsed.filter(x=>x&&typeof x==='object') as AnyRecord[]:[]}catch{return [];}}
 function leaveDaysOf(item:AnyRecord){return Math.max(0,num(item.days??item.leaveDays??item['Số ngày nghỉ']));}
-function getStaff(rows:LegacyRow[]){return rows.map(row=>{const d=row.data;const contractEndDate=ymd(pick(d,['Ngày hết hạn hợp đồng','Ngày kết thúc hợp đồng','Ngày hết hạn HĐ','Hạn hợp đồng']));const contractLevel=contractAlertLevel(contractEndDate);const position=pick(d,['Chức vụ','Chức danh']);const leaveHistory=parseLeaveHistory(d['Lịch sử nghỉ phép']??d.leaveHistory);const annualLeaveEntitlement=Math.max(0,num(pick(d,['Số ngày phép năm','Phép năm','Ngày phép năm'])));const leaveTaken=leaveHistory.reduce((sum,item)=>sum+leaveDaysOf(item),0)||Math.max(0,num(pick(d,['Số ngày đã nghỉ phép','Đã nghỉ phép','Ngày đã nghỉ'])));const leaveRemaining=Math.max(annualLeaveEntitlement-leaveTaken,0);return {row_no:row.row_no,legacy_id:row.legacy_id||'',id:pick(d,['Mã NV']),name:pick(d,['Họ và tên','Họ tên']),department:pick(d,['Bộ phận']),position,managerNote:pick(d,['Lưu ý quản lý','Ghi chú quản lý','Lưu ý']),isManager:isManagerPosition(position),phone:pick(d,['Số điện thoại']),status:pick(d,['Trạng thái']),contractStartDate:ymd(pick(d,['Ngày ký hợp đồng','Ngày bắt đầu hợp đồng','Ngày ký HĐ'])),contractEndDate,contractAlert:contractLevel,contractDays:dayDelta(contractEndDate),annualLeaveEntitlement,leaveTaken,leaveRemaining,leaveHistory,data:d};}).filter(x=>x.name);}
+function getStaff(rows:LegacyRow[]){return rows.map(row=>{const d=row.data;const contractEndDate=ymd(pick(d,['Ngày hết hạn hợp đồng','Ngày hết hạn Hợp đồng','Ngày kết thúc hợp đồng','Ngày hết hạn HĐ','Ngày kết thúc HĐ','Hạn hợp đồng','Hạn HĐ','Ngày hết hạn HĐLĐ','Ngày hết hạn hợp đồng lao động','Ngày kết thúc hợp đồng lao động','Contract End Date','contractEndDate']));const contractLevel=contractAlertLevel(contractEndDate);const position=pick(d,['Chức vụ','Chức danh']);const leaveHistory=parseLeaveHistory(d['Lịch sử nghỉ phép']??d.leaveHistory);const annualLeaveEntitlement=Math.max(0,num(pick(d,['Số ngày phép năm','Phép năm','Ngày phép năm'])));const leaveTaken=leaveHistory.reduce((sum,item)=>sum+leaveDaysOf(item),0)||Math.max(0,num(pick(d,['Số ngày đã nghỉ phép','Đã nghỉ phép','Ngày đã nghỉ'])));const leaveRemaining=Math.max(annualLeaveEntitlement-leaveTaken,0);return {row_no:row.row_no,legacy_id:row.legacy_id||'',id:pick(d,['Mã NV']),name:pick(d,['Họ và tên','Họ tên']),department:pick(d,['Bộ phận']),position,managerNote:pick(d,['Lưu ý quản lý','Ghi chú quản lý','Lưu ý']),isManager:isManagerPosition(position),phone:pick(d,['Số điện thoại']),status:pick(d,['Trạng thái']),contractStartDate:ymd(pick(d,['Ngày ký hợp đồng','Ngày bắt đầu hợp đồng','Ngày ký HĐ','Ngày ký HĐLĐ'])),contractEndDate,contractAlert:contractLevel,contractDays:dayDelta(contractEndDate),annualLeaveEntitlement,leaveTaken,leaveRemaining,leaveHistory,data:d};}).filter(x=>x.name);}
 function managerDirectory(staff:AnyRecord[]){return staff.filter(x=>x.isManager||isManagerPosition(x.position));}
 function staffMap(staff:AnyRecord[]){return new Map<string,string>(staff.map(x=>[norm(x.name),text(x.department)] as [string,string]));}
 function departmentOptions(catalogRows:LegacyRow[],staff:AnyRecord[]){
@@ -203,7 +204,7 @@ async function buildAlerts(f:Filters,staff:AnyRecord[],departments:string[],map:
 
  for(const x of staff){
   const level=contractAlertLevel(x.contractEndDate);
-  if(level&&!f.manager&&!f.approvalStatus&&matchesDepartment(x.department)&&matchesPerson(x.name))alerts.push({kind:'HỢP ĐỒNG',level,date:x.contractEndDate,title:`Hợp đồng của ${x.name} sắp đến hạn`,instruction:'Mở mục Nhân sự, kiểm tra ngày hết hạn và thực hiện gia hạn hoặc cập nhật hồ sơ.',person:x.name,department:x.department,target:'staff',row_no:x.row_no,id:x.id,contractStartDate:x.contractStartDate,contractEndDate:x.contractEndDate,contractDays:x.contractDays});
+  if(level&&!f.manager&&!f.approvalStatus&&matchesDepartment(x.department)&&matchesPerson(x.name)){const expired=level==='HỢP ĐỒNG QUÁ HẠN';alerts.push({kind:'HỢP ĐỒNG',level,date:x.contractEndDate,title:expired?`Hợp đồng của ${x.name} đã quá hạn`:`Hợp đồng của ${x.name} sắp đến hạn`,instruction:expired?'Mở mục Nhân sự, kiểm tra ngay hồ sơ và cập nhật gia hạn hợp đồng.':'Mở mục Nhân sự, kiểm tra ngày hết hạn và thực hiện gia hạn hoặc cập nhật hồ sơ.',person:x.name,department:x.department,target:'staff',row_no:x.row_no,id:x.id,contractStartDate:x.contractStartDate,contractEndDate:x.contractEndDate,contractDays:x.contractDays});}
  }
 
  const leavePlanning=buildLeavePlanning(staff,departments);
