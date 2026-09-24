@@ -125,7 +125,6 @@ th,td{padding:10px 11px;line-height:1.4}
 .validation-alert{display:grid;gap:4px;margin:10px 0;padding:14px 16px;border:3px solid #dc2626;border-left-width:9px;border-radius:8px;background:#fff1f2;color:#991b1b;box-shadow:0 5px 15px rgba(220,38,38,.13)}.validation-alert strong{font-size:18px;letter-spacing:.02em}.validation-alert span{font-size:15px;font-weight:800;line-height:1.4}.validation-alert small{font-weight:700}.modal-validation-alert{margin:0 18px 12px;position:sticky;top:0;z-index:3}.validation-alert-copy{display:grid;gap:4px}.validation-alert-close{justify-self:end;padding:7px 12px;border:1px solid #b91c1c;border-radius:6px;background:#b91c1c;color:#fff;font-weight:900;cursor:pointer}.validation-alert-close:hover{background:#991b1b}
 .checklist-invalid-row td{background:#fff1f2!important}.checklist-invalid-row select,.checklist-invalid-row input{border:2px solid #dc2626!important;background:#fffafa}
 .settings-grid .wide{grid-column:1/-1}.settings-grid label small{display:block;margin-top:5px;color:#64748b;font-weight:400;line-height:1.35}
-.side-menu-open{top:auto!important;bottom:24px!important;background:linear-gradient(135deg,#174ea6,#0f2f70)!important;border:2px solid #fff!important}
 .side-menu{background:linear-gradient(180deg,#163f88 0%,#1d5dbb 54%,#0f2f70 100%)!important}.side-menu nav button{min-height:48px}.side-menu nav button:hover,.side-menu nav button.active{background:linear-gradient(90deg,rgba(255,255,255,.28),rgba(255,255,255,.11))!important;box-shadow:inset 3px 0 #fbbf24}.side-menu-close{top:auto!important;right:16px!important;bottom:18px!important;background:rgba(255,255,255,.22)!important;border:2px solid rgba(255,255,255,.65)!important}
 .menu-toggle{background:linear-gradient(135deg,#174ea6,#0f2f70)!important;box-shadow:0 4px 10px rgba(15,44,96,.2)}
 
@@ -277,8 +276,6 @@ th,td{padding:10px 11px;line-height:1.4}
 .side-menu nav button{display:flex;align-items:center;gap:9px;width:100%;min-height:50px;padding:9px 12px;border:0;border-radius:12px;background:transparent;color:#fff;text-align:left;font:inherit;font-weight:800;cursor:pointer;transition:background .15s ease,transform .15s ease}
 .side-menu nav button:hover,.side-menu nav button.active{background:rgba(255,255,255,.2);transform:translateX(2px)}
 .side-menu nav button span{display:grid;place-items:center;width:25px;height:25px;flex:0 0 25px;border-radius:50%;background:rgba(255,255,255,.22);font-size:12px}
-.side-menu-open{position:fixed;top:76px;left:10px;z-index:34;width:38px;height:38px;border:0;border-radius:9px;background:#174ea6;color:#fff;font-size:28px;line-height:1;box-shadow:0 4px 12px rgba(15,44,96,.22);cursor:pointer}
-.menu-is-open .side-menu-open{display:none}
 .menu-is-open .app-header{padding-left:300px}
 .menu-is-open .app-main{margin-left:274px}
 .app-main{min-height:100vh;transition:margin-left .2s ease}
@@ -585,11 +582,11 @@ th,td{padding:10px 11px;line-height:1.4}
 
 
 /* Menu controls: keep the entry/exit action obvious at every viewport size. */
-.menu-toggle,.side-menu-open,.side-menu-close{align-items:center;justify-content:center;gap:6px;font-weight:900;white-space:nowrap;transition:transform .15s ease,box-shadow .15s ease,background .15s ease}
+.menu-toggle,.side-menu-close{align-items:center;justify-content:center;gap:6px;font-weight:900;white-space:nowrap;transition:transform .15s ease,box-shadow .15s ease,background .15s ease}
 .menu-action-icon{display:inline-grid;place-items:center;line-height:1;font-size:1.35em}
 .menu-action-label{display:none;font-size:12px;letter-spacing:.02em}
-.menu-toggle:focus-visible,.side-menu-open:focus-visible,.side-menu-close:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}
-.menu-toggle:hover,.side-menu-open:hover,.side-menu-close:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(15,44,96,.3)}
+.menu-toggle:focus-visible,.side-menu-close:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}
+.menu-toggle:hover,.side-menu-close:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(15,44,96,.3)}
 
 /* Alert tones are applied to the wrapper and its table row, not only the button. */
 .home-alert-item.new-task{border-color:#7dd3fc!important;border-left-color:#0ea5e9!important;background:#eff8ff!important}
@@ -617,8 +614,6 @@ th,td{padding:10px 11px;line-height:1.4}
  .side-menu-brand{padding:8px 92px 20px 10px;font-size:21px}
  .side-menu-close{top:12px!important;right:12px!important;bottom:auto!important;width:auto!important;min-width:78px;height:42px;padding:0 10px;border:2px solid rgba(255,255,255,.8)!important;border-radius:10px;background:rgba(255,255,255,.2)!important;font-size:13px}
  .side-menu-close .menu-action-label{display:inline}
- .side-menu-open{top:calc(env(safe-area-inset-top,0px) + 78px)!important;bottom:auto!important;left:12px;width:auto;min-width:76px;height:46px;padding:0 12px;border:2px solid #fff!important;border-radius:11px;font-size:14px}
- .side-menu-open .menu-action-label{display:inline}
  .side-menu nav button{min-height:50px}
 }
 
@@ -626,8 +621,6 @@ th,td{padding:10px 11px;line-height:1.4}
 .side-menu-brand{padding-right:102px}
 .side-menu-close{top:14px!important;right:12px!important;bottom:auto!important;width:auto!important;min-width:78px;height:42px;padding:0 10px;border:2px solid rgba(255,255,255,.8)!important;border-radius:10px;background:rgba(255,255,255,.2)!important;font-size:13px}
 .side-menu-close .menu-action-label{display:inline}
-.side-menu-open{top:76px!important;bottom:auto!important;left:12px;width:auto;min-width:76px;height:46px;padding:0 12px;border:2px solid #fff!important;border-radius:11px;font-size:14px}
-.side-menu-open .menu-action-label{display:inline}
 
 /* Preserve the old readable overdue presentation: red is an accent, not a full-row fill. */
 .alert-table-wrap tr.danger td{background:#fff7f7!important;color:#243042!important;font-weight:500}
