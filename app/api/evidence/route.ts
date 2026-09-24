@@ -4,7 +4,7 @@ import {hasSession} from '../../../lib/auth';
 
 export const runtime='nodejs';
 const MAX_FILE_SIZE=8*1024*1024;
-const ALLOWED=new Set(['image/jpeg','image/png','image/webp','application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
+const ALLOWED=new Set(['image/jpeg','image/png','image/webp','application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/zip','application/x-7z-compressed','application/x-rar-compressed','application/octet-stream','application/x-msdownload']);
 const BUCKET=process.env.SUPABASE_STORAGE_BUCKET||'documents';
 
 function safeName(name:string){return name.normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/-+/g,'-').slice(-100)}
@@ -28,7 +28,7 @@ export async function POST(req:Request){
   const form=await req.formData();const file=form.get('file');
   const module=String(form.get('module')||'');const legacyId=String(form.get('legacy_id')||'');
   if(!(file instanceof File)||!module||!legacyId)return NextResponse.json({ok:false,error:'Thiếu tệp hoặc mã công việc'},{status:400});
-  if(file.size>MAX_FILE_SIZE||!ALLOWED.has(file.type))return NextResponse.json({ok:false,error:'Chỉ nhận JPG, PNG, WEBP, PDF, DOC, DOCX, XLS, XLSX tối đa 8 MB'},{status:400});
+  if(file.size>MAX_FILE_SIZE||!ALLOWED.has(file.type))return NextResponse.json({ok:false,error:'Chỉ nhận JPG, PNG, WEBP, PDF, DOC, DOCX, XLS, XLSX, ZIP, 7Z, RAR hoặc EXE tối đa 8 MB'},{status:400});
   await ensureEvidenceBucket(db);
   const path=`${module}/${legacyId}/${crypto.randomUUID()}-${safeName(file.name)}`;
   const {error:uploadError}=await db.storage.from(BUCKET).upload(path,file,{contentType:file.type,cacheControl:'3600',upsert:false});
