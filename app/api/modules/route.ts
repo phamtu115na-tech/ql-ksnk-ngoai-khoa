@@ -8,7 +8,7 @@ export const dynamic='force-dynamic';
 
 type AnyRecord=Record<string,any>;
 type LegacyRow={row_no:number;legacy_id?:string|null;data:AnyRecord};
-type Filters={from?:string;to?:string;department?:string;person?:string;manager?:string;title?:string;priority?:string;status?:string;approvalStatus?:string;assignees?:string[];statuses?:string[];formCode?:string;type?:string;reportSection?:string[]};
+type Filters={from?:string;to?:string;department?:string;person?:string;manager?:string;title?:string;priority?:string;status?:string;approvalStatus?:string;alertLevel?:string;assignees?:string[];statuses?:string[];formCode?:string;type?:string;reportSection?:string[]};
 
 const PAGE=1000;
 const BASE_DEPARTMENTS=['VỆ SINH MÔI TRƯỜNG','ĐỒ VẢI','ĐỒ VẢI - PHÒNG VIP','GIÁM SÁT','DỤNG CỤ','VI PHẠM CHUNG'];
@@ -73,7 +73,7 @@ function appendApprovalHistory(data:AnyRecord,event:AnyRecord){
 function overlap(startValue:unknown,endValue:unknown,filters:Filters){const start=ymd(startValue);const end=ymd(endValue)||start;if(!filters.from&&!filters.to)return true;return (!end||end>=(filters.from||'0000-01-01'))&&(!start||start<=(filters.to||'9999-12-31'));}
 function inRange(value:unknown,filters:Filters){const date=ymd(value);return (!filters.from||!date||date>=filters.from)&&(!filters.to||!date||date<=filters.to);}
 function arrayParam(url:URL,name:string){const raw=url.searchParams.get(name);if(!raw)return [];try{const parsed=JSON.parse(raw);return Array.isArray(parsed)?parsed.map(text).filter(Boolean):[];}catch{return raw.split('|').map(text).filter(Boolean);}}
-function parseFilters(url:URL):Filters{return {from:text(url.searchParams.get('from')),to:text(url.searchParams.get('to')),department:text(url.searchParams.get('department')),person:text(url.searchParams.get('person')),manager:text(url.searchParams.get('manager')),title:text(url.searchParams.get('title')),priority:text(url.searchParams.get('priority')),status:text(url.searchParams.get('status')),approvalStatus:text(url.searchParams.get('approvalStatus')),assignees:arrayParam(url,'assignees'),statuses:arrayParam(url,'statuses'),formCode:text(url.searchParams.get('formCode')),type:text(url.searchParams.get('type')),reportSection:arrayParam(url,'reportSection')};}
+function parseFilters(url:URL):Filters{return {from:text(url.searchParams.get('from')),to:text(url.searchParams.get('to')),department:text(url.searchParams.get('department')),person:text(url.searchParams.get('person')),manager:text(url.searchParams.get('manager')),title:text(url.searchParams.get('title')),priority:text(url.searchParams.get('priority')),status:text(url.searchParams.get('status')),approvalStatus:text(url.searchParams.get('approvalStatus')),alertLevel:text(url.searchParams.get('alertLevel')),assignees:arrayParam(url,'assignees'),statuses:arrayParam(url,'statuses'),formCode:text(url.searchParams.get('formCode')),type:text(url.searchParams.get('type')),reportSection:arrayParam(url,'reportSection')};}
 
 async function readSheet(sheet:string):Promise<LegacyRow[]>{
  const client=db();const rows:LegacyRow[]=[];let from=0;
@@ -200,6 +200,7 @@ async function buildAlerts(f:Filters,staff:AnyRecord[],departments:string[],map:
  const approvalScope=Boolean(f.manager||f.approvalStatus);
  const matchesPerson=(person:unknown)=>!f.person||same(person,f.person);
  const matchesDepartment=(department:unknown)=>!f.department||same(department,f.department);
+ const matchesAlertLevel=(level:unknown)=>!f.alertLevel||same(level,f.alertLevel);
  const matchesTask=(x:AnyRecord)=>matchesDepartment(x.department)&&matchesPerson(x.assignee)&&(!f.manager||same(x.managerName,f.manager))&&(!f.approvalStatus||same(x.approvalStatus,f.approvalStatus)||(isWaitingManager(f.approvalStatus)&&isWaitingManager(x.approvalStatus)));
 
  for(const x of staff){
@@ -254,8 +255,8 @@ async function buildAlerts(f:Filters,staff:AnyRecord[],departments:string[],map:
    alert.notificationTitle=`PHẢN HỒI QUẢN LÝ: ${alert.title.replace(/^Ý kiến quản lý mới:\s*/i,'')}`;alert.title=alert.notificationTitle;alert.message=`${alert.managerName||'Quản lý'} đã gửi ý kiến: ${alert.managerOpinion||'Mở chi tiết để xem.'}`;alert.notificationAudience='EMPLOYEE';alert.notificationType='MANAGER_OPINION';
   }
  }
- const managerStaff=managerDirectory(staff);const managers=managerStaff.map(x=>text(x.name)).filter(Boolean).sort((a,b)=>a.localeCompare(b,'vi'));
- return {rows:alerts.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))),total:alerts.length,departments,staff,managerStaff,options:{approvalStatuses:TASK_APPROVAL_STATUSES,managers}};
+ const managerStaff=managerDirectory(staff);const managers=managerStaff.map(x=>text(x.name)).filter(Boolean).sort((a,b)=>a.localeCompare(b,'vi'));const alertLevels=[...new Set(alerts.map(alert=>text(alert.level)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'vi'));const visibleAlerts=alerts.filter(alert=>matchesAlertLevel(alert.level)).sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
+ return {rows:visibleAlerts,total:visibleAlerts.length,departments,staff,managerStaff,options:{approvalStatuses:TASK_APPROVAL_STATUSES,managers,alertLevels}};
 }
 
 function canonical(moduleName:string,body:AnyRecord){const data=body.data&&typeof body.data==='object'&&!Array.isArray(body.data)?body.data:{};
