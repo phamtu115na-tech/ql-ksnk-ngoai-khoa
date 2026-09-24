@@ -50,3 +50,22 @@ export async function GET(req:Request){
   return NextResponse.json({ok:true,files},{headers:{'Cache-Control':'private, max-age=30'}});
  }catch(e){return NextResponse.json({ok:false,error:e instanceof Error?e.message:String(e)},{status:500});}
 }
+
+export async function DELETE(req:Request){
+ if(!await hasSession())return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});
+ try{
+  const db=supabaseAdmin();if(!db)throw new Error('SUPABASE_SERVICE_ROLE_KEY chưa cấu hình');
+  const id=new URL(req.url).searchParams.get('id')||'';
+  if(!id)return NextResponse.json({ok:false,error:'Thiếu mã tệp minh chứng'},{status:400});
+  const {data:record,error:readError}=await db.from('ksnk_evidence').select('id,storage_path').eq('id',id).maybeSingle();
+  if(readError)throw readError;
+  if(!record)return NextResponse.json({ok:false,error:'Không tìm thấy tệp minh chứng'},{status:404});
+  if(record.storage_path){
+   const {error:storageError}=await db.storage.from(BUCKET).remove([record.storage_path]);
+   if(storageError)throw storageError;
+  }
+  const {error}=await db.from('ksnk_evidence').delete().eq('id',id);
+  if(error)throw error;
+  return NextResponse.json({ok:true,id});
+ }catch(e){return NextResponse.json({ok:false,error:e instanceof Error?e.message:String(e)},{status:500});}
+}
