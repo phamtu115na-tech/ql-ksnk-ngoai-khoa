@@ -650,3 +650,5 @@ th,td{padding:10px 11px;line-height:1.4}
 @media(max-width:600px){.kpi-rules-heading h2{font-size:20px}.kpi-rules-modal{padding:12px}.reminder-filter-bar>label:has(input[type=date]){flex:1 1 140px}}
 
 .task-selected-evidence{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 0}.task-selected-evidence img{width:80px;height:64px;object-fit:cover;border:1px solid #cbd5e1;border-radius:6px}.task-selected-evidence>span{overflow-wrap:anywhere}.task-selected-evidence a{text-decoration:none}.task-saved-evidence{margin:12px 0}.task-saved-evidence .evidence-item{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
+
+.reminder-list-panel .actions-cell{white-space:normal;min-width:210px}.reminder-list-panel .actions-cell button{margin:3px;white-space:normal}.reminder-list-panel .reminder-delete-button{display:inline-flex;background:#dc2626;color:#fff;border:1px solid #b91c1c;border-radius:6px;padding:9px 12px;font-weight:800}
