@@ -639,3 +639,14 @@ th,td{padding:10px 11px;line-height:1.4}
 .alert-table-wrap tr.danger .edit-btn{background:#fff!important;color:#123b8f!important;border:1px solid #123b8f!important}
 .home-alert-item.danger{border-color:#fca5a5!important;background:#fff7f7!important;border-left-color:#dc2626!important}
 .home-alert-item.danger .home-alert-card{background:#fff7f7!important}
+
+/* Score conversion dialog matches the original KPI configuration. */
+.kpi-rules-modal{position:fixed;inset:0;margin:auto;width:min(980px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:16px;border:0;border-radius:12px;background:#fff;color:#123b8f;box-shadow:0 24px 64px #0004;overflow:auto}
+.kpi-rules-modal::backdrop{background:#0007}
+.kpi-rules-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;border-bottom:2px solid #173b8f;padding-bottom:12px}
+.kpi-rules-heading h2{margin:0;font-size:26px;font-weight:500}.kpi-rules-heading p{font-size:12px;margin:6px 0 0}.kpi-rules-heading button{white-space:nowrap}
+.kpi-rules-modal .kpi-rule-editor{padding:0;border:0;background:#fff}.kpi-rules-modal .kpi-rule-editor-note{font-size:13px;font-weight:400;color:#123b8f}.kpi-rules-modal .kpi-rule-editor-table{max-height:none}.kpi-rules-modal table{min-width:720px;width:100%;border-collapse:collapse}.kpi-rules-modal th{background:#173b8f;color:white;padding:12px 8px}.kpi-rules-modal td{padding:8px;border:1px solid #d9e2ef}.kpi-rules-modal .kpi-color-input{min-width:72px}.kpi-rules-modal .kpi-color-input code{display:none}.kpi-rules-modal .kpi-color-input input{width:72px;height:36px}.kpi-rules-modal .kpi-rule-editor-table input{min-width:70px}.kpi-rules-modal .kpi-rule-editor-actions{display:flex;justify-content:flex-end}.kpi-rules-modal .kpi-rule-editor-actions button{width:auto}
+.reminder-filter-bar{flex-wrap:wrap}.reminder-filter-bar>label:has(input[type=date]){flex:0 1 160px;min-width:140px}
+@media(max-width:600px){.kpi-rules-heading h2{font-size:20px}.kpi-rules-modal{padding:12px}.reminder-filter-bar>label:has(input[type=date]){flex:1 1 140px}}
+
+.task-selected-evidence{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 0}.task-selected-evidence img{width:80px;height:64px;object-fit:cover;border:1px solid #cbd5e1;border-radius:6px}.task-selected-evidence>span{overflow-wrap:anywhere}.task-selected-evidence a{text-decoration:none}.task-saved-evidence{margin:12px 0}.task-saved-evidence .evidence-item{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
