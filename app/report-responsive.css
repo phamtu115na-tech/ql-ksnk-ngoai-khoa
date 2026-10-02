@@ -654,3 +654,25 @@ th,td{padding:10px 11px;line-height:1.4}
 .reminder-list-panel .actions-cell{white-space:normal;min-width:210px}.reminder-list-panel .actions-cell button{margin:3px;white-space:normal}.reminder-list-panel .reminder-delete-button{display:inline-flex;background:#dc2626;color:#fff;border:1px solid #b91c1c;border-radius:6px;padding:9px 12px;font-weight:800}
 
 .evidence-capture-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px}.evidence-capture-actions>input[type=file]{flex:1 1 240px;margin-top:0!important}.evidence-camera-button{border:1px solid #1677ff;border-radius:7px;background:#eef5ff;color:#0b5ed7;padding:9px 12px;font-weight:900;cursor:pointer;white-space:nowrap}.evidence-camera-button:hover{background:#dbeafe}.evidence-camera-input{display:none!important}
+
+/* Per-form checklist scoring and evidence presentation */
+.checklist-score-config-summary,.checklist-score-config-editor{margin:14px 0;padding:14px;border:2px solid #c8daf1;border-radius:9px;background:#f8fbff}
+.checklist-score-config-summary{border-top:4px solid #7b2cbf}
+.checklist-score-config-editor{border-top:4px solid #16a34a}
+.checklist-score-config-summary .toolbar-line,.checklist-score-config-editor .toolbar-line{margin:0 0 10px}
+.checklist-score-config-summary .toolbar-line small,.checklist-score-config-editor .toolbar-line small{display:block;margin-top:3px;color:#64748b}
+.checklist-score-config-grid{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:9px}
+.checklist-score-config-grid>div,.checklist-score-config-grid>label{display:grid;gap:4px;padding:9px;border:1px solid #dbe3ee;border-radius:7px;background:#fff}
+.checklist-score-config-grid>div.wide{grid-column:1/-1}
+.checklist-score-config-grid small{color:#64748b;font-size:12px;font-weight:700}
+.checklist-score-config-grid b{color:#17335f;white-space:normal}
+.checklist-score-config-grid input,.checklist-score-config-grid select{width:100%;box-sizing:border-box;padding:8px;border:1px solid #cbd5e1;border-radius:6px;background:#fff}
+.checklist-kpi-band-grid{display:grid;grid-template-columns:repeat(3,minmax(160px,1fr));gap:9px;margin-top:10px}
+.checklist-kpi-band-grid>label,.checklist-kpi-band{display:grid;gap:5px;padding:9px;border:1px dashed #9db7d8;border-radius:7px;background:#fff}
+.checklist-kpi-band{grid-template-columns:1fr 1fr}
+.checklist-kpi-band>b{grid-column:1/-1;color:#174ea6}
+.checklist-kpi-band input,.checklist-kpi-band-grid>label input{width:100%;box-sizing:border-box;padding:8px;border:1px solid #cbd5e1;border-radius:6px}
+.checklist-config-badge{display:inline-block;padding:5px 8px;border-radius:999px;background:#eef5ff;color:#174ea6;font-size:12px;font-weight:800;white-space:normal}
+.report-inline-table .evidence-links,.report-issue-inline-table .evidence-links{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:135px}
+.report-inline-table .report-evidence-empty,.report-issue-inline-table .report-evidence-empty{display:block;min-width:110px}
+@media(max-width:780px){.checklist-score-config-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.checklist-kpi-band-grid{grid-template-columns:1fr}.checklist-score-config-grid>div.wide{grid-column:1/-1}.checklist-score-config-summary,.checklist-score-config-editor{padding:10px}}
