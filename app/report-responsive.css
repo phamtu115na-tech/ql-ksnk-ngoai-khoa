@@ -673,6 +673,12 @@ th,td{padding:10px 11px;line-height:1.4}
 .checklist-kpi-band>b{grid-column:1/-1;color:#174ea6}
 .checklist-kpi-band input,.checklist-kpi-band-grid>label input{width:100%;box-sizing:border-box;padding:8px;border:1px solid #cbd5e1;border-radius:6px}
 .checklist-config-badge{display:inline-block;padding:5px 8px;border-radius:999px;background:#eef5ff;color:#174ea6;font-size:12px;font-weight:800;white-space:normal}
+.report-row-evidence{display:grid;gap:6px;margin-top:10px;padding-top:9px;border-top:1px dashed #b8c7dc;color:#334155;font-size:13px;line-height:1.4}
+.report-row-evidence>div{display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap}
+.report-row-evidence>div>b{color:#174ea6;white-space:nowrap}
+.report-row-evidence .evidence-links{display:inline-flex;min-width:0;gap:4px}
+.report-row-evidence .report-evidence-empty{min-width:0;color:#64748b}
+.report-row-evidence .report-evidence-link,.report-row-evidence .evidence-item a{font-weight:800}
 .report-inline-table .evidence-links,.report-issue-inline-table .evidence-links{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:135px}
 .report-inline-table .report-evidence-empty,.report-issue-inline-table .report-evidence-empty{display:block;min-width:110px}
 @media(max-width:780px){.checklist-score-config-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.checklist-kpi-band-grid{grid-template-columns:1fr}.checklist-score-config-grid>div.wide{grid-column:1/-1}.checklist-score-config-summary,.checklist-score-config-editor{padding:10px}}
