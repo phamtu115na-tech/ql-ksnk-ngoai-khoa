@@ -23,3 +23,10 @@
 .deadline-tags{display:flex;gap:5px;flex-wrap:wrap}.deadline-tags>span{font-size:11px;padding:4px 7px;border-radius:12px;background:#edf3fb;color:#405676}.deadline-card-overdue .deadline-tags>span:first-child{background:#fff0f0;color:#b42332}
 .deadline-worktype{font-size:10px;font-weight:700;color:#48659a;overflow-wrap:anywhere}.deadline-person{display:flex;align-items:center;gap:8px;font-size:12px}.deadline-avatar{border-radius:50%;background:#e0ecff;color:#2459a6;width:30px;height:30px;display:grid;place-items:center;flex-shrink:0;font-weight:700}.deadline-person small{display:block;color:#64748b;font-size:11px;margin-top:3px}.deadline-card-footer{border-top:1px solid #edf0f5;padding-top:9px;font-size:11px;color:#526780}.deadline-card-footer small{display:block;margin-top:4px;color:#855610}.deadline-empty{color:#e1e8ff;font-size:12px;text-align:center;border:1px dashed #ffffff35;border-radius:10px;padding:24px 8px}.deadline-board-note{color:#e1e8ff;font-size:12px;line-height:1.6;margin:8px 3px 0}
 @media(max-width:640px){.task-layout-switch{width:100%}.task-layout-switch button{flex:1}.deadline-board{padding:12px}.deadline-column{flex-basis:245px}}
+
+.reminder-detail-backdrop{z-index:100;padding:20px;overscroll-behavior:contain}
+.reminder-detail-dialog{width:min(960px,100%);max-height:calc(100dvh - 40px);overflow-y:auto;margin:0!important;background:#fff;box-shadow:0 24px 80px #0f172a55;border-radius:16px;overscroll-behavior:contain}
+.reminder-detail-dialog>.toolbar-line{position:sticky;top:-1px;z-index:1;background:#fff;padding:12px 0;border-bottom:1px solid #dbe3ee}
+.reminder-detail-dialog .card-actions{display:flex;gap:10px;flex-wrap:wrap;padding-top:16px}
+.reminder-detail-dialog .reminder-detail-grid{overflow-wrap:anywhere}
+@media(max-width:640px){.reminder-detail-backdrop{padding:10px}.reminder-detail-dialog{max-height:calc(100dvh - 20px);padding:14px}.reminder-detail-dialog .card-actions button{flex:1 1 140px}}

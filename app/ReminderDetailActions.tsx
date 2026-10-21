@@ -8,7 +8,7 @@ function norm(value:string|null|undefined){return (value||'').toLowerCase().norm
 export default function ReminderDetailActions(){
  const[host,setHost]=useState<HTMLElement|null>(null);
  useEffect(()=>{
-  const sync=()=>setHost(document.querySelector<HTMLElement>('.reminder-detail-panel > .toolbar-line'));
+  const sync=()=>setHost(document.querySelector<HTMLElement>('.reminder-detail-panel:not([data-native-actions]) > .toolbar-line'));
   sync();
   const observer=new MutationObserver(sync);
   observer.observe(document.body,{childList:true,subtree:true});
