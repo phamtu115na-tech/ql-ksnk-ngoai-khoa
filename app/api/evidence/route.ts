@@ -1,8 +1,10 @@
 import {NextResponse} from 'next/server';
-import {supabaseAdmin} from '../../../lib/supabase';
+import {supabaseAdmin,effectiveSupabaseUrl} from '../../../lib/supabase';
+import {evidenceStoragePath} from '../../../lib/evidence-url';
 import {hasSession} from '../../../lib/auth';
 
 export const runtime='nodejs';
+export const dynamic='force-dynamic';
 const MAX_FILE_SIZE=8*1024*1024;
 const ALLOWED=new Set(['image/jpeg','image/png','image/webp','application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/zip','application/x-7z-compressed','application/x-rar-compressed','application/octet-stream','application/x-msdownload']);
 const BUCKET=process.env.SUPABASE_STORAGE_BUCKET||'documents';
@@ -44,10 +46,23 @@ export async function GET(req:Request){
  try{
   const db=supabaseAdmin();if(!db)throw new Error('SUPABASE_SERVICE_ROLE_KEY chưa cấu hình');
   const u=new URL(req.url),module=u.searchParams.get('module')||'',legacyId=u.searchParams.get('legacy_id')||'';
+  if(u.searchParams.get('open')==='1'){
+   const id=u.searchParams.get('id');const reference=u.searchParams.get('reference');
+   let query=db.from('ksnk_evidence').select('id,file_name,storage_path,mime_type');
+   if(id)query=query.eq('id',id);
+   else if(reference){const path=evidenceStoragePath(reference,effectiveSupabaseUrl(),BUCKET);if(!path)return NextResponse.json({ok:false,error:'Liên kết không thuộc kho minh chứng của hệ thống.'},{status:400});query=query.eq('storage_path',path);}
+   else return NextResponse.json({ok:false,error:'Thiếu mã tệp.'},{status:400});
+   const {data:records,error:lookupError}=await query.limit(1);if(lookupError)throw lookupError;
+   const record=records?.[0];if(!record)return NextResponse.json({ok:false,error:'Không tìm thấy tệp minh chứng hoặc tệp đã bị xóa.'},{status:404});
+   const {data:file,error:downloadError}=await db.storage.from(BUCKET).download(record.storage_path);
+   if(downloadError||!file)throw new Error('Không tải được tệp minh chứng. '+(downloadError?.message||''));
+   const inline=['image/jpeg','image/png','image/webp','application/pdf'].includes(record.mime_type);
+   return new Response(file.stream(),{headers:{'Content-Type':record.mime_type||'application/octet-stream','Content-Disposition':`${inline?'inline':'attachment'}; filename="${safeName(record.file_name)}"; filename*=UTF-8''${encodeURIComponent(record.file_name).replace(/'/g,'%27')}`,'Cache-Control':'private, no-store, max-age=0','X-Content-Type-Options':'nosniff'}});
+  }
   const {data,error}=await db.from('ksnk_evidence').select('id,file_name,storage_path,mime_type,created_at').eq('module',module).eq('legacy_id',legacyId).order('created_at',{ascending:false});
   if(error)throw error;
-  const files=await Promise.all((data||[]).map(async f=>{const {data:signed}=await db.storage.from(BUCKET).createSignedUrl(f.storage_path,600);return {...f,storage_path:undefined,url:signed?.signedUrl||''}}));
-  return NextResponse.json({ok:true,files},{headers:{'Cache-Control':'private, max-age=30'}});
+  const files=(data||[]).map(f=>({...f,storage_path:undefined,url:'/api/evidence?open=1&id='+encodeURIComponent(String(f.id))}));
+  return NextResponse.json({ok:true,files},{headers:{'Cache-Control':'private, no-store, max-age=0'}});
  }catch(e){return NextResponse.json({ok:false,error:e instanceof Error?e.message:String(e)},{status:500});}
 }
 

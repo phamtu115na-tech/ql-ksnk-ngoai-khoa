@@ -30,3 +30,7 @@
 .reminder-detail-dialog .card-actions{display:flex;gap:10px;flex-wrap:wrap;padding-top:16px}
 .reminder-detail-dialog .reminder-detail-grid{overflow-wrap:anywhere}
 @media(max-width:640px){.reminder-detail-backdrop{padding:10px}.reminder-detail-dialog{max-height:calc(100dvh - 20px);padding:14px}.reminder-detail-dialog .card-actions button{flex:1 1 140px}}
+
+.evaluation-warning-backdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:#0f172a99;padding:20px}.evaluation-warning-backdrop .modal-validation-alert{width:min(560px,100%);margin:0;background:#fff7ed;box-shadow:0 20px 60px #0005;border:2px solid #f59e0b;border-radius:14px;padding:24px}
+
+.deadline-add{display:block;width:100%;font-size:30px;font-weight:600;line-height:1;cursor:pointer;background:transparent;color:#fff;min-height:52px;margin:0 0 12px}.deadline-add:hover,.deadline-add:focus-visible{background:#ffffff20;border-color:#fff;outline:2px solid #fff;outline-offset:2px}

@@ -2,7 +2,7 @@
 import {useEffect,useState} from 'react';
 import {BOARD_COLUMNS,taskColumn,vietnamDay,type BoardTask,type BoardColumn} from '../lib/task-board';
 
-export default function TaskDeadlineBoard({rows,onEdit,variant='tasks'}:{rows:BoardTask[];onEdit:(row:BoardTask)=>void;variant?:'tasks'|'reminders'}) {
+export default function TaskDeadlineBoard({rows,onEdit,onCreate,variant='tasks'}:{rows:BoardTask[];onCreate:()=>void;onEdit:(row:BoardTask)=>void;variant?:'tasks'|'reminders'}) {
   const reminders=variant==='reminders';
   const itemLabel=reminders?'nhắc việc':'công việc';
   const reminderLabels:Record<BoardColumn,string>={overdue:'Đã qua ngày nhắc',today:'Nhắc hôm nay',week:'Nhắc tuần này',nextWeek:'Nhắc tuần sau',fortnight:'Nhắc trong 2 tuần',later:'Xa hơn',noDate:'Chưa có ngày nhắc',done:'Đã xong'};
@@ -16,7 +16,8 @@ export default function TaskDeadlineBoard({rows,onEdit,variant='tasks'}:{rows:Bo
       {BOARD_COLUMNS.map(column=><section className="deadline-column" key={column.id} aria-label={reminders?reminderLabels[column.id]:column.label}>
         <h3 style={{background:column.color}}><span>{reminders?reminderLabels[column.id]:column.label}</span><b>{groups[column.id].length}</b></h3>
         <div className="deadline-column-cards">
-          {groups[column.id].length===0?<p className="deadline-empty">Không có {itemLabel}</p>:groups[column.id].map((row,index)=><button type="button" key={row.row_no??row.id??index} className={'deadline-card '+(column.id==='overdue'?'deadline-card-overdue':'')} onClick={()=>onEdit(row)}>
+          <button type="button" className="deadline-empty deadline-add" onClick={onCreate} aria-label={`Tạo ${itemLabel} mới — ${reminders?reminderLabels[column.id]:column.label}`} title={`Tạo ${itemLabel} mới`}>+</button>
+          {groups[column.id].map((row,index)=><button type="button" key={row.row_no??row.id??index} className={'deadline-card '+(column.id==='overdue'?'deadline-card-overdue':'')} onClick={()=>onEdit(row)}>
             <span className="deadline-card-title">{row.title||'Chưa có tiêu đề'}</span>
             {row.description&&<span className="deadline-description">{row.description}</span>}
             <span className="deadline-tags"><span>{column.id==='done'?(reminders?'✓ Đã xong':'✓ Đã hoàn thành'):row.endDate?`${reminders?'Ngày nhắc':'Hạn'}: ${row.endDate.slice(0,10).split('-').reverse().join('/')}`:(reminders?'Chưa có ngày nhắc':'Không có hạn chót')}</span>{row.priority&&<span>{row.priority}</span>}</span>
