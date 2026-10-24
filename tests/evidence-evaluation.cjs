@@ -4,8 +4,10 @@ const vm=require('node:vm');
 const ts=require('typescript');
 function load(path,mocks={}){const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:name=>mocks[name]||require(name),URL,Response,Request,process,Buffer,console});return exports;}
 const rules=load('lib/task-evaluation.ts');
-for(const status of ['CHƯA BẮT ĐẦU','ĐANG THỰC HIỆN','QUÁ HẠN',''])assert.throws(()=>rules.requireEmployeeCompleted(status));
-rules.requireEmployeeCompleted('ĐÃ HOÀN THÀNH');
+for(const evaluation of ['', 'CHƯA BẮT ĐẦU', 'QUÁ HẠN'])assert.throws(()=>rules.requireManagerEvaluation('ĐANG LÀM','ĐÃ HOÀN THÀNH',evaluation));
+for(const evaluation of ['XUẤT SẮC','TỐT','KHÁ','CHƯA ĐẠT','KÉM'])rules.requireManagerEvaluation('ĐANG LÀM','ĐÃ HOÀN THÀNH',evaluation);
+rules.requireManagerEvaluation('ĐANG LÀM','ĐANG LÀM','');
+rules.requireManagerEvaluation('ĐÃ HOÀN THÀNH','ĐÃ HOÀN THÀNH','');
 const urls=load('lib/evidence-url.ts');
 const origin='https://example.supabase.co';
 const expired=origin+'/storage/v1/object/sign/documents/tasks/1/image.png?token=expired';
