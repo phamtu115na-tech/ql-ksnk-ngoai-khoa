@@ -4,8 +4,8 @@ import {supabaseAdmin} from './supabase';
 
 export const sessionCookie={name:'ksnk_session',options:{httpOnly:true,sameSite:'strict' as const,secure:process.env.NODE_ENV==='production',path:'/',maxAge:43200}};
 export function db(){const client=supabaseAdmin();if(!client)throw Error('Thiếu cấu hình Supabase');return client;}
-export type Person={id:string;name:string;username:string;unit:string;admin:boolean;active:boolean;legacy_operator:boolean;department:string;staff_code:string|null;version:string};
-export const personFields='id,name,username,unit,admin,active,legacy_operator,department,staff_code,version';
+export type Person={id:string;name:string;username:string;unit:string;admin:boolean;active:boolean;legacy_operator:boolean;department:string;pending_login:boolean;staff_code:string|null;version:string};
+export const personFields='id,name,username,unit,admin,active,legacy_operator,department,staff_code,pending_login,version';
 const digest=(token:string)=>createHash('sha256').update(token).digest('hex');
 export async function actor():Promise<Person|null>{
  const value=(await cookies()).get(sessionCookie.name)?.value;

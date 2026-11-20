@@ -27,6 +27,11 @@ function login(){
 async function start(){
  const r=await api('me');state.me=r.me;state.people=r.people;state.scope=r.me.unit==='company'?'all':r.me.unit;state.offset=0;state.tab=['task','reminder','chat'].includes(location.hash.slice(1))?location.hash.slice(1):'all';lastUnread=0;
  $('#identity').textContent=r.me.name+' · '+units[r.me.unit];$('#dock').hidden=false;dashboard();await refresh();
+ const q=new URLSearchParams(location.search);
+ if(q.has('row')){
+ await run(async()=>{const result=await api('sourceThread',{kind:state.tab,row:Number(q.get('row')),ref:q.get('ref')});
+ await openThread(result.id);});
+ }
 }
 function dashboard(){
  const a=state.me;state.screen++;
@@ -67,7 +72,7 @@ function paint(){
  $('#heading').textContent=names[k]+((state.due?.[k]||0)>0?' · '+state.due[k]+' việc của tôi đến hạn hoặc quá hạn':'');$('#pager').innerHTML='';
  if(k==='admin'){
  $('#actions').innerHTML='<button class="primary" id="new">Cấp tài khoản</button>';$('#new').onclick=()=>account();$('#actions').insertAdjacentHTML('afterbegin','<button id="roster">Danh mục nhân viên hiện tại</button>');$('#roster').onclick=()=>run(directory);
- $('#rows').innerHTML=state.people.filter(x=>state.scope==='all'||x.unit===state.scope).map(x=>'<div class="row"><div><strong>'+esc(x.name)+'</strong><small>'+esc(x.username)+' · '+esc(units[x.unit])+' · '+(x.admin?'Quản trị viên':x.active?'Đang hoạt động':'Đã khóa')+'</small></div>'+(x.admin?'':'<button data-account="'+x.id+'">Sửa / cấp lại mã</button>')+'</div>').join('');return;
+ $('#rows').innerHTML=state.people.filter(x=>state.scope==='all'||x.unit===state.scope).map(x=>'<div class="row"><div><strong>'+esc(x.name)+'</strong><small>'+esc(x.pending_login?'Chưa cấp tài khoản':x.username)+' · '+esc(units[x.unit])+' · '+(x.admin?'Quản trị viên':x.active?'Đang hoạt động':'Đã khóa')+'</small></div>'+(x.admin?'':'<button data-account="'+x.id+'">Sửa / cấp lại mã</button>')+'</div>').join('');return;
  }
  const actions=k==='all'?['task','reminder','chat']:[k];$('#actions').innerHTML=actions.map(t=>'<button class="primary" data-new="'+t+'">'+({task:'+ Giao việc',reminder:'+ Nhắc việc',chat:'+ Trao đổi'}[t])+'</button>').join('');
  const work=k==='task'||k==='reminder',board=work&&localStorage.cxView!=='list';
@@ -75,7 +80,7 @@ function paint(){
  $('#viewMode').onclick=()=>{localStorage.cxView=board?'list':'board';paint()};}
  const card=({item:t,unread})=>{
  const member=[t.owner_id,...t.performers,...t.observers].includes(state.me.id);
- return '<div class="row"><div><small>'+names[t.kind]+' · '+esc(t.units.map(x=>units[x]).join(' / '))+'</small><strong>'+esc(rowTitle(t))+' '+badge(unread)+'</strong><small>'+esc(t.status)+(t.due&&t.due<=new Date(Date.now()+7*3600000).toISOString().slice(0,10)&&t.status!=='Hoàn thành'?' · <b class="late">Đến hạn / quá hạn</b>':'')+(t.due?' · Hạn '+esc(t.due.split('-').reverse().join('/')):'')+'</small></div>'+(member?'<button data-open="'+t.id+'">Mở</button>':'<small>Theo dõi tiến độ</small>')+'</div>';
+ return '<div class="row"><div><small>'+names[t.kind]+' · '+esc(t.units.map(x=>units[x]).join(' / '))+'</small><strong>'+esc(rowTitle(t))+' '+badge(unread)+'</strong><small>'+esc(t.status)+' · '+esc(t.performers.map(person).join(', '))+(t.due&&t.due<=new Date(Date.now()+7*3600000).toISOString().slice(0,10)&&t.status!=='Hoàn thành'?' · <b class="late">Đến hạn / quá hạn</b>':'')+(t.due?' · Hạn '+esc(t.due.split('-').reverse().join('/')):'')+'</small></div>'+(member?'<button data-open="'+t.id+'">Mở</button>':'<small>Theo dõi tiến độ</small>')+'</div>';
  };
  if(board){
  const left=$('.deadlineGrid')?.scrollLeft||0;
@@ -98,7 +103,7 @@ function changeCode(){
 }
 function submit(fn){$('#edit').onsubmit=e=>{e.preventDefault();const form=e.currentTarget;run(()=>fn(new FormData(form)),form.querySelector('button[type=submit],button.primary'))};}
 function account(x,staff){
- modal(x?'Cập nhật nhân viên':'Cấp tài khoản','<form id="edit"><label>Họ tên<input name="name" required value="'+esc(staff?.name||x?.name)+'"></label><label>Tên đăng nhập<input name="username" pattern="[a-z0-9._\\-]{3,50}" required value="'+esc(x?.username)+'"></label><label>Đơn vị<select name="unit">'+options(units,staff?.unit||x?.unit||'surgery')+'</select></label><label>Mã mới '+(x?'(để trống để giữ mã)':'')+'<input type="password" name="code" minlength="12" '+(x?'':'required')+'></label><label>Trạng thái<select name="active">'+options({on:'Đang hoạt động',off:'Khóa tài khoản'},x?.active===false?'off':'on')+'</select></label><label><span><input type="checkbox" name="legacy" '+(x?.legacy_operator?'checked':'')+'> Phụ trách nghiệp vụ KSNK Ngoại khoa (quyền sửa hồ sơ)</span></label><button class="primary">Lưu tài khoản</button></form>');
+ modal(x?'Cập nhật nhân viên':'Cấp tài khoản','<form id="edit"><label>Họ tên<input name="name" required value="'+esc(staff?.name||x?.name)+'"></label><label>Tên đăng nhập<input name="username" pattern="[a-z0-9._\\-]{3,50}" required value="'+esc(x?.pending_login?'':x?.username)+'"></label><label>Đơn vị<select name="unit">'+options(units,staff?.unit||x?.unit||'surgery')+'</select></label><label>Mã mới '+(x&&!x.pending_login?'(để trống để giữ mã)':'')+'<input type="password" name="code" minlength="12" '+(x&&!x.pending_login?'':'required')+'></label><label>Trạng thái<select name="active">'+options({on:'Đang hoạt động',off:'Khóa tài khoản'},x?.active===false&&!x.pending_login?'off':'on')+'</select></label><label><span><input type="checkbox" name="legacy" '+(x?.legacy_operator?'checked':'')+'> Phụ trách nghiệp vụ KSNK Ngoại khoa (quyền sửa hồ sơ)</span></label><button class="primary">Lưu tài khoản</button></form>');
  if(staff||x?.staff_code){$('#edit [name=name]').readOnly=true;$('#edit [name=unit]').disabled=true;}
  submit(async fd=>{await api('account',{...Object.fromEntries(fd),unit:staff?.unit||$('#edit [name=unit]').value,staffCode:staff?.code||x?.staff_code,id:x?.id,version:x?.version,active:fd.get('active')==='on',legacy:fd.has('legacy')});state.people=(await api('me')).people;close();paint();notice('Đã lưu tài khoản.')});
 }
@@ -114,9 +119,9 @@ async function upload(fd){
  result.push({name:file.name,path:f.path});}return result;
 }
 function compose(kind){
- const direct=kind==='chat',everyone=state.people.filter(x=>x.active&&(!direct||x.id!==state.me.id));
+ const direct=kind==='chat',everyone=state.people.filter(x=>(x.active||(!direct&&x.pending_login))&&(!direct||x.id!==state.me.id));
  const allowed=state.me.unit==='company'?Object.keys(units):[state.me.unit,'company'];
- const picker=(name,radio)=>'<div class="picker">'+everyone.map(x=>'<label data-unit="'+x.unit+'"><input type="'+(radio?'radio':'checkbox')+'" name="'+name+'" value="'+x.id+'">'+esc(x.name)+' · '+esc([x.staff_code,x.department,x.username].filter(Boolean).join(' · '))+'</label>').join('')+'</div>';
+ const picker=(name,radio)=>'<div class="picker">'+everyone.map(x=>'<label data-unit="'+x.unit+'"><input type="'+(radio?'radio':'checkbox')+'" name="'+name+'" value="'+x.id+'">'+esc(x.name)+' · '+esc([x.staff_code,x.department,x.pending_login?'Chưa cấp tài khoản':x.username].filter(Boolean).join(' · '))+'</label>').join('')+'</div>';
  modal(names[kind],'<form id="edit"><p>Người tạo · '+esc(state.me.name)+'</p><label>Đơn vị nhận</label><div class="picker">'+allowed.map(x=>'<label><input type="checkbox" name="unitChoice" value="'+x+'" '+(state.scope==='all'||state.scope===x?'checked':'')+'>'+esc(units[x])+'</label>').join('')+'</div>'+(direct?'':'<label>Tiêu đề<input required name="title" maxlength="180"></label><label>Ngày '+(kind==='task'?'đến hạn':'nhắc')+'<input type="date" name="due" required></label><label>Nội dung<textarea name="note" maxlength="6000"></textarea></label>')+'<label>'+(direct?'Người nhận':'Người thực hiện')+'</label>'+picker('performers',direct)+(direct?'':'<label>Người liên quan</label>'+picker('observers',false)+fileField)+'<button class="primary"> ' +(direct?'Mở trao đổi':'Lưu và mở trao đổi')+'</button></form>');
  const f=$('#edit');function filter(){const u=new FormData(f).getAll('unitChoice');f.querySelectorAll('[data-unit]').forEach(l=>{l.hidden=!u.includes(l.dataset.unit);if(l.hidden)l.querySelector('input').checked=false})}
  filter();f.onchange=e=>{if(e.target.name==='unitChoice')filter()};const id=crypto.randomUUID();
@@ -134,7 +139,7 @@ async function openThread(id){
  const epoch=state.dialog;
  const r=await api('thread',{id});if(state.dialog!==epoch)return;
  state.members=r.members;const t=r.item,isChat=t.kind==='chat',canUpdate=t.owner_id===state.me.id||t.performers.includes(state.me.id);
- const facts='<div class="details pane"><h3>'+names[t.kind]+'</h3><p>Đơn vị · '+esc(t.units.map(x=>units[x]).join(' / '))+'</p><p>Người tạo · '+esc(person(t.owner_id))+'</p><p>Người thực hiện · '+esc(t.performers.map(person).join(', '))+'</p><p>Người liên quan · '+esc(t.observers.map(person).join(', ')||'—')+'</p><p style="white-space:pre-wrap">'+esc(t.note)+'</p><p>Ngày '+(t.kind==='reminder'?'nhắc':'đến hạn')+' · '+esc(t.due||'—')+'</p>'+(t.owner_id===state.me.id&&!isChat?'<button id="editTask">Sửa nội dung và hạn</button>':'')+(canUpdate&&!isChat?'<label>Trạng thái<select id="progress">'+options(Object.fromEntries(statuses.map(x=>[x,x])),t.status)+'</select></label><button id="saveStatus">Lưu trạng thái</button>':'')+'</div>';
+ const facts='<div class="details pane"><h3>'+names[t.kind]+'</h3><p>Đơn vị · '+esc(t.units.map(x=>units[x]).join(' / '))+'</p><p>Người tạo · '+esc(t.owner_id?person(t.owner_id):'Chưa ghi trong sổ')+'</p><p>Người thực hiện · '+esc(t.performers.map(person).join(', '))+'</p><p>Người liên quan · '+esc(t.observers.map(person).join(', ')||'—')+'</p><p style="white-space:pre-wrap">'+esc(t.note)+'</p><p>Ngày '+(t.kind==='reminder'?'nhắc':'đến hạn')+' · '+esc(t.due||'—')+'</p>'+(t.owner_id===state.me.id&&!isChat?'<button id="editTask">Sửa nội dung và hạn</button>':'')+(canUpdate&&!isChat?'<label>Trạng thái<select id="progress">'+options(Object.fromEntries(statuses.map(x=>[x,x])),t.status)+'</select></label><button id="saveStatus">Lưu trạng thái</button>':'')+'</div>';
  modal(rowTitle(t),'<div class="phoneTabs"><button data-view="detail">Chi tiết</button><button data-view="chat">Trò chuyện</button></div><div class="split" data-view="chat">'+facts+'<div class="discussion pane"><h3>'+esc(isChat?'Trao đổi riêng':'Trò chuyện '+names[t.kind].toLowerCase())+'</h3><small>'+esc(r.members.map(x=>x.name).join(', '))+'</small><div id="stream" class="stream"><button id="older" '+(r.rows.length<50?'hidden':'')+'>Xem tin cũ hơn</button><div id="messages">'+messages(r.rows)+'</div></div><form id="send"><label>Tin nhắn<textarea name="body" maxlength="6000" placeholder="Nhập nội dung, gõ @ để nhắc tên thành viên…"></textarea></label><div id="mentions"></div>'+fileField+' <button class="primary">Gửi ➤</button></form></div></div>');
  $('.modalbar').insertAdjacentHTML('beforeend','<button id="expand">Mở rộng</button>');$('#expand').onclick=()=>{$('#expand').textContent=$('#modal').classList.toggle('expanded')?'Thu gọn':'Mở rộng'};
  state.thread=id;state.seq=r.rows.at(-1)?.seq||0;state.seen=0;state.first=r.rows[0]?.seq||0;
@@ -177,7 +182,7 @@ async function directory(){
  const linked=s=>state.people.find(p=>p.unit===s.unit&&p.staff_code===s.code);
  const draw=()=>{const q=$('#findStaff').value.toLocaleLowerCase('vi').trim();
  $('#staffRows').innerHTML=staff.filter(s=>[s.name,s.code,s.department].join(' ').toLocaleLowerCase('vi').includes(q)).map(s=>{
- const p=linked(s);return '<div class="row"><div><strong>'+esc(s.name)+'</strong><small>'+esc([s.code,s.department,units[s.unit]||'Đơn vị cần xác nhận'].join(' · '))+'</small></div>'+(!available(s)?'<small>Kiểm tra mã, đơn vị hoặc tên trong Nhân sự</small>':p?'<button data-profile="'+s.source_id+'">'+esc(p.username)+' · Sửa</button>':'<button data-profile="'+s.source_id+'">Cấp / nối tài khoản</button>')+'</div>'}).join('')||'<p>Không có hồ sơ phù hợp.</p>'};
+ const p=linked(s);return '<div class="row"><div><strong>'+esc(s.name)+'</strong><small>'+esc([s.code,s.department,units[s.unit]||'Đơn vị cần xác nhận'].join(' · '))+'</small></div>'+(!available(s)?'<small>Kiểm tra mã, đơn vị hoặc tên trong Nhân sự</small>':p?'<button data-profile="'+s.source_id+'">'+esc(p.pending_login?'Cấp tài khoản':p.username+' · Sửa')+'</button>':'<button data-profile="'+s.source_id+'">Cấp / nối tài khoản</button>')+'</div>'}).join('')||'<p>Không có hồ sơ phù hợp.</p>'};
  draw();$('#findStaff').oninput=draw;
  $('#syncStaff').onclick=e=>run(async()=>{await api('sync');await directory();notice('Đã đối chiếu tài khoản và các vai trò trong hồ sơ cũ.')},e.target);
  $('#staffRows').onclick=e=>{const b=e.target.closest('[data-profile]');if(!b)return;const s=staff.find(v=>v.source_id===Number(b.dataset.profile));const p=linked(s);if(p){account(p,s);return;}

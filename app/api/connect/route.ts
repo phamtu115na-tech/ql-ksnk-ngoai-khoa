@@ -24,12 +24,20 @@ async function dispatch(req:Request){
  const result:Person[]=[];
  for(let start=0;;start+=500){
  let q=client.from('cx_people').select(personFields).order('id').range(start,start+499);
- if(!all)q=q.eq('active',true);
+ if(!all)q=q.or('active.eq.true,pending_login.eq.true');
  if(a!.unit!=='company')q=q.in('unit',[a!.unit,'company']);
  const page=checked(await q)||[];result.push(...page);if(page.length<500)break;
  }return result;
  }
  if(b.action==='me')return {me:a,people:await people(a.admin)};
+ if(b.action==='sourceThread'){
+ must(['reminder','task'].includes(b.kind)&&Number.isSafeInteger(b.row)&&b.row>0);
+ const source=checked(await client.from('ksnk_legacy_rows').select('id,legacy_id,data').eq('sheet_name',b.kind==='task'?'GIAO VIỆC':'NHAC_VIEC_GHI_CHU').eq('row_no',b.row).maybeSingle());
+ must(source&&(!b.ref||[source.legacy_id,source.data?.ID,source.data?.['MÃ NHẮC VIỆC']].includes(b.ref)),'Hồ sơ đã thay đổi. Tải lại danh sách.',404);
+ const item=checked(await client.from('cx_threads').select('*').eq('source_row',source.id).maybeSingle());
+ must(item&&member(item,a),'Chỉ người tham gia việc này được mở trò chuyện.',403);
+ return {id:item.id};
+ }
  if(b.action==='history'){
  must(['task','reminder'].includes(b.kind));
  return {rows:await rpc('cx_history',{who:a.id,k:b.kind,scope,skip_rows:Math.max(0,Number(b.offset)||0)})};
@@ -56,6 +64,7 @@ async function dispatch(req:Request){
  const name=str(b.name,120),username=str(b.username,50).toLowerCase();must(name&&/^[a-z0-9._-]{3,50}$/.test(username)&&units.includes(b.unit));
  const patch:Record<string,unknown>={name,username,unit:b.unit,legacy_operator:b.legacy===true&&b.unit!=='general',active:b.active===true,version:randomUUID()};
  if(b.staffCode){must(typeof b.staffCode==='string'&&b.staffCode.length<=150);patch.staff_code=b.staffCode;}
+ if(b.code)patch.pending_login=false;
  if(b.code||!b.id){const code=str(b.code,72);must(code.length>=12&&Buffer.byteLength(code)<=72,'Mã cần ít nhất 12 ký tự và tối đa 72 byte.');patch.credential=await hash(code,12);}
  if(b.id){
  must(uuid(b.id)&&uuid(b.version)&&b.id!==a.id,'Dùng mục Đổi mã để cập nhật tài khoản đang đăng nhập.');
@@ -88,7 +97,7 @@ async function dispatch(req:Request){
  const kind=b.kind;must(kinds.includes(kind)&&uuid(b.id));
  const p=ids(b.performers),o=ids(b.observers||[]);must(p.length,'Chọn người thực hiện hoặc người nhận.');
  if(kind==='chat')must(p.length===1&&p[0]!==a.id&&!o.length);
- const selected=(await people()).filter(x=>x.active&&(p.includes(x.id)||o.includes(x.id)));
+ const selected=(await people()).filter(x=>(x.active||(kind!=='chat'&&x.pending_login))&&(p.includes(x.id)||o.includes(x.id)));
  must(new Set([...p,...o]).size===selected.length,'Người nhận không thuộc phạm vi tài khoản.',403);
  const u=[...new Set([a.unit,...selected.map(x=>x.unit)])],label=kind==='chat'?'Trao đổi riêng':str(b.title,180);
  must(label);const d=b.due||null;must(!d||/^\d{4}-\d{2}-\d{2}$/.test(d));
@@ -99,7 +108,7 @@ async function dispatch(req:Request){
  if(b.action==='thread'){
  const before=Number(b.before)||2147483647;
  const rows=checked(await client.from('cx_messages').select('*').eq('thread',t.id).lt('seq',before).order('seq',{ascending:false}).limit(50))||[];
- const participants=[...new Set([t.owner_id,...t.performers,...t.observers])];
+ const participants=[...new Set([t.owner_id,...t.performers,...t.observers].filter(Boolean))];
  const members=checked(await client.from('cx_people').select('id,name,username,unit').in('id',participants))||[];
  return {item:t,members,rows:rows.reverse()};
  }
