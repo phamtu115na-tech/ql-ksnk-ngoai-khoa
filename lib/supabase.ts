@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 // The production database currently used by this project.  This is only a
 // diagnostic default when no URL has been supplied; an explicitly configured
 // URL is never silently replaced by another project.
-export const DEFAULT_SUPABASE_PROJECT_REF='qmhvdedsztmuplfmsrqz';
+export const DEFAULT_SUPABASE_PROJECT_REF='';
 export const DEFAULT_SUPABASE_URL=`https://${DEFAULT_SUPABASE_PROJECT_REF}.supabase.co`;
 
 function normalize(value?:string){
@@ -22,7 +22,7 @@ function configuredUrl(){
 
 export function effectiveSupabaseUrl(){
  const url=configuredUrl();
- return url||DEFAULT_SUPABASE_URL;
+ return url;
 }
 
 export function supabaseConfigInfo(){
@@ -63,6 +63,7 @@ function normalizedServerKeys(){
 
 export function supabaseAdminCandidates(){
  const url=effectiveSupabaseUrl();
+ if(!url)return [];
  return normalizedServerKeys().map(key=>createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}}));
 }
 

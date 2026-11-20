@@ -1,2 +1,3 @@
-import {NextResponse} from 'next/server';import {supabaseAdmin} from '../../../lib/supabase';
-export async function GET(){const db=supabaseAdmin();if(!db)return NextResponse.json({ok:false,supabase:false,error:'Thiếu SUPABASE_SERVICE_ROLE_KEY'},{status:503});const {count,error}=await db.from('ksnk_legacy_rows').select('*',{count:'exact',head:true});return NextResponse.json({ok:!error,supabase:!error,legacyRows:count||0,error:error?.message||null})}
+import {db,hasSession} from '../../../lib/auth';
+export async function GET(){if(!await hasSession())return Response.json({error:'Cần quyền quản trị'},{status:403});
+ const {count,error}=await db().from('ksnk_legacy_rows').select('id',{count:'exact',head:true});return Response.json({ok:!error,legacyRows:count});}

@@ -1,7 +1,7 @@
 import {NextResponse} from 'next/server';
 import {supabaseAdmin,effectiveSupabaseUrl} from '../../../lib/supabase';
 import {evidenceStoragePath} from '../../../lib/evidence-url';
-import {hasSession} from '../../../lib/auth';
+import {canOperateLegacy} from '../../../lib/auth';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -24,7 +24,7 @@ async function ensureEvidenceBucket(db:ReturnType<typeof supabaseAdmin>){
 }
 
 export async function POST(req:Request){
- if(!await hasSession())return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});
+ if(!await canOperateLegacy())return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});
  try{
   const db=supabaseAdmin();if(!db)throw new Error('SUPABASE_SERVICE_ROLE_KEY chưa cấu hình');
   const form=await req.formData();const file=form.get('file');
@@ -42,7 +42,7 @@ export async function POST(req:Request){
 }
 
 export async function GET(req:Request){
- if(!await hasSession())return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});
+ if(!await canOperateLegacy())return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});
  try{
   const db=supabaseAdmin();if(!db)throw new Error('SUPABASE_SERVICE_ROLE_KEY chưa cấu hình');
   const u=new URL(req.url),module=u.searchParams.get('module')||'',legacyId=u.searchParams.get('legacy_id')||'';
@@ -67,7 +67,7 @@ export async function GET(req:Request){
 }
 
 export async function DELETE(req:Request){
- if(!await hasSession())return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});
+ if(!await canOperateLegacy())return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});
  try{
   const db=supabaseAdmin();if(!db)throw new Error('SUPABASE_SERVICE_ROLE_KEY chưa cấu hình');
   const id=new URL(req.url).searchParams.get('id')||'';

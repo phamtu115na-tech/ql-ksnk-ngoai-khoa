@@ -1,34 +1,12 @@
-import {NextResponse} from 'next/server';
-import {cookies} from 'next/headers';
-import {hash} from 'bcryptjs';
-import {hasSession,storedPassword,verifyPassword,sessionCookie} from '../../../../lib/auth';
-import {supabaseAdmin} from '../../../../lib/supabase';
-
+import {actor,db,signOut} from '../../../../lib/auth';
+import {compare,hash} from 'bcryptjs';
+import {randomUUID} from 'crypto';
 export async function POST(req:Request){
- if(req.headers.get('origin')!==new URL(req.url).origin)return NextResponse.json({ok:false,error:'Yêu cầu không hợp lệ'},{status:403});
- if(!await hasSession())return NextResponse.json({ok:false,error:'Vui lòng đăng nhập lại'},{status:401});
- try{
-  const {currentPassword,newPassword,confirmPassword}=await req.json();
-  if(typeof currentPassword!=='string'||typeof newPassword!=='string'||newPassword!==confirmPassword||newPassword.length<12||Buffer.byteLength(newPassword)>72||Buffer.byteLength(currentPassword)>72)
-   return NextResponse.json({ok:false,error:'Mật khẩu mới cần ít nhất 12 ký tự, tối đa 72 byte và xác nhận phải trùng khớp.'},{status:400});
-  const old=await storedPassword();
-  if(!await verifyPassword(currentPassword,old))return NextResponse.json({ok:false,error:'Mật khẩu hiện tại không đúng'},{status:400});
-  if(currentPassword===newPassword)return NextResponse.json({ok:false,error:'Mật khẩu mới phải khác mật khẩu hiện tại'},{status:400});
-  const password_hash=await hash(newPassword,12);
-  const db=supabaseAdmin();if(!db)throw new Error();
-  // Compare-and-set prevents simultaneous requests from overwriting another change.
-  const {data:existing,error:readError}=await db.from('ksnk_settings').select('id').eq('id',1).maybeSingle();
-  if(readError)throw readError;
-  if(existing){
-   let update=db.from('ksnk_settings').update({password_hash,updated_at:new Date().toISOString()}).eq('id',1);
-   update=old?update.eq('password_hash',old):update.is('password_hash',null);
-   const {data,error}=await update.select('id');
-   if(error||!data?.length)throw new Error();
-  }else{
-   const {error}=await db.from('ksnk_settings').insert({id:1,password_hash});
-   if(error)throw error;
-  }
-  (await cookies()).delete(sessionCookie.name);
-  return NextResponse.json({ok:true});
- }catch{return NextResponse.json({ok:false,error:'Không lưu được mật khẩu. Vui lòng thử lại.'},{status:503})}
+ const me=await actor();if(!me)return Response.json({error:'Cần đăng nhập'},{status:401});
+ const {currentPassword,newPassword,confirmPassword}=await req.json();
+ const {data}=await db().from('cx_people').select('credential').eq('id',me.id).single();
+ if(!data||typeof currentPassword!=='string'||typeof newPassword!=='string'||newPassword.length<12||Buffer.byteLength(newPassword)>72||newPassword!==confirmPassword||!await compare(currentPassword,data.credential))return Response.json({error:'Kiểm tra mã hiện tại và mã mới (ít nhất 12 ký tự).'}, {status:400});
+ const {data:changed,error}=await db().from('cx_people').update({credential:await hash(newPassword,12),version:randomUUID()}).eq('id',me.id).eq('version',me.version).select('id').single();
+ if(error||!changed)return Response.json({error:'Hãy tải lại tài khoản.'},{status:409});
+ await signOut();return Response.json({ok:true});
 }
