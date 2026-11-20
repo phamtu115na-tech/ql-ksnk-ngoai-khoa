@@ -1,6 +1,8 @@
 'use strict';
 const $=s=>document.querySelector(s);
 const units={company:'Công ty Cổ phần Bệnh viện 115 Nghệ An',general:'Bệnh viện Đa khoa 115 Nghệ An',surgery:'Bệnh viện Ngoại khoa 115 Nghệ An'};
+const embeddedWork=new URLSearchParams(location.search).has('row')&&window.parent!==window;
+if(embeddedWork)document.documentElement.classList.add('work-embed');
 const names={all:'Tổng quan',task:'Giao việc',reminder:'Nhắc việc',chat:'Trao đổi',admin:'Nhân viên'};
 const statuses=['Mới','Đã nhận','Đang thực hiện','Hoàn thành'];
 const state={me:null,people:[],tab:'all',scope:'all',offset:0,rows:[],badges:{},screen:0,dialog:0,thread:null,seq:0,loading:false};
@@ -29,8 +31,8 @@ async function start(){
  $('#identity').textContent=r.me.name+' · '+units[r.me.unit];$('#dock').hidden=false;dashboard();await refresh();
  const q=new URLSearchParams(location.search);
  if(q.has('row')){
- await run(async()=>{const result=await api('sourceThread',{kind:state.tab,row:Number(q.get('row')),ref:q.get('ref')});
- await openThread(result.id);});
+ try{const result=await api('sourceThread',{kind:state.tab,row:Number(q.get('row')),ref:q.get('ref')});
+ await openThread(result.id);}catch(e){if(embeddedWork){const panel=document.createElement('p');panel.setAttribute('role','status');panel.textContent=e.message;document.body.append(panel);}else notice(e.message);}
  }
 }
 function dashboard(){
@@ -66,17 +68,20 @@ function deadlineGroup(t){
 }
 function paint(){
  if(!$('#rows')||!state.me)return;
- const k=state.tab,visible=Object.keys(names).filter(x=>x!=='admin'||state.me.admin);
+ const k=state.tab,visible=Object.keys(names).filter(x=>x!=='task'&&(x!=='admin'||state.me.admin));
  $('#tabs').innerHTML=visible.map(t=>'<button data-tab="'+t+'" class="'+(t===k?'active':'')+'">'+names[t]+' '+badge(state.badges[t])+'</button>').join('');
+ if(!$('#taskAlerts'))$('#dock').insertAdjacentHTML('beforeend','<button id="taskAlerts" data-tab="task" hidden></button>');
+ $('#taskAlerts').hidden=!state.badges.task;
+ $('#taskAlerts').textContent='Giao việc · '+(state.badges.task||0)+' mới';
  $('#remCount').textContent=[state.badges.reminder?state.badges.reminder+' mới':'',state.due?.reminder?state.due.reminder+' đến hạn':''].filter(Boolean).join(' · ');$('#chatCount').textContent=state.badges.chat||'';
- $('#heading').textContent=names[k]+((state.due?.[k]||0)>0?' · '+state.due[k]+' việc của tôi đến hạn hoặc quá hạn':'');$('#pager').innerHTML='';
+ $('#heading').textContent=(k==='task'?'Thông báo giao việc':names[k])+((state.due?.[k]||0)>0?' · '+state.due[k]+' việc của tôi đến hạn hoặc quá hạn':'');$('#pager').innerHTML='';
  if(k==='admin'){
  $('#actions').innerHTML='<button class="primary" id="new">Cấp tài khoản</button>';$('#new').onclick=()=>account();$('#actions').insertAdjacentHTML('afterbegin','<button id="roster">Danh mục nhân viên hiện tại</button>');$('#roster').onclick=()=>run(directory);
  $('#rows').innerHTML=state.people.filter(x=>state.scope==='all'||x.unit===state.scope).map(x=>'<div class="row"><div><strong>'+esc(x.name)+'</strong><small>'+esc(x.pending_login?'Chưa cấp tài khoản':x.username)+' · '+esc(units[x.unit])+' · '+(x.admin?'Quản trị viên':x.active?'Đang hoạt động':'Đã khóa')+'</small></div>'+(x.admin?'':'<button data-account="'+x.id+'">Sửa / cấp lại mã</button>')+'</div>').join('');return;
  }
- const actions=k==='all'?['task','reminder','chat']:[k];$('#actions').innerHTML=actions.map(t=>'<button class="primary" data-new="'+t+'">'+({task:'+ Giao việc',reminder:'+ Nhắc việc',chat:'+ Trao đổi'}[t])+'</button>').join('');
+ const actions=(k==='all'||k==='chat')?['chat']:[];$('#actions').innerHTML=actions.map(t=>'<button class="primary" data-new="'+t+'">'+({task:'+ Giao việc',reminder:'+ Nhắc việc',chat:'+ Trao đổi'}[t])+'</button>').join('');
  const work=k==='task'||k==='reminder',board=work&&localStorage.cxView!=='list';
- if(work){$('#actions').insertAdjacentHTML('afterbegin','<button id="oldWork">Hồ sơ nghiệp vụ cũ</button>');$('#oldWork').onclick=()=>run(()=>historyWork(k,0));$('#actions').insertAdjacentHTML('afterbegin','<button id="viewMode">'+(board?'Dạng danh sách':'Bảng thời hạn')+'</button>');
+ if(work){$('#actions').insertAdjacentHTML('afterbegin','<button id="viewMode">'+(board?'Dạng danh sách':'Bảng thời hạn')+'</button>');
  $('#viewMode').onclick=()=>{localStorage.cxView=board?'list':'board';paint()};}
  const card=({item:t,unread})=>{
  const member=[t.owner_id,...t.performers,...t.observers].includes(state.me.id);
@@ -129,7 +134,7 @@ function compose(kind){
  const r=await api('create',{kind,id,title:fd.get('title'),due:fd.get('due'),note:fd.get('note'),performers:fd.getAll('performers'),observers:fd.getAll('observers'),files});
  close();await refresh();await openThread(r.id);});
 }
-function messages(rows){return rows.map(m=>'<article class="msg"><strong>'+esc(person(m.sender))+'</strong> <small>'+esc(new Date(m.sent).toLocaleString('vi-VN'))+'</small><div>'+esc(m.body)+'</div>'+m.files.map(f=>'<button data-file="'+esc(f.path)+'" data-msg="'+m.seq+'" data-image="'+(f.mime.startsWith('image/')?'1':'0')+'">'+esc(f.name)+'</button>').join('')+'</article>').join('');}
+function messages(rows){return rows.map(m=>'<article class="msg"><strong>'+esc(m.sender?person(m.sender):'Thông báo hệ thống')+'</strong> <small>'+esc(new Date(m.sent).toLocaleString('vi-VN'))+'</small><div>'+esc(m.body)+'</div>'+m.files.map(f=>'<button data-file="'+esc(f.path)+'" data-msg="'+m.seq+'" data-image="'+(f.mime.startsWith('image/')?'1':'0')+'">'+esc(f.name)+'</button>').join('')+'</article>').join('');}
 async function markSeen(){
  const s=$('#stream'),split=$('.split');if(!state.thread||!s||document.hidden||!$('#modal').open||s.scrollHeight-s.scrollTop-s.clientHeight>45)return;
  if(matchMedia('(max-width:800px)').matches&&split.dataset.view==='detail')return;

@@ -18,6 +18,6 @@ export default function LegacyConnectDock(){
   return ()=>{live=false;clearInterval(timer)};
  },[]);
  return <nav aria-label="Trao đổi công việc" style={{position:'fixed',zIndex:50,bottom:12,left:12,right:12,display:'flex',justifyContent:'space-between',pointerEvents:'none'}}>
- {(['reminder','chat'] as const).map(k=><a key={k} style={{pointerEvents:'auto',borderRadius:24,padding:'8px 16px',background:'#225b9d',color:'white'}} href={'/connect/index.html#'+k}>{k==='chat'?'✉ Trao đổi':'☷ Nhắc việc'} {counts[k]?('('+counts[k]+')'):''}</a>)}
+ {(['task','reminder','chat'] as const).filter(k=>k!=='task'||counts.task>0).map(k=><a key={k} style={{pointerEvents:'auto',borderRadius:24,padding:'8px 16px',background:'#225b9d',color:'white'}} href={'/connect/index.html#'+k}>{k==='chat'?'✉ Trao đổi':k==='task'?'Giao việc mới':'☷ Nhắc việc'} {counts[k]?('('+counts[k]+')'):''}</a>)}
  </nav>;
 }

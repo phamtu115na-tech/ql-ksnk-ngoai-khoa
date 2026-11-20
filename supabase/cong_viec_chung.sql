@@ -88,6 +88,7 @@ create trigger cx_export_work after insert on cx_threads for each row execute fu
 revoke all on function cx_export_work(),cx_refresh_native(ksnk_legacy_rows,ksnk_legacy_rows) from public,anon,authenticated;
 grant execute on function cx_export_work(),cx_refresh_native(ksnk_legacy_rows,ksnk_legacy_rows) to service_role;
 
+alter table cx_messages alter column sender drop not null;
 create or replace function cx_source_changed() returns trigger language plpgsql as $$
 begin
  if tg_op='DELETE' then
@@ -102,6 +103,11 @@ begin
  if tg_op='UPDATE' and exists(select from cx_threads where source_row=new.id and legacy_id_is_connect) then
  perform cx_refresh_native(new,old);
  else perform cx_import_work(new);end if;
+ if tg_op='INSERT' or new.data is distinct from old.data then
+ perform cx_append(t.id,null,case when tg_op='UPDATE' then 'Phiếu đã được cập nhật trong hệ thống Ngoại khoa.'
+ when t.kind='task' then 'Có giao việc mới từ hệ thống Ngoại khoa.' else 'Có nhắc việc mới từ hệ thống Ngoại khoa.' end,
+ '[]',gen_random_uuid()) from cx_threads t where t.source_row=new.id;
+ end if;
  end if;
  return null;
 end $$;
@@ -135,7 +141,7 @@ loop execute format('revoke all on function %s from public,anon,authenticated',f
 create or replace function cx_board(who uuid,scope text,screen text,skip_rows int default 0)
 returns table(item jsonb,unread bigint) language sql stable as $$
  select to_jsonb(t),case when who=t.owner_id or who=any(t.performers||t.observers) then
- (select count(*) from cx_messages m where m.thread=t.id and m.seq>coalesce(r.seq,0) and m.sender<>who) else 0 end
+ (select count(*) from cx_messages m where m.thread=t.id and m.seq>coalesce(r.seq,0) and m.sender is distinct from who) else 0 end
  from cx_threads t join cx_people a on a.id=who and a.active
  left join cx_reads r on r.thread=t.id and r.person=who
  where cardinality(t.units)>0 and (a.unit='company' or a.unit=any(t.units))
@@ -159,3 +165,17 @@ drop trigger if exists cx_role_resolved on cx_work_people;
 create trigger cx_role_resolved after update of staff_code on cx_work_people for each row when(old.staff_code is distinct from new.staff_code) execute function cx_role_resolved();
 revoke all on function cx_role_resolved() from public,anon,authenticated;
 grant execute on function cx_role_resolved() to service_role;
+
+create or replace function cx_badges(who uuid,scope text) returns table(kind text,unread bigint)
+language sql stable as $$
+ select t.kind,count(*) from cx_threads t join cx_people a on a.id=who and a.active
+ left join cx_reads r on r.person=who and r.thread=t.id
+ join cx_messages m on m.thread=t.id and m.seq>coalesce(r.seq,0) and m.sender is distinct from who
+ where (a.unit='company' or a.unit=any(t.units)) and (scope='all' or scope=any(t.units))
+ and (who=t.owner_id or who=any(t.performers||t.observers)) group by t.kind
+$$;
+
+-- Announce outstanding records once on installation, preserving prior reads.
+select cx_append(t.id,null,'Đã đồng bộ phiếu đang theo dõi từ hệ thống Ngoại khoa.','[]',t.id)
+from cx_threads t where t.source_row is not null and not t.legacy_id_is_connect and t.status<>'Hoàn thành'
+and cardinality(t.units)>0 and t.seq=0;
