@@ -10,7 +10,7 @@
  * 3. Chạy migrateWorkbookToVercel().
  */
 const VERCEL_WORKBOOK_IMPORT_URL =
-  'https://ql-ksnk-ngoai-khoa-pkdu.vercel.app/api/import/workbook';
+  String(PropertiesService.getScriptProperties().getProperty('VERCEL_BASE_URL') || '').replace(/\/$/, '') + '/api/import/workbook';
 const WORKBOOK_IMPORT_BATCH_SIZE = 100;
 
 function migrateWorkbookToVercel() {
@@ -95,7 +95,7 @@ function loginToVercelForMigration_(password) {
   ), {
     method: 'post',
     contentType: 'application/json',
-    payload: JSON.stringify({ password: password }),
+    payload: JSON.stringify({ username: 'admin', unit: 'company', password: password }),
     muteHttpExceptions: true
   });
 

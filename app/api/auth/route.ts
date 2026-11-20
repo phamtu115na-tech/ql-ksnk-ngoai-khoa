@@ -1,34 +1,28 @@
 import {NextResponse} from 'next/server';
-import {cookies} from 'next/headers';
-import {makeSession,hasSession,sessionCookie,storedPassword,verifyPassword,ensureDefaultPasswordStored} from '../../../lib/auth';
-
-function configError(error:unknown){
- const message=error instanceof Error?error.message:'';
- if(message.includes('SESSION_SECRET'))return 'SESSION_SECRET phải có ít nhất 32 ký tự trên Vercel.';
- if(message.includes('Thiếu cấu hình Supabase'))return 'Thiếu SUPABASE_SERVICE_ROLE_KEY hoặc SUPABASE_SECRET_KEY trên Vercel.';
- if(message.includes('[PGRST205]')||message.includes('[42P01]'))return 'Supabase đang trỏ tới project không có bảng public.ksnk_settings. Kiểm tra SUPABASE_URL.';
- if(message.includes('[42501]')||message.includes('[PGRST301]')||message.includes('Invalid API key')||message.includes('Unauthorized'))return 'Khóa server Supabase không hợp lệ hoặc không có quyền đọc public.ksnk_settings.';
- if(message.includes('Không đọc được cấu hình đăng nhập'))return 'Không đọc được bảng public.ksnk_settings trên Supabase. Kiểm tra khóa server và tên project.';
- return 'Không đăng nhập được. Kiểm tra cấu hình Supabase và SESSION_SECRET (ít nhất 32 ký tự).';
-}
-
-export async function GET(){return NextResponse.json({ok:true,authenticated:await hasSession()})}
-
+import {hash,compare} from 'bcryptjs';
+import {canOperateLegacy,db,signIn,signOut} from '../../../lib/auth';
+import {timingSafeEqual,createHash} from 'crypto';
+const digest=(v:string)=>createHash('sha256').update(v).digest();
+export async function GET(){return NextResponse.json({authenticated:await canOperateLegacy()});}
 export async function POST(req:Request){
  try{
-  const {password}=await req.json();
-  if(typeof password!=='string'||Buffer.byteLength(password)>72)return NextResponse.json({ok:false,error:'Mật khẩu không hợp lệ'},{status:400});
-  const passwordHash=await storedPassword();
-  if(!await verifyPassword(password,passwordHash))return NextResponse.json({ok:false,error:'Mật khẩu không đúng'},{status:401});
-  if(!passwordHash){
-   try{await ensureDefaultPasswordStored()}catch(error){console.error('[auth] default password bootstrap failed:',error instanceof Error?error.message:error)}
-  }
-  (await cookies()).set(sessionCookie.name,makeSession(passwordHash),sessionCookie.options);
-  return NextResponse.json({ok:true});
- }catch(error){
-  console.error('[auth] sign-in failed:',error instanceof Error?error.message:error);
-  return NextResponse.json({ok:false,error:configError(error)},{status:503});
+ const {username:raw,password,unit}=await req.json();
+ const username=String(raw||'').trim().toLowerCase();
+ const denied=()=>NextResponse.json({error:'Kiểm tra đơn vị, tên và mã đăng nhập.'},{status:401});
+ if(!/^[a-z0-9._-]{3,50}$/.test(username)||typeof password!=='string'||Buffer.byteLength(password)>72)return denied();
+ const client=db(),minute=Math.floor(Date.now()/60000);
+ const limit=await client.rpc('cx_attempt',{k:username+':'+minute});if(limit.error)throw limit.error;
+ if(limit.data>10)return NextResponse.json({error:'Vui lòng thử lại sau một phút.'},{status:429});
+ const lookup=()=>client.from('cx_people').select('*').eq('username',username).maybeSingle();
+ let {data:user,error}=await lookup();if(error)throw error;
+ const bootstrap=process.env.BOOTSTRAP_ADMIN_CODE||'';
+ if(!user&&username==='admin'&&unit==='company'&&bootstrap.length>=12&&timingSafeEqual(digest(bootstrap),digest(password))){
+ const ins=await client.from('cx_people').insert({username,name:'Quản trị Tổng công ty',unit,admin:true,credential:await hash(password,12)});
+ if(ins.error&&ins.error.code!=='23505')throw ins.error;
+ const result=await lookup();if(result.error)throw result.error;user=result.data;
  }
+ if(!user?.active||user.unit!==unit||!await compare(password,user.credential))return denied();
+ await signIn(user);return NextResponse.json({ok:true});
+ }catch{return NextResponse.json({error:'Chưa kết nối được cơ sở dữ liệu. Kiểm tra biến môi trường và tập lệnh cài đặt SQL.'},{status:503});}
 }
-
-export async function DELETE(){(await cookies()).delete(sessionCookie.name);return NextResponse.json({ok:true})}
+export async function DELETE(){await signOut();return NextResponse.json({ok:true});}

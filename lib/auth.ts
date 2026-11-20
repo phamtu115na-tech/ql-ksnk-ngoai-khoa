@@ -1,62 +1,34 @@
-import {createHmac,timingSafeEqual} from 'crypto';
 import {cookies} from 'next/headers';
-import {compare,hash} from 'bcryptjs';
-import {supabaseAdminCandidates} from './supabase';
+import {randomBytes,createHash} from 'crypto';
+import {supabaseAdmin} from './supabase';
 
-const COOKIE='ksnk_session';
-function secret(){return process.env.SESSION_SECRET||''}
-function signature(payload:string){return createHmac('sha256',secret()).update(payload).digest('hex')}
-export async function storedPassword(){
- const dbs=supabaseAdminCandidates();
- if(!dbs.length)throw new Error('Thiếu cấu hình Supabase');
- let successfulQuery=false;
- let lastCode='';
- for(const db of dbs){
-  const {data,error}=await db.from('ksnk_settings').select('password_hash').eq('id',1).maybeSingle();
-  if(!error){
-   successfulQuery=true;
-   if(data?.password_hash)return data.password_hash as string;
-   continue;
-  }
-  if(typeof error.code==='string')lastCode=error.code;
- }
- if(successfulQuery)return undefined;
- throw new Error('Không đọc được cấu hình đăng nhập'+(lastCode?' ['+lastCode+']':''));
+export const sessionCookie={name:'ksnk_session',options:{httpOnly:true,sameSite:'strict' as const,secure:process.env.NODE_ENV==='production',path:'/',maxAge:43200}};
+export function db(){const client=supabaseAdmin();if(!client)throw Error('Thiếu cấu hình Supabase');return client;}
+export type Person={id:string;name:string;username:string;unit:string;admin:boolean;active:boolean;legacy_operator:boolean;department:string;staff_code:string|null;version:string};
+export const personFields='id,name,username,unit,admin,active,legacy_operator,department,staff_code,version';
+const digest=(token:string)=>createHash('sha256').update(token).digest('hex');
+export async function actor():Promise<Person|null>{
+ const value=(await cookies()).get(sessionCookie.name)?.value;
+ if(!value||!/^[0-9a-f]{64}$/.test(value))return null;
+ const session=await db().from('cx_sessions').select('person,version').eq('token',digest(value)).gt('expires',new Date().toISOString()).maybeSingle();
+ if(session.error)throw session.error;
+ if(!session.data)return null;
+ const user=await db().from('cx_people').select(personFields).eq('id',session.data.person).eq('version',session.data.version).eq('active',true).maybeSingle();
+ if(user.error)throw user.error;return user.data;
 }
-
-export async function ensureDefaultPasswordStored(){
- const expected=process.env.APP_DEFAULT_PASSWORD||'';
- if(!expected)return;
- const dbs=supabaseAdminCandidates();
- if(!dbs.length)return;
- const passwordHash=await hash(expected,12);
- for(const db of dbs){
-  const {data,error}=await db.from('ksnk_settings').select('id,password_hash').eq('id',1).maybeSingle();
-  if(error)continue;
-  if(data?.password_hash)return;
-  const write=data
-   ? await db.from('ksnk_settings').update({password_hash:passwordHash,updated_at:new Date().toISOString()}).eq('id',1)
-   : await db.from('ksnk_settings').insert({id:1,hospital_name:'BỆNH VIỆN 115',password_hash:passwordHash});
-  if(!write.error)return;
- }
+export async function hasSession(){return Boolean((await actor())?.admin);}
+export async function signIn(user:Person){
+ const raw=randomBytes(32).toString('hex');
+ const client=db();
+ await client.from('cx_sessions').delete().lt('expires',new Date().toISOString());
+ const {error}=await client.from('cx_sessions').insert({token:digest(raw),person:user.id,version:user.version,expires:new Date(Date.now()+43200000).toISOString()});
+ if(error)throw error;
+ (await cookies()).set(sessionCookie.name,raw,sessionCookie.options);
+}
+export async function signOut(){
+ const jar=await cookies(),token=jar.get(sessionCookie.name)?.value;
+ if(token){const {error}=await db().from('cx_sessions').delete().eq('token',digest(token));if(error)throw error;}
+ jar.delete(sessionCookie.name);
 }
 
-export async function verifyPassword(password:string,hashValue:string|null|undefined){
- if(hashValue)return compare(password,hashValue);
- const expected=process.env.APP_DEFAULT_PASSWORD||'';
- const a=Buffer.from(password),b=Buffer.from(expected);
- return Boolean(expected)&&a.length===b.length&&timingSafeEqual(a,b);
-}
-function version(hashValue:string|null|undefined){return signature('credential:'+ (hashValue||process.env.APP_DEFAULT_PASSWORD||''))}
-export function makeSession(hashValue?:string|null){
- if(secret().length<32)throw new Error('SESSION_SECRET cần ít nhất 32 ký tự');
- const payload=Buffer.from(JSON.stringify({exp:Date.now()+12*60*60*1000,v:version(hashValue)})).toString('base64url');return payload+'.'+signature(payload);
-}
-export async function hasSession(){
- const token=(await cookies()).get(COOKIE)?.value||'',dot=token.lastIndexOf('.');
- if(!secret()||dot<1)return false;
- const payload=token.slice(0,dot),given=Buffer.from(token.slice(dot+1)),expected=Buffer.from(signature(payload));
- if(given.length!==expected.length||!timingSafeEqual(given,expected))return false;
- try{const claims=JSON.parse(Buffer.from(payload,'base64url').toString());return claims.exp>Date.now()&&claims.v===version(await storedPassword())}catch{return false}
-}
-export const sessionCookie={name:COOKIE,options:{httpOnly:true,sameSite:'strict' as const,secure:process.env.NODE_ENV==='production',path:'/',maxAge:12*60*60}};
+export async function canOperateLegacy(){const u=await actor();return Boolean(u&&(u.admin||(u.legacy_operator&&u.unit!=='general')));}

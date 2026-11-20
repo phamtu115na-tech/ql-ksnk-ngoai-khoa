@@ -1,6 +1,6 @@
 import {requireManagerEvaluation} from '../../../lib/task-evaluation';
 import {NextResponse} from 'next/server';
-import {hasSession} from '../../../lib/auth';
+import {canOperateLegacy} from '../../../lib/auth';
 import {buildLeavePlanning} from '../../../lib/leave-policy';
 import {supabaseAdmin} from '../../../lib/supabase';
 
@@ -162,7 +162,8 @@ function task(row:LegacyRow,map?:Map<string,string>,staffDirectory:AnyRecord[]=[
  const d=row.data;
  const rawAssignee=pick(d,['Người thực hiện','Người chịu trách nhiệm']);
  const rawAssigneeId=pick(d,['Mã NV','Mã nhân viên','Mã người thực hiện','Mã người chịu trách nhiệm','staffId']);
- const assigneeRecord=staffDirectory.find(x=>(rawAssigneeId&&same(x.id,rawAssigneeId))||(rawAssignee&&same(x.name,rawAssignee)));
+ const matches=staffDirectory.filter(x=>rawAssigneeId?same(x.id,rawAssigneeId):rawAssignee&&same(x.name,rawAssignee));
+ const assigneeRecord=matches.length===1?matches[0]:undefined;
  const assignee=assigneeRecord?.name||rawAssignee;
  const assigneeId=assigneeRecord?.id||rawAssigneeId;
  const rawManager=pick(d,['Người quản lý phê duyệt','Quản lý phê duyệt','Người duyệt']);
@@ -438,8 +439,8 @@ async function saveTaskApproval(body:AnyRecord){
 }
 async function inlineUpdate(body:AnyRecord){const kind=text(body.kind).toUpperCase();if(kind==='OPINION'){const rows=await readSheet(S.opinions);const found=Number(body.row_no)?rows.find(x=>x.row_no===Number(body.row_no)):rows.find(x=>same(pick(x.data,['Từ ngày']),body.fromDate)&&same(pick(x.data,['Đến ngày']),body.toDate)&&same(pick(x.data,['Bộ phận']),body.department)&&same(pick(x.data,['Mã phiếu']),body.formCode));const data=canonical('reports',{...body,data:found?.data||{}});const rowNo=await saveRow(S.opinions,found?.row_no,data);return {row_no:rowNo,kind};}const sheet=kind==='TASK'?S.tasks:kind==='PLAN'?(text(body.planType).toUpperCase()==='THÁNG'?S.monthly:S.weekly):kind==='VIOLATION'?S.violations:kind==='ISSUE'?S.issues:'';if(!sheet)throw new Error('Loại dữ liệu cập nhật không hỗ trợ.');const rows=await readSheet(sheet);const found=Number(body.row_no)?rows.find(x=>x.row_no===Number(body.row_no)):findById(rows,text(body.id));if(!found)throw new Error('Không tìm thấy bản ghi cần cập nhật.');const data={...found.data};if(kind==='TASK'){requireManagerEvaluation(found.data['Trạng thái NV'],body.status,body.evalStatus??found.data['Đánh giá quản lý']??found.data['Đánh giá quản lý hiện tại']);if(body.status!==undefined)data['Trạng thái NV']=body.status;if(body.evalStatus!==undefined)data['Đánh giá quản lý']=body.evalStatus;if(body.note!==undefined)data['Ghi chú quản lý']=body.note;if(body.managerOpinion!==undefined)data['Ý kiến quản lý']=body.managerOpinion;}else if(kind==='PLAN'){if(body.status!==undefined)data['Trạng thái']=body.status;if(body.note!==undefined)data['Ghi chú']=body.note;if(body.description!==undefined)data['Nội dung / Mô tả']=body.description;}else if(kind==='ISSUE'){const fields:Record<string,string>={date:'Ngày ghi nhận',department:'Bộ phận',issue:'Tồn tại / Sự cố / Kiến nghị',cause:'Nguyên nhân',action:'Phương án khắc phục',owner:'Người phụ trách',deadline:'Hạn xử lý',status:'Trạng thái',recommendation:'Kiến nghị',note:'Ghi chú'};for(const [key,column] of Object.entries(fields))if(body[key]!==undefined)data[column]=body[key];}else{if(body.status!==undefined)data['Trạng thái']=body.status;if(body.note!==undefined)data['Ghi chú']=body.note;}await saveRow(sheet,found.row_no,data);return {row_no:found.row_no,kind};}
 
-export async function GET(req:Request){if(!await hasSession())return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});try{const url=new URL(req.url);const moduleName=text(url.searchParams.get('module'))||'tasks';const result=await buildModule(moduleName,parseFilters(url));return NextResponse.json({ok:true,module:moduleName,...result},{headers:{'Cache-Control':'private, no-store'}});}catch(error){console.error('[modules:get]',error);return NextResponse.json({ok:false,error:'Không tải được dữ liệu phân hệ',detail:error instanceof Error?error.message:'Lỗi Supabase'},{status:503});}}
-export async function POST(req:Request){if(!await hasSession())return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});try{const body=(await req.json()) as AnyRecord;const moduleName=text(body.module);const op=text(body.op)||'save';
+export async function GET(req:Request){if(!await canOperateLegacy())return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});try{const url=new URL(req.url);const moduleName=text(url.searchParams.get('module'))||'tasks';const result=await buildModule(moduleName,parseFilters(url));return NextResponse.json({ok:true,module:moduleName,...result},{headers:{'Cache-Control':'private, no-store'}});}catch(error){console.error('[modules:get]',error);return NextResponse.json({ok:false,error:'Không tải được dữ liệu phân hệ',detail:error instanceof Error?error.message:'Lỗi Supabase'},{status:503});}}
+export async function POST(req:Request){if(!await canOperateLegacy())return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});try{const body=(await req.json()) as AnyRecord;const moduleName=text(body.module);const op=text(body.op)||'save';
  if(moduleName==='alerts'&&['read','unread'].includes(op))return NextResponse.json({ok:true,...await saveAlertReadState(body)});
  if(moduleName==='kpi'&&op==='delete_report'){
   const entries=Array.isArray(body.entries)?body.entries as AnyRecord[]:[];
