@@ -12,3 +12,5 @@
 .work-embed #modal .stream{height:auto;min-height:48px;flex:1;overflow:auto;background:#eaf4fa;padding:12px}
 .work-embed #modal #send{flex:none;max-height:50dvh;overflow:auto}.work-embed #send textarea{min-height:44px;height:60px}
 .msg.mine{background:#e1f4ed;margin-left:auto}.msg{max-width:92%;width:fit-content}
+
+.nk-detail-only #app,.nk-detail-only #dock,.nk-board-frame #tabs{display:none}.nk-detail-only #modal{height:100%;width:100%;max-height:100%;max-width:100%;margin:0;box-sizing:border-box}.nk-detail-only #modal .split{min-height:68vh}

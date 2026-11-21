@@ -20,7 +20,7 @@ let noticeTimer,audio,lastUnread=0;
 function notice(v){const target=$('#modal').open?$('#modalError'):$('#notice');if(!target)return;target.textContent=v;target.hidden=false;clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>{target.hidden=true},6500);}
 async function run(fn,button){if(button?.disabled)return;if(button)button.disabled=true;try{await fn()}catch(e){notice(e.message)}finally{if(button)button.disabled=false}}
 function close(){$('#modal').classList.remove('expanded');if($('#modal').open)$('#modal').close();state.thread=null;state.dialog++;}
-function modal(title,body){close();$('#dialogBody').innerHTML='<div class="modalbar"><h2>'+esc(title)+'</h2><button id="close">Đóng ×</button></div><p id="modalError" class="error" role="alert" hidden></p>'+body;$('#close').onclick=close;$('#modal').showModal();}
+function modal(title,body){close();$('#dialogBody').innerHTML='<div class="modalbar"><h2>'+esc(title)+'</h2><button id="close">Đóng ×</button></div><p id="modalError" class="error" role="alert" hidden></p>'+body;$('#close').onclick=()=>{if(new URLSearchParams(location.search).has('detail'))window.parent.postMessage('ksnk-close-thread',location.origin);else close()};$('#modal').showModal();}
 $('#modal').addEventListener('cancel',()=>{state.thread=null;state.dialog++});
 function login(){
  if(window.parent!==window){window.top.location.replace('/');return;}
@@ -33,10 +33,11 @@ async function start(){
  const r=await api('me');state.me=r.me;state.people=r.people;state.scope='surgery';state.offset=0;const target=location.hash.slice(1);
  if(!embeddedWork&&window.parent===window){
  const q=new URLSearchParams(location.search),args=new URLSearchParams();
- if(target||!(r.me.admin||r.me.legacy_operator))args.set('work',target||'task');
+ if(target)args.set('work',target);
  if(q.has('thread'))args.set('thread',q.get('thread'));
  location.replace('/ngoai-khoa'+(args.size?'?'+args:''));return;
  }
+ if(new URLSearchParams(location.search).has('detail'))document.documentElement.classList.add('nk-detail-only');
  if(!embeddedWork)document.documentElement.classList.add('nk-board-frame');
  state.tab=(target==='admin'&&r.me.admin)||['task','reminder','chat','account'].includes(target)?(target==='account'?'all':target):'reminder';lastUnread=0;
  if(window.parent===window&&!embeddedWork&&!document.querySelector('nk-work-alerts')){
@@ -45,7 +46,8 @@ async function start(){
  }
  $('#identity').textContent=r.me.name+' · '+units[r.me.unit];$('#dock').hidden=false;dashboard();await refresh();
  const q=new URLSearchParams(location.search);
- if(q.has('thread'))await run(()=>openThread(q.get('thread')));
+ if(q.has('thread')){try{await openThread(q.get('thread'));}catch(e){modal('Không mở được phiếu','<p>'+esc(e.message)+'</p>');}}
+ if(target==='account')changeCode();
  if(q.has('row')){
  try{const result=await api('sourceThread',{kind:state.tab,row:Number(q.get('row')),ref:q.get('ref')});
  await openThread(result.id);}catch(e){if(embeddedWork){const panel=document.createElement('p');panel.setAttribute('role','status');panel.textContent=e.message;document.body.append(panel);}else notice(e.message);}
@@ -165,6 +167,9 @@ async function openThread(id){
  state.members=r.members;const t=r.item,isChat=t.kind==='chat',canUpdate=t.owner_id===state.me.id||t.performers.includes(state.me.id);
  const facts='<div class="details pane"><h3>'+names[t.kind]+'</h3><p>Đơn vị · '+esc(t.units.map(x=>units[x]).join(' / '))+'</p><p>Người tạo · '+esc(t.owner_id?person(t.owner_id):'Chưa ghi trong sổ')+'</p><p>Người thực hiện · '+esc(t.performers.map(person).join(', '))+'</p><p>Người liên quan · '+esc(t.observers.map(person).join(', ')||'—')+'</p><p style="white-space:pre-wrap">'+esc(t.note)+'</p><p>Ngày '+(t.kind==='reminder'?'nhắc':'đến hạn')+' · '+esc(t.due||'—')+'</p>'+(t.owner_id===state.me.id&&!isChat?'<button id="editTask">Sửa nội dung và hạn</button>':'')+(canUpdate&&!isChat?'<label>Trạng thái<select id="progress">'+options(Object.fromEntries(statuses.map(x=>[x,x])),t.status)+'</select></label><button id="saveStatus">Lưu trạng thái</button>':'')+'</div>';
  modal(rowTitle(t),'<div class="phoneTabs"><button data-view="detail">Chi tiết</button><button data-view="chat">Trò chuyện</button></div><div class="split" data-view="chat">'+facts+'<div class="discussion pane"><h3>'+esc(isChat?'Trao đổi riêng':t.kind==='task'?'Trò chuyện giao việc':'Trò chuyện nhắc việc')+'</h3><small>'+esc(r.members.map(x=>x.name).join(', '))+'</small><div id="stream" class="stream"><button id="older" '+(r.rows.length<50?'hidden':'')+'>Xem tin cũ hơn</button><div id="messages">'+messages(r.rows)+'</div></div><form id="send"><label>Tin nhắn<textarea name="body" maxlength="6000" placeholder="Nhập nội dung, gõ @ để nhắc tên thành viên…"></textarea></label><div id="mentions"></div>'+fileField+' <button class="primary">Gửi ➤</button></form></div></div>');
+ if(!isChat){const received=r.received||[],bar=document.createElement('div');bar.className='receipt';bar.textContent='Đã nhận · '+(received.map(person).join(', ')||'Chưa có người xác nhận');
+ if(t.performers.includes(state.me.id)&&!received.includes(state.me.id)){const button=document.createElement('button');button.type='button';button.textContent='Xác nhận đã nhận';button.onclick=()=>run(async()=>{await api('receive',{id});await openThread(id)},button);bar.append(' ',button);}
+ $('.discussion h3').after(bar);}
  $('.modalbar').insertAdjacentHTML('beforeend','<button id="expand">Mở rộng</button>');$('#expand').onclick=()=>{$('#expand').textContent=$('#modal').classList.toggle('expanded')?'Thu gọn':'Mở rộng'};
  state.thread=id;state.seq=r.rows.at(-1)?.seq||0;state.seen=0;state.first=r.rows[0]?.seq||0;
  const stream=$('#stream');stream.scrollTop=stream.scrollHeight;stream.onscroll=()=>run(markSeen);

@@ -290,7 +290,11 @@ declare code text;
 begin
  if sheet='GIAO VIỆC' then
  code:=coalesce(nullif(d->>'Mã NV',''),nullif(d->>'Mã nhân viên',''),nullif(d->>'Mã người thực hiện',''),nullif(d->>'Mã người chịu trách nhiệm',''),nullif(d->>'staffId',''));
- return query select 'Người thực hiện'::text,cx_key(coalesce(code,nullif(d->>'Người thực hiện',''),d->>'Người chịu trách nhiệm')),code is not null;
+ if code is not null then
+ return query select 'Người thực hiện'::text,cx_key(code),true;
+ else
+ return query select distinct 'Người thực hiện'::text,cx_key(v),false from regexp_split_to_table(coalesce(nullif(d->>'Người thực hiện',''),d->>'Người chịu trách nhiệm',''),'[,;|]+') v;
+ end if;
  return query select 'Người giao'::text,cx_key(coalesce(nullif(d->>'Người giao việc',''),nullif(d->>'Người giao',''),d->>'Người tạo')),false;
  elsif sheet='NHAC_VIEC_GHI_CHU' then
  return query select distinct 'Người liên quan'::text,cx_key(v),false from regexp_split_to_table(coalesce(d->>'NGƯỜI LIÊN QUAN',d->>'Người liên quan',''),'[,;|\n]+') v;
@@ -697,3 +701,13 @@ end $$;
 revoke all on function nk_keep_work_creator(),nk_create_work(text,jsonb,uuid) from public,anon,authenticated;
 grant execute on function nk_keep_work_creator(),nk_create_work(text,jsonb,uuid) to service_role;
 
+
+create or replace function nk_receive_work(t uuid,who uuid) returns boolean language plpgsql as $$
+begin
+ perform 1 from cx_threads where id=t and kind in ('task','reminder') and units=array['surgery'] and who=any(performers) for update;
+ if not found then return false; end if;
+ perform cx_append(t,who,'Đã xác nhận nhận việc.','[]'::jsonb,who,null);
+ return true;
+end $$;
+revoke all on function nk_receive_work(uuid,uuid) from public,anon,authenticated;
+grant execute on function nk_receive_work(uuid,uuid) to service_role;
