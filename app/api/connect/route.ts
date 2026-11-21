@@ -2,7 +2,7 @@ import {actor,db,personFields,Person} from '../../../lib/auth';
 import {randomUUID} from 'crypto';
 import {hash} from 'bcryptjs';
 export const dynamic='force-dynamic';
-const units=['company','general','surgery'];
+const unit='surgery';
 const kinds=['task','reminder','chat'];
 const statuses=['Mới','Đã nhận','Đang thực hiện','Hoàn thành'];
 const mime=['image/jpeg','image/png','image/webp','application/pdf','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
@@ -13,23 +13,31 @@ function ids(v:unknown):string[]{must(Array.isArray(v)&&v.length<=200&&v.every(u
 function uuid(v:unknown){return typeof v==='string'&&/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(v)}
 function checked<T>(r:{data:T,error:unknown}){if(r.error)throw r.error;return r.data}
 type Thread={id:string;title:string;owner_id:string;performers:string[];observers:string[];units:string[];kind:string;seq:number;status:string;due:string;note:string};
-function member(t:Thread,a:Person){return (a.unit==='company'||t.units.includes(a.unit))&&[t.owner_id,...t.performers,...t.observers].includes(a.id)}
+function member(t:Thread,a:Person){return (t.units.length===1&&t.units[0]===unit&&a.unit===unit)&&[t.owner_id,...t.performers,...t.observers].includes(a.id)}
 async function dispatch(req:Request){
  const a=await actor();must(a,'Vui lòng đăng nhập lại.',401);
  const b=await req.json(),client=db(),files=client.storage.from('connect-files');
- const scope=a.unit==='company'?(b.scope||'all'):a.unit;
- must(scope==='all'||units.includes(scope));
+ const scope=unit;
+ must(!b.scope||b.scope===scope);
  const rpc=async(name:string,args:Record<string,unknown>)=>checked(await client.rpc(name,args));
  async function people(all=false){
  const result:Person[]=[];
  for(let start=0;;start+=500){
  let q=client.from('cx_people').select(personFields).order('id').range(start,start+499);
- if(!all)q=q.eq('active',true);
- if(a!.unit!=='company')q=q.in('unit',[a!.unit,'company']);
+ if(!all)q=q.or('active.eq.true,pending_login.eq.true');
+ q=q.eq('unit',unit);
  const page=checked(await q)||[];result.push(...page);if(page.length<500)break;
  }return result;
  }
  if(b.action==='me')return {me:a,people:await people(a.admin)};
+ if(b.action==='sourceThread'){
+ must(['reminder','task'].includes(b.kind)&&Number.isSafeInteger(b.row)&&b.row>0);
+ const source=checked(await client.from('nk_legacy_rows').select('id,legacy_id,data').eq('sheet_name',b.kind==='task'?'GIAO VIỆC':'NHAC_VIEC_GHI_CHU').eq('row_no',b.row).maybeSingle());
+ must(source&&(!b.ref||[source.legacy_id,source.data?.ID,source.data?.['MÃ NHẮC VIỆC']].includes(b.ref)),'Hồ sơ đã thay đổi. Tải lại danh sách.',404);
+ const item=checked(await client.from('cx_threads').select('*').eq('source_row',source.id).maybeSingle());
+ must(item&&member(item,a),'Chỉ người tham gia việc này được mở trò chuyện.',403);
+ return {id:item.id};
+ }
  if(b.action==='history'){
  must(['task','reminder'].includes(b.kind));
  return {rows:await rpc('cx_history',{who:a.id,k:b.kind,scope,skip_rows:Math.max(0,Number(b.offset)||0)})};
@@ -38,35 +46,45 @@ async function dispatch(req:Request){
  must(a.admin,'Cần quyền quản trị',403);
  if(b.action==='sync'){await rpc('cx_refresh_links',{});return {ok:true};}
  if(b.action==='confirm'){
+ must(checked(await client.from('cx_staff_catalog').select('source_id').eq('unit',unit).eq('source_id',b.employee).maybeSingle()),'Nhân sự ngoài phạm vi bệnh viện.',403);
  must(await rpc('cx_confirm_role',{src:b.src,role_name:b.role,raw_token:b.token,by_code:b.match_code,employee:b.employee}),'Hồ sơ đã thay đổi. Tải lại để kiểm tra.',409);return {ok:true};
  }
  const staff=[],pending=[];
  for(let start=0;;start+=500){
- const rows=checked(await client.from('cx_staff_catalog').select('*').order('source_id').range(start,start+499))||[];
+ const rows=checked(await client.from('cx_staff_catalog').select('*').eq('unit',unit).order('source_id').range(start,start+499))||[];
  staff.push(...rows);if(rows.length<500)break;
  }
  for(let start=0;;start+=500){
- const rows=checked(await client.from('cx_work_people').select('source_id,unit,role,token,match_code').is('staff_code',null).order('source_id').order('role').order('token').range(start,start+499))||[];
+ const rows=checked(await client.from('cx_work_people').select('source_id,unit,role,token,match_code').eq('unit',unit).is('staff_code',null).order('source_id').order('role').order('token').range(start,start+499))||[];
  pending.push(...rows);if(rows.length<500)break;
  }
  return {staff,pending};
  }
  if(b.action==='account'){
  must(a.admin,'Chỉ quản trị viên được cấp tài khoản.',403);
- const name=str(b.name,120),username=str(b.username,50).toLowerCase();must(name&&/^[a-z0-9._-]{3,50}$/.test(username)&&units.includes(b.unit));
- const patch:Record<string,unknown>={name,username,unit:b.unit,legacy_operator:b.legacy===true&&b.unit!=='general',active:b.active===true,version:randomUUID()};
+ const name=str(b.name,120),username=str(b.username,50).toLowerCase();must(name&&/^[a-z0-9._-]{3,50}$/.test(username)&&b.unit===unit);
+ const patch:Record<string,unknown>={name,username,unit:b.unit,legacy_operator:b.legacy===true,active:b.active===true,version:randomUUID()};
  if(b.staffCode){must(typeof b.staffCode==='string'&&b.staffCode.length<=150);patch.staff_code=b.staffCode;}
+ if(b.code)patch.pending_login=false;
  if(b.code||!b.id){const code=str(b.code,72);must(code.length>=12&&Buffer.byteLength(code)<=72,'Mã cần ít nhất 12 ký tự và tối đa 72 byte.');patch.credential=await hash(code,12);}
  if(b.id){
  must(uuid(b.id)&&uuid(b.version)&&b.id!==a.id,'Dùng mục Đổi mã để cập nhật tài khoản đang đăng nhập.');
- const row=await client.from('cx_people').update(patch).eq('id',b.id).eq('admin',false).eq('version',b.version).select('id').maybeSingle();if(row.error?.code==='23505')throw new Fail('Tên đăng nhập hoặc hồ sơ nhân viên đã được sử dụng');must(checked(row),'Tài khoản đã thay đổi. Hãy tải lại.',409);
+ const row=await client.from('cx_people').update(patch).eq('id',b.id).eq('unit',unit).eq('admin',false).eq('version',b.version).select('id').maybeSingle();if(row.error?.code==='23505')throw new Fail('Tên đăng nhập hoặc hồ sơ nhân viên đã được sử dụng');must(checked(row),'Tài khoản đã thay đổi. Hãy tải lại.',409);
  }else{const r=await client.from('cx_people').insert(patch);if(r.error?.code==='23505')throw new Fail('Tên đăng nhập hoặc hồ sơ nhân viên đã được sử dụng');checked(r);}
  return {ok:true};
  }
- if(b.action==='counts')return {badges:await rpc('cx_badges',{who:a.id,scope})};
+ if(b.action==='workAlerts'){
+ const kind=b.kind||'all',offset=b.offset??0;
+ must(['all','task','reminder'].includes(kind)&&Number.isSafeInteger(offset)&&offset>=0);
+ return await rpc('nk_work_alerts',{who:a.id,filter_kind:kind,skip_rows:offset});
+ }
+ if(b.action==='counts'){const [badges,latest]=await Promise.all([rpc('cx_badges',{who:a.id,scope}),rpc('cx_notification',{who:a.id})]);return {badges,latest};}
  if(b.action==='board'){
  const screen=b.kind||'all';must(screen==='all'||kinds.includes(screen));
- return {due:await rpc('cx_due',{who:a.id,scope}),rows:await rpc('cx_board',{who:a.id,scope,screen,skip_rows:Math.max(0,Number(b.offset)||0)}),badges:await rpc('cx_badges',{who:a.id,scope})};
+ const [due,rows,badges,latest]=await Promise.all([
+ rpc('cx_due',{who:a.id,scope}),rpc('cx_board',{who:a.id,scope,screen,skip_rows:Math.max(0,Number(b.offset)||0)}),
+ rpc('cx_badges',{who:a.id,scope}),rpc('cx_notification',{who:a.id})]);
+ return {due,rows,badges,latest};
  }
  if(b.action==='upload'){
  must(mime.includes(b.mime)&&Number.isInteger(b.size)&&b.size>0&&b.size<=8388608,'Tệp không đúng định dạng hoặc vượt 8 MB.');
@@ -88,7 +106,7 @@ async function dispatch(req:Request){
  const kind=b.kind;must(kinds.includes(kind)&&uuid(b.id));
  const p=ids(b.performers),o=ids(b.observers||[]);must(p.length,'Chọn người thực hiện hoặc người nhận.');
  if(kind==='chat')must(p.length===1&&p[0]!==a.id&&!o.length);
- const selected=(await people()).filter(x=>x.active&&(p.includes(x.id)||o.includes(x.id)));
+ const selected=(await people()).filter(x=>(x.active||(kind!=='chat'&&x.pending_login))&&(p.includes(x.id)||o.includes(x.id)));
  must(new Set([...p,...o]).size===selected.length,'Người nhận không thuộc phạm vi tài khoản.',403);
  const u=[...new Set([a.unit,...selected.map(x=>x.unit)])],label=kind==='chat'?'Trao đổi riêng':str(b.title,180);
  must(label);const d=b.due||null;must(!d||/^\d{4}-\d{2}-\d{2}$/.test(d));
@@ -99,7 +117,7 @@ async function dispatch(req:Request){
  if(b.action==='thread'){
  const before=Number(b.before)||2147483647;
  const rows=checked(await client.from('cx_messages').select('*').eq('thread',t.id).lt('seq',before).order('seq',{ascending:false}).limit(50))||[];
- const participants=[...new Set([t.owner_id,...t.performers,...t.observers])];
+ const participants=[...new Set([t.owner_id,...t.performers,...t.observers].filter(Boolean))];
  const members=checked(await client.from('cx_people').select('id,name,username,unit').in('id',participants))||[];
  return {item:t,members,rows:rows.reverse()};
  }
