@@ -1,0 +1,12 @@
+'use client';
+import {useEffect,useState} from 'react';
+import {teamRecords,TeamModule} from '../lib/team-records';
+type Row={id:number;sheet:string;fields_data:Record<string,string>;department:string};
+export default function TeamRecords({module,title,onBack}:{module:TeamModule;title:string;onBack:()=>void}){
+ const [page,paging]=useState(0),[rows,setRows]=useState<Row[]>([]),[editable,canEdit]=useState(false),[error,fail]=useState(''),[revision,refresh]=useState(0);
+ const [draft,setDraft]=useState<{row:Row;field:string;value:string}|null>(null);
+ const def=teamRecords[module];
+ useEffect(()=>{let active=true;fail('');setRows([]);fetch('/api/team-records',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'list',module,offset:page*50})}).then(r=>r.json()).then(r=>{if(active){if(r.error)fail(r.error);else{setRows(r.rows);canEdit(r.editable);}}}).catch(()=>{if(active)fail('Không tải được hồ sơ');});return()=>{active=false;};},[module,page,revision]);
+ async function save(){if(!draft)return;try{const res=await fetch('/api/team-records',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'save',module,id:draft.row.id,field:draft.field,previous:draft.row.fields_data[draft.field]??null,value:draft.value})});const data=await res.json();if(!res.ok)throw Error(data.error);setDraft(null);refresh(n=>n+1);}catch(e){fail(e instanceof Error?e.message:'Không lưu được hồ sơ');}}
+ return <main className="content-shell"><div className="module-toolbar"><button className="back-btn" onClick={onBack}>← TRANG CHỦ</button><h2>{title}</h2></div>{error&&<p role="alert">{error}</p>}{rows.map(r=><article className="panel-card" key={r.id}><b>{r.department}</b><dl>{Object.entries(r.fields_data).map(([k,v])=><div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>{editable&&def.edit.map(f=><button key={f} className="edit-btn" onClick={()=>setDraft({row:r,field:f,value:r.fields_data[f]||''})}>Sửa {f.toLowerCase()}</button>)}{draft?.row.id===r.id&&<div><label>{draft.field}<textarea value={draft.value} maxLength={6000} onChange={e=>setDraft({...draft,value:e.target.value})}/></label><button onClick={save}>Lưu</button><button onClick={()=>setDraft(null)}>Hủy</button></div>}</article>)}{!rows.length&&!error&&<p>Không có hồ sơ trong trang này.</p>}<nav>{page>0&&<button onClick={()=>paging(page-1)}>Trang trước</button>}{rows.length===50&&<button onClick={()=>paging(page+1)}>Trang sau</button>}</nav></main>;
+}

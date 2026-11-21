@@ -24,7 +24,7 @@ async function ensureEvidenceBucket(db:ReturnType<typeof supabaseAdmin>){
 }
 
 export async function POST(req:Request){
- if(!await canOperateLegacy())return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});
+ if(!await canOperateLegacy(true))return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});
  try{
   const db=supabaseAdmin();if(!db)throw new Error('SUPABASE_SERVICE_ROLE_KEY chưa cấu hình');
   const form=await req.formData();const file=form.get('file');
@@ -67,7 +67,7 @@ export async function GET(req:Request){
 }
 
 export async function DELETE(req:Request){
- if(!await canOperateLegacy())return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});
+ if(!await canOperateLegacy(true))return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});
  try{
   const db=supabaseAdmin();if(!db)throw new Error('SUPABASE_SERVICE_ROLE_KEY chưa cấu hình');
   const id=new URL(req.url).searchParams.get('id')||'';

@@ -14,3 +14,9 @@ Bản nâng cấp này dùng cấu hình kết nối và mật khẩu quản tr�
 ### Trao đổi trực tiếp trong KSNK
 
 Sau khi đăng nhập, mở **Trang chủ** để xem việc cần xử lý. Trong menu **Giao việc & Nhắc việc**, chọn **Giao việc** hoặc **Nhắc việc & Ghi chú**. Từng phiếu hiển thị tin gần nhất và số tin chưa đọc của chính tài khoản. Mở phiếu để đọc lịch sử, gửi tin hoặc xác nhận đã nhận. Người giao có thể chọn nhiều nhân viên. Trên bảng thời hạn, mở thẻ công việc để vào trò chuyện. Dữ liệu phiếu và tin nhắn dùng các bảng hiện có.
+
+## Phân quyền trưởng khoa, tổ trưởng và nhân viên
+
+Chạy `supabase/phan_quyen_to.sql` một lần khi nâng từ PR 8, sau đó triển khai mã nguồn. Trong **Quản trị nhân viên → Sửa / cấp lại mã**, chọn vai trò, chọn đúng bộ phận cho tổ trưởng và tích **Được xem**, **Được sửa**. Khi bỏ quyền xem, giao diện cũng bỏ quyền sửa. Nhân viên có quyền sửa được cập nhật ghi chú riêng và tiến độ trên phiếu mình thực hiện. Người tạo và quản lý đúng phạm vi có thể chỉnh nội dung chung. Tổ trưởng mở các phân hệ của tổ trên menu, các trường nội dung được phép chỉnh có nút Sửa.
+
+Phiếu giao việc có bộ phận ghi rõ dùng bộ phận trên phiếu. Nếu phiếu chưa ghi bộ phận, hệ thống chỉ xếp vào tổ khi toàn bộ người thực hiện cùng thuộc tổ đó. Tin nhắn trực tiếp thuộc riêng người tham gia. Các tài khoản quản lý cũ cần được đối chiếu vai trò theo danh mục thực tế. Khi quản trị viên lưu vai trò quản lý, tài khoản được đọc trao đổi công việc trong phạm vi đã cấp, kể cả phiếu trước đó.

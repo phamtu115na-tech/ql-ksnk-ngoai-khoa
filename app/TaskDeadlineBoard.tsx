@@ -19,7 +19,7 @@ export default function TaskDeadlineBoard({rows,onEdit,onCreate,variant='tasks'}
         <div className="deadline-column-cards">
           {onCreate&&<button type="button" className="deadline-empty deadline-add" onClick={onCreate} aria-label={`Tạo ${itemLabel} mới — ${reminders?reminderLabels[column.id]:column.label}`} title={`Tạo ${itemLabel} mới`}>+</button>}
           {groups[column.id].map((row,index)=><button type="button" key={row.row_no??row.id??index} className={'deadline-card '+(column.id==='overdue'?'deadline-card-overdue':'')} onClick={()=>onEdit(row)}>
-            <span className="deadline-card-title">{row.title||'Chưa có tiêu đề'}</span><WorkMessage compact source={row.sourceId}/>
+            <WorkMessage compact source={row.sourceId}/><span className="deadline-card-title">{row.title||'Chưa có tiêu đề'}</span>
             {row.description&&<span className="deadline-description">{row.description}</span>}
             <span className="deadline-tags"><span>{column.id==='done'?(reminders?'✓ Đã xong':'✓ Đã hoàn thành'):row.endDate?`${reminders?'Ngày nhắc':'Hạn'}: ${row.endDate.slice(0,10).split('-').reverse().join('/')}`:(reminders?'Chưa có ngày nhắc':'Không có hạn chót')}</span>{row.priority&&<span>{row.priority}</span>}</span>
             {row.workType&&<span className="deadline-worktype">{row.workType}</span>}
