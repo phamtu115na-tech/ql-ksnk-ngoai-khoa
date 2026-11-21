@@ -28,7 +28,7 @@ returns table(item jsonb,unread bigint) language sql stable as $$
  left join cx_reads r on r.thread=t.id and r.person=who
  where cardinality(t.units)>0 and (a.unit='company' or a.unit=any(t.units))
  and (scope='all' or scope=any(t.units))
- and ((a.admin and t.kind<>'chat') or who=t.owner_id or who=any(t.performers||t.observers))
+ and (((a.admin or a.legacy_operator) and t.kind<>'chat') or who=t.owner_id or who=any(t.performers||t.observers))
  and (screen='all' or t.kind=screen)
  order by t.updated desc,t.id limit 80 offset greatest(skip_rows,0)
 $$;

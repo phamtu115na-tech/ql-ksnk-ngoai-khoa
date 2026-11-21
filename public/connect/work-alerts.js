@@ -42,7 +42,7 @@ class HospitalWorkAlerts extends HTMLElement {
   }catch(err){if(token===this.version){this.lastList='';this.find('.list').textContent=err.message;this.find('footer').replaceChildren();}}
  }
  card(w){
-  const link=document.createElement('a');link.href='/connect/index.html?thread='+encodeURIComponent(w.id)+'#'+w.kind;
+  const link=document.createElement('a');link.href='/ngoai-khoa?work='+w.kind+'&thread='+encodeURIComponent(w.id);
   link.onclick=e=>{
    if(e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;
    this.toggle(false);

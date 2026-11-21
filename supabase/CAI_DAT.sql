@@ -597,7 +597,7 @@ returns table(item jsonb,unread bigint) language sql stable as $$
  left join cx_reads r on r.thread=t.id and r.person=who
  where cardinality(t.units)>0 and (a.unit='company' or a.unit=any(t.units))
  and (scope='all' or scope=any(t.units))
- and ((a.admin and t.kind<>'chat') or who=t.owner_id or who=any(t.performers||t.observers))
+ and (((a.admin or a.legacy_operator) and t.kind<>'chat') or who=t.owner_id or who=any(t.performers||t.observers))
  and (screen='all' or t.kind=screen)
  order by t.updated desc,t.id limit 80 offset greatest(skip_rows,0)
 $$;
@@ -645,10 +645,10 @@ language sql stable as $$
  left join cx_reads seen on seen.thread=t.id and seen.person=who
  cross join lateral (
  select count(*) as unread,(array_agg(left(coalesce(nullif(body,''),'Ảnh / tài liệu'),180) order by seq desc))[1] as preview
- from cx_messages where thread=t.id and seq>coalesce(seen.seq,0) and sender is distinct from who
+ from cx_messages where (t.owner_id=who or who=any(t.performers||t.observers)) and thread=t.id and seq>coalesce(seen.seq,0) and sender is distinct from who
  ) m
  where t.units=array['surgery'] and t.kind in ('task','reminder')
- and (t.owner_id=who or who=any(t.performers||t.observers))
+ and (a.admin or a.legacy_operator or t.owner_id=who or who=any(t.performers||t.observers))
  ), eligible as (
  select * from alerts where unread>0 or (status<>'Hoàn thành' and
  (due<=today or (daily and due is null)))

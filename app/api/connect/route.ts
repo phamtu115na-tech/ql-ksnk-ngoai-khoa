@@ -113,6 +113,9 @@ async function dispatch(req:Request){
  const id=await rpc('cx_create',{t:b.id,k:kind,label,who:a.id,p,o,u,d,details:str(b.note||'',6000),pk:kind==='chat'?[a.id,p[0]].sort().join(':'):null,attachments:await attachments()});return {id};
  }
  must(uuid(b.id));const t=checked(await client.from('cx_threads').select('*').eq('id',b.id).maybeSingle()) as Thread;
+ if(b.action==='thread'&&t&&t.kind!=='chat'&&t.units.length===1&&t.units[0]==='surgery'&&(a.admin||a.legacy_operator)&&!member(t,a)){
+ return {viewOnly:true,item:{title:t.title,note:t.note,status:t.status,performers:t.performers,due:t.due}};
+ }
  must(t&&member(t,a),'Chỉ thành viên của việc được mở trao đổi.',403);
  if(b.action==='thread'){
  const before=Number(b.before)||2147483647;
