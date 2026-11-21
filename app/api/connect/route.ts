@@ -73,6 +73,11 @@ async function dispatch(req:Request){
  }else{const r=await client.from('cx_people').insert(patch);if(r.error?.code==='23505')throw new Fail('Tên đăng nhập hoặc hồ sơ nhân viên đã được sử dụng');checked(r);}
  return {ok:true};
  }
+ if(b.action==='workAlerts'){
+ const kind=b.kind||'all',offset=b.offset??0;
+ must(['all','task','reminder'].includes(kind)&&Number.isSafeInteger(offset)&&offset>=0);
+ return await rpc('nk_work_alerts',{who:a.id,filter_kind:kind,skip_rows:offset});
+ }
  if(b.action==='counts'){const [badges,latest]=await Promise.all([rpc('cx_badges',{who:a.id,scope}),rpc('cx_notification',{who:a.id})]);return {badges,latest};}
  if(b.action==='board'){
  const screen=b.kind||'all';must(screen==='all'||kinds.includes(screen));

@@ -1,0 +1,7 @@
+:host{position:fixed;bottom:12px;left:12px;z-index:55;color:#17375f;font:15px/1.5 system-ui,sans-serif}
+*{box-sizing:border-box}section{position:absolute;bottom:52px;left:0;width:min(440px,calc(100vw - 24px));max-height:min(71vh,700px);overflow:auto;background:white;border:1px solid #d6e3f4;border-radius:16px;box-shadow:0 12px 35px #15385e32;padding:14px}section[hidden]{display:none}
+header{position:sticky;top:-14px;background:white;display:flex;align-items:center;justify-content:space-between;padding:6px 0;z-index:1}h2{font-size:19px;margin:0}
+button{background:white;border:1px solid #c8d7eb;border-radius:10px;padding:7px 11px;color:inherit;font:600 14px system-ui;cursor:pointer}
+.launch{background:#223f6b;border:0;border-radius:25px;color:white;font-size:16px;padding:11px 18px}.close{font-size:20px}
+nav,footer{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0}button[aria-pressed=true]{background:#e5effc;border-color:#80a4d2}
+.list{display:grid;gap:8px}.list a{display:grid;gap:5px;padding:12px;text-decoration:none;color:inherit;border:1px solid #d3e0f1;border-radius:12px;overflow-wrap:anywhere}.list a:hover,.list a:focus-visible{background:#f3f8ff}.list strong{font-size:16px}.list small{color:#476485}.list p{border-top:1px solid #e3eaf2;padding-top:7px;margin:3px 0;color:#20539a}

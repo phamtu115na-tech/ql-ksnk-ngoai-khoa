@@ -22,6 +22,7 @@ function close(){$('#modal').classList.remove('expanded');if($('#modal').open)$(
 function modal(title,body){close();$('#dialogBody').innerHTML='<div class="modalbar"><h2>'+esc(title)+'</h2><button id="close">Đóng ×</button></div><p id="modalError" class="error" role="alert" hidden></p>'+body;$('#close').onclick=close;$('#modal').showModal();}
 $('#modal').addEventListener('cancel',()=>{state.thread=null;state.dialog++});
 function login(){
+ document.querySelector('nk-work-alerts')?.remove();
  close();$('#dock').hidden=true;$('#identity').textContent='Điều hành KSNK';
  $('#app').innerHTML='<form id="login" class="card login"><p>Không gian làm việc nội bộ</p><h1>Đăng nhập nhân viên</h1><p>Sử dụng tài khoản do quản trị viên cấp.</p><label>Đơn vị đăng nhập<select name="unit">'+options(units,'surgery')+'</select></label><label>Tên đăng nhập<input required name="username" autocomplete="username"></label><label>Mã đăng nhập<input required type="password" name="password" autocomplete="current-password"></label><p class="error" id="loginError"></p><button class="primary">Đăng nhập</button><small>Mất mã? Liên hệ quản trị viên để được cấp lại.</small></form>';
  $('#login').onsubmit=e=>{e.preventDefault();const form=e.currentTarget;run(async()=>{try{const data=Object.fromEntries(new FormData(form));await request('/api/auth',data);localStorage.cxUnit=data.unit;await start()}catch(err){$('#loginError').textContent=err.message}},form.querySelector('button'))};
@@ -30,6 +31,10 @@ async function start(){
  const r=await api('me');state.me=r.me;state.people=r.people;state.scope='surgery';state.offset=0;const target=location.hash.slice(1);
  if(!target&&!embeddedWork&&(r.me.admin||r.me.legacy_operator)){location.replace('/ngoai-khoa');return;}
  state.tab=(target==='admin'&&r.me.admin)||['task','reminder','chat','account'].includes(target)?(target==='account'?'all':target):'reminder';lastUnread=0;
+ if(!embeddedWork&&!document.querySelector('nk-work-alerts')){
+ const alerts=document.createElement('nk-work-alerts');document.body.append(alerts);
+ alerts.addEventListener('work-selected',e=>{e.preventDefault();run(()=>openThread(e.detail));});
+ }
  $('#identity').textContent=r.me.name+' · '+units[r.me.unit];$('#dock').hidden=false;dashboard();await refresh();
  const q=new URLSearchParams(location.search);
  if(q.has('thread'))await run(()=>openThread(q.get('thread')));
@@ -78,10 +83,7 @@ function paint(){
  if(!$('#rows')||!state.me)return;
  const k=state.tab,visible=Object.keys(names).filter(x=>(x!=='admin'||state.me.admin));
  $('#tabs').innerHTML=visible.map(t=>'<button data-tab="'+t+'" class="'+(t===k?'active':'')+'">'+names[t]+' '+badge(state.badges[t])+'</button>').join('');
- if(!$('#taskAlerts'))$('#dock').insertAdjacentHTML('beforeend','<button id="taskAlerts" data-tab="task" hidden></button>');
- $('#taskAlerts').hidden=!state.badges.task;
- $('#taskAlerts').textContent='Giao việc · '+(state.badges.task||0)+' mới';
- $('#remCount').textContent=[state.badges.reminder?state.badges.reminder+' mới':'',state.due?.reminder?state.due.reminder+' đến hạn':''].filter(Boolean).join(' · ');$('#chatCount').textContent=state.badges.chat||'';
+ $('#chatCount').textContent=state.badges.chat||'';
  $('#heading').textContent=(k==='task'?'Thông báo giao việc':names[k])+((state.due?.[k]||0)>0?' · '+state.due[k]+' việc của tôi đến hạn hoặc quá hạn':'');$('#pager').innerHTML='';
  if(k==='admin'){
  $('#actions').innerHTML='<button class="primary" id="new">Cấp tài khoản</button>';$('#new').onclick=()=>account();$('#actions').insertAdjacentHTML('afterbegin','<button id="roster">Danh mục nhân viên hiện tại</button>');$('#roster').onclick=()=>run(directory);

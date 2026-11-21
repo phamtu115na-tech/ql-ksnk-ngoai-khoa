@@ -1,5 +1,6 @@
 'use client';
-import {useEffect,useRef,useState} from 'react';
+import Script from 'next/script';
+import {createElement,useEffect,useRef,useState} from 'react';
 
 type Update={id:string;kind:string;title:string;body:string;seq:number};
 const labels:Record<string,string>={task:'Việc được giao',reminder:'Nhắc việc',chat:'Trao đổi'};
@@ -39,8 +40,8 @@ export default function LegacyConnectDock(){
   if(audio.current){await audio.current.close();audio.current=null;setSound(false);return;}
   const ctx=new AudioContext();await ctx.resume();audio.current=ctx;setSound(true);
  }
- return <aside className="nk-notifications" aria-label="Thông báo công việc">
+ return <><Script src="/connect/work-alerts.js" strategy="afterInteractive"/>{createElement('nk-work-alerts')}<aside className="nk-notifications"  aria-label="Thông báo công việc">
  {latest&&<a role="status" className="nk-latest" href={link(latest.kind,latest.id)}><strong>{latest.kind==='chat'?'Tin nhắn mới':latest.title}</strong><span>{latest.body}</span></a>}
  <nav><button type="button" aria-pressed={sound} onClick={toggle}>{sound?'Tắt chuông':'Bật chuông'}</button>
- {Object.keys(labels).filter(k=>k!=='task'||counts.task>0).map(k=><a key={k} href={link(k)}>{labels[k]} {counts[k]>0&&<b>{counts[k]}</b>}</a>)}</nav></aside>;
+ {['chat'].map(k=><a key={k} href={link(k)}>{labels[k]} {counts[k]>0&&<b>{counts[k]}</b>}</a>)}</nav></aside></>;
 }
