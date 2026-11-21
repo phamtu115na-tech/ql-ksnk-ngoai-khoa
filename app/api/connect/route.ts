@@ -79,6 +79,10 @@ async function dispatch(req:Request){
  return await rpc('nk_work_alerts',{who:a.id,filter_kind:kind,skip_rows:offset});
  }
  if(b.action==='counts'){const [badges,latest]=await Promise.all([rpc('cx_badges',{who:a.id,scope}),rpc('cx_notification',{who:a.id})]);return {badges,latest};}
+ if(b.action==='workRows'){
+ must(['task','reminder'].includes(b.kind)&&Number.isSafeInteger(b.offset)&&b.offset>=0);
+ return await rpc('cx_board',{who:a.id,scope,screen:b.kind,skip_rows:b.offset});
+ }
  if(b.action==='board'){
  const screen=b.kind||'all';must(screen==='all'||kinds.includes(screen));
  const [due,rows,badges,latest]=await Promise.all([
@@ -113,13 +117,18 @@ async function dispatch(req:Request){
  const id=await rpc('cx_create',{t:b.id,k:kind,label,who:a.id,p,o,u,d,details:str(b.note||'',6000),pk:kind==='chat'?[a.id,p[0]].sort().join(':'):null,attachments:await attachments()});return {id};
  }
  must(uuid(b.id));const t=checked(await client.from('cx_threads').select('*').eq('id',b.id).maybeSingle()) as Thread;
+ if(b.action==='thread'&&t&&t.kind!=='chat'&&t.units.length===1&&t.units[0]==='surgery'&&(a.admin||a.legacy_operator)&&!member(t,a)){
+ return {viewOnly:true,item:{title:t.title,note:t.note,status:t.status,performers:t.performers,due:t.due}};
+ }
  must(t&&member(t,a),'Chỉ thành viên của việc được mở trao đổi.',403);
+ if(b.action==='receive'){must(await rpc('nk_receive_work',{t:t.id,who:a.id}),'Bạn không phải người thực hiện.',403);return {ok:true};}
  if(b.action==='thread'){
  const before=Number(b.before)||2147483647;
  const rows=checked(await client.from('cx_messages').select('*').eq('thread',t.id).lt('seq',before).order('seq',{ascending:false}).limit(50))||[];
  const participants=[...new Set([t.owner_id,...t.performers,...t.observers].filter(Boolean))];
  const members=checked(await client.from('cx_people').select('id,name,username,unit').in('id',participants))||[];
- return {item:t,members,rows:rows.reverse()};
+ const receipts=t.performers.length?checked(await client.from('cx_messages').select('sender,request_id').eq('thread',t.id).in('request_id',t.performers)):[];
+ return {item:t,members,received:(receipts||[]).filter(x=>x.sender===x.request_id).map(x=>x.sender),rows:rows.reverse()};
  }
  if(b.action==='edit'){
  const title=str(b.title,180);must(title&&uuid(b.requestId)&&Number.isInteger(b.expected)&&/^\d{4}-\d{2}-\d{2}$/.test(b.due));
@@ -135,7 +144,7 @@ async function dispatch(req:Request){
  return checked(await files.createSignedUrl(b.path,90));
  }
  if(b.action==='send'||b.action==='status'){
- must(uuid(b.requestId));const status=b.action==='status'?b.status:null;
+ must(uuid(b.requestId)&&b.requestId!==a.id);const status=b.action==='status'?b.status:null;
  if(status!==null)must(t.kind!=='chat'&&statuses.includes(status)&&(t.owner_id===a.id||t.performers.includes(a.id)),'Bạn không có quyền cập nhật trạng thái.',403);
  const body=status?'Cập nhật trạng thái: '+status:str(b.body||'',6000),list=await attachments();must(body||list.length,'Nhập nội dung hoặc chọn tệp.');
  await rpc('cx_append',{t:t.id,who:a.id,txt:body,attachments:list,rid:b.requestId,new_status:status});return {ok:true};

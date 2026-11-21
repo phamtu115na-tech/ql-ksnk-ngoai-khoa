@@ -1,4 +1,4 @@
-export type BoardTask = {row_no?: number; id?: string; title?: string; endDate?: string; status?: string; assignee?: string; assigner?: string; department?: string; priority?: string; approvalStatus?: string; workType?: string; description?: string};
+export type BoardTask = {sourceId?: number; row_no?: number; id?: string; title?: string; endDate?: string; status?: string; assignee?: string; assigner?: string; department?: string; priority?: string; approvalStatus?: string; workType?: string; description?: string};
 export const BOARD_COLUMNS = [
   {id:'overdue',label:'Quá hạn',color:'#f05260'},
   {id:'today',label:'Hạn hôm nay',color:'#c4e744'},

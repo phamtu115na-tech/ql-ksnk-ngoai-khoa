@@ -5,9 +5,13 @@ import LegacyDashboard from '../LegacyDashboard';
 import Quick from '../HeaderQuickActions';
 import Detail from '../ReminderDetailActions';
 import Images from '../ReminderImageManager';
-export default async function Dashboard(){
- const user=await actor();
+import {WorkProvider} from '../WorkBoard';
+export default async function Dashboard({searchParams}:{searchParams:Promise<{work?:string;thread?:string}>}){
+ const params=await searchParams,user=await actor();
  if(!user)redirect('/');
- if(!user.admin&&!user.legacy_operator)redirect('/connect/index.html#reminder');
- return <><nav aria-label="Tài khoản bệnh viện" style={{display:'flex',gap:16,padding:'8px 16px'}}><a href="/connect/index.html#account">Tài khoản của tôi</a>{user.admin&&<a href="/connect/index.html#admin">Quản trị nhân viên</a>}</nav><Quick/><Detail/><Images/><LegacyDashboard/><Dock/></>;
+ const manager=user.admin||user.legacy_operator;
+ const utility=['account','chat',...(user.admin?['admin']:[])].includes(params.work||'')&&!params.thread;
+ return <WorkProvider><nav aria-label="Tài khoản bệnh viện" className="nk-account-nav"><a href="/ngoai-khoa">Trang chủ</a><a href="/ngoai-khoa?work=account">{user.name} · Tài khoản</a>{user.admin&&<a href="/ngoai-khoa?work=admin">Quản trị nhân viên</a>}</nav>
+ {utility?<iframe className="nk-workboard" title="Tài khoản và trao đổi riêng" src={'/connect/index.html?utility=1#'+params.work}/>:<><Quick/>{manager&&<><Detail/><Images/></>}<LegacyDashboard manager={manager} who={user.id} openWork={Boolean(params.work)} creatorName={user.admin&&!user.staff_code?user.username:user.name}/></>}
+ <Dock/></WorkProvider>;
 }

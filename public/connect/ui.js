@@ -7,7 +7,8 @@ const names={all:'Tổng quan',task:'Việc được giao',reminder:'Nhắc vi�
 const statuses=['Mới','Đã nhận','Đang thực hiện','Hoàn thành'];
 const state={me:null,people:[],tab:'all',scope:'all',offset:0,rows:[],badges:{},screen:0,dialog:0,thread:null,seq:0,loading:false};
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const person=id=>state.people.find(x=>x.id===id)?.name||state.members?.find(x=>x.id===id)?.name||'Thành viên';
+const accountLabel=p=>p?.admin&&!p.staff_code?p.username:p?.name;
+const person=id=>accountLabel(state.people.find(x=>x.id===id)||state.members?.find(x=>x.id===id))||'Thành viên';
 const options=(map,v)=>Object.entries(map).map(([k,n])=>'<option value="'+esc(k)+'" '+(k===v?'selected':'')+'>'+esc(n)+'</option>').join('');
 const badge=n=>n?'<b class="badge">'+Number(n)+'</b>':'';
 const api=(action,data={})=>request('/api/connect',{action,...data});
@@ -19,9 +20,10 @@ let noticeTimer,audio,lastUnread=0;
 function notice(v){const target=$('#modal').open?$('#modalError'):$('#notice');if(!target)return;target.textContent=v;target.hidden=false;clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>{target.hidden=true},6500);}
 async function run(fn,button){if(button?.disabled)return;if(button)button.disabled=true;try{await fn()}catch(e){notice(e.message)}finally{if(button)button.disabled=false}}
 function close(){$('#modal').classList.remove('expanded');if($('#modal').open)$('#modal').close();state.thread=null;state.dialog++;}
-function modal(title,body){close();$('#dialogBody').innerHTML='<div class="modalbar"><h2>'+esc(title)+'</h2><button id="close">Đóng ×</button></div><p id="modalError" class="error" role="alert" hidden></p>'+body;$('#close').onclick=close;$('#modal').showModal();}
+function modal(title,body){close();$('#dialogBody').innerHTML='<div class="modalbar"><h2>'+esc(title)+'</h2><button id="close">Đóng ×</button></div><p id="modalError" class="error" role="alert" hidden></p>'+body;$('#close').onclick=()=>{if(new URLSearchParams(location.search).has('detail'))window.parent.postMessage('ksnk-close-thread',location.origin);else close()};$('#modal').showModal();}
 $('#modal').addEventListener('cancel',()=>{state.thread=null;state.dialog++});
 function login(){
+ if(window.parent!==window){window.top.location.replace('/');return;}
  document.querySelector('nk-work-alerts')?.remove();
  close();$('#dock').hidden=true;$('#identity').textContent='Điều hành KSNK';
  $('#app').innerHTML='<form id="login" class="card login"><p>Không gian làm việc nội bộ</p><h1>Đăng nhập nhân viên</h1><p>Sử dụng tài khoản do quản trị viên cấp.</p><label>Đơn vị đăng nhập<select name="unit">'+options(units,'surgery')+'</select></label><label>Tên đăng nhập<input required name="username" autocomplete="username"></label><label>Mã đăng nhập<input required type="password" name="password" autocomplete="current-password"></label><p class="error" id="loginError"></p><button class="primary">Đăng nhập</button><small>Mất mã? Liên hệ quản trị viên để được cấp lại.</small></form>';
@@ -29,15 +31,23 @@ function login(){
 }
 async function start(){
  const r=await api('me');state.me=r.me;state.people=r.people;state.scope='surgery';state.offset=0;const target=location.hash.slice(1);
- if(!target&&!embeddedWork&&(r.me.admin||r.me.legacy_operator)){location.replace('/ngoai-khoa');return;}
+ if(!embeddedWork&&window.parent===window){
+ const q=new URLSearchParams(location.search),args=new URLSearchParams();
+ if(target)args.set('work',target);
+ if(q.has('thread'))args.set('thread',q.get('thread'));
+ location.replace('/ngoai-khoa'+(args.size?'?'+args:''));return;
+ }
+ if(new URLSearchParams(location.search).has('detail'))document.documentElement.classList.add('nk-detail-only');
+ if(!embeddedWork)document.documentElement.classList.add('nk-board-frame');
  state.tab=(target==='admin'&&r.me.admin)||['task','reminder','chat','account'].includes(target)?(target==='account'?'all':target):'reminder';lastUnread=0;
- if(!embeddedWork&&!document.querySelector('nk-work-alerts')){
+ if(window.parent===window&&!embeddedWork&&!document.querySelector('nk-work-alerts')){
  const alerts=document.createElement('nk-work-alerts');document.body.append(alerts);
  alerts.addEventListener('work-selected',e=>{e.preventDefault();run(()=>openThread(e.detail));});
  }
  $('#identity').textContent=r.me.name+' · '+units[r.me.unit];$('#dock').hidden=false;dashboard();await refresh();
  const q=new URLSearchParams(location.search);
- if(q.has('thread'))await run(()=>openThread(q.get('thread')));
+ if(q.has('thread')){try{await openThread(q.get('thread'));}catch(e){modal('Không mở được phiếu','<p>'+esc(e.message)+'</p>');}}
+ if(target==='account')changeCode();
  if(q.has('row')){
  try{const result=await api('sourceThread',{kind:state.tab,row:Number(q.get('row')),ref:q.get('ref')});
  await openThread(result.id);}catch(e){if(embeddedWork){const panel=document.createElement('p');panel.setAttribute('role','status');panel.textContent=e.message;document.body.append(panel);}else notice(e.message);}
@@ -84,7 +94,7 @@ function paint(){
  const k=state.tab,visible=Object.keys(names).filter(x=>(x!=='admin'||state.me.admin));
  $('#tabs').innerHTML=visible.map(t=>'<button data-tab="'+t+'" class="'+(t===k?'active':'')+'">'+names[t]+' '+badge(state.badges[t])+'</button>').join('');
  $('#chatCount').textContent=state.badges.chat||'';
- $('#heading').textContent=(k==='task'?'Thông báo giao việc':names[k])+((state.due?.[k]||0)>0?' · '+state.due[k]+' việc của tôi đến hạn hoặc quá hạn':'');$('#pager').innerHTML='';
+ $('#heading').textContent=(k==='task'?((state.me.admin||state.me.legacy_operator)?'Giao việc toàn viện':'Việc được giao'):names[k])+((state.due?.[k]||0)>0?' · '+state.due[k]+' việc của tôi đến hạn hoặc quá hạn':'');$('#pager').innerHTML='';
  if(k==='admin'){
  $('#actions').innerHTML='<button class="primary" id="new">Cấp tài khoản</button>';$('#new').onclick=()=>account();$('#actions').insertAdjacentHTML('afterbegin','<button id="roster">Danh mục nhân viên hiện tại</button>');$('#roster').onclick=()=>run(directory);
  $('#rows').innerHTML=state.people.filter(x=>state.scope==='all'||x.unit===state.scope).map(x=>'<div class="row"><div><strong>'+esc(x.name)+'</strong><small>'+esc(x.pending_login?'Chưa cấp tài khoản':x.username)+' · '+esc(units[x.unit])+' · '+(x.admin?'Quản trị viên':x.active?'Đang hoạt động':'Đã khóa')+'</small></div>'+(x.admin?'':'<button data-account="'+x.id+'">Sửa / cấp lại mã</button>')+'</div>').join('');return;
@@ -95,7 +105,7 @@ function paint(){
  $('#viewMode').onclick=()=>{localStorage.cxView=board?'list':'board';paint()};}
  const card=({item:t,unread})=>{
  const member=[t.owner_id,...t.performers,...t.observers].includes(state.me.id);
- return '<div class="row"><div><small>'+names[t.kind]+' · '+esc(t.units.map(x=>units[x]).join(' / '))+'</small><strong>'+esc(rowTitle(t))+' '+badge(unread)+'</strong><small>'+esc(t.status)+' · '+esc(t.performers.map(person).join(', '))+(t.due&&t.due<=new Date(Date.now()+7*3600000).toISOString().slice(0,10)&&t.status!=='Hoàn thành'?' · <b class="late">Đến hạn / quá hạn</b>':'')+(t.due?' · Hạn '+esc(t.due.split('-').reverse().join('/')):'')+'</small>'+(member&&t.latest_message?'<p>'+esc(t.latest_message)+'</p>':'')+'</div>'+(member?'<button data-open="'+t.id+'">Mở</button>':'<small>Theo dõi tiến độ</small>')+'</div>';
+ return '<div class="row"><div><small>'+names[t.kind]+' · '+esc(t.units.map(x=>units[x]).join(' / '))+'</small><strong>'+esc(rowTitle(t))+' '+badge(unread)+'</strong><small>'+esc(t.status)+' · '+esc(t.performers.map(person).join(', '))+(t.due&&t.due<=new Date(Date.now()+7*3600000).toISOString().slice(0,10)&&t.status!=='Hoàn thành'?' · <b class="late">Đến hạn / quá hạn</b>':'')+(t.due?' · Hạn '+esc(t.due.split('-').reverse().join('/')):'')+'</small>'+(member&&t.latest_message?'<p>'+esc(t.latest_message)+'</p>':'')+'</div>'+(member?'<button data-open="'+t.id+'">Mở</button>':'<button data-open="'+t.id+'">Xem tiến độ</button>')+'</div>';
  };
  if(board){
  const left=$('.deadlineGrid')?.scrollLeft||0;
@@ -137,25 +147,29 @@ function compose(kind){
  const direct=kind==='chat',everyone=state.people.filter(x=>(x.active||(!direct&&x.pending_login))&&(!direct||x.id!==state.me.id));
  const allowed=['surgery'];
  const picker=(name,radio)=>'<div class="picker">'+everyone.map(x=>'<label data-unit="'+x.unit+'"><input type="'+(radio?'radio':'checkbox')+'" name="'+name+'" value="'+x.id+'">'+esc(x.name)+' · '+esc([x.staff_code,x.department,x.pending_login?'Chưa cấp tài khoản':x.username].filter(Boolean).join(' · '))+'</label>').join('')+'</div>';
- modal(names[kind],'<form id="edit"><p>Người tạo · '+esc(state.me.name)+'</p><label>Đơn vị nhận</label><div class="picker">'+allowed.map(x=>'<label><input type="checkbox" name="unitChoice" value="'+x+'" '+(state.scope==='all'||state.scope===x?'checked':'')+'>'+esc(units[x])+'</label>').join('')+'</div>'+(direct?'':'<label>Tiêu đề<input required name="title" maxlength="180"></label><label>Ngày '+(kind==='task'?'đến hạn':'nhắc')+'<input type="date" name="due" required></label><label>Nội dung<textarea name="note" maxlength="6000"></textarea></label>')+'<label>'+(direct?'Người nhận':'Người thực hiện')+'</label>'+picker('performers',direct)+(direct?'':'<label>Người liên quan</label>'+picker('observers',false)+fileField)+'<button class="primary"> ' +(direct?'Mở trao đổi':'Lưu và mở trao đổi')+'</button></form>');
+ modal(names[kind],'<form id="edit"><p>Người tạo · '+esc(accountLabel(state.me))+'</p><label>Đơn vị nhận</label><div class="picker">'+allowed.map(x=>'<label><input type="checkbox" name="unitChoice" value="'+x+'" '+(state.scope==='all'||state.scope===x?'checked':'')+'>'+esc(units[x])+'</label>').join('')+'</div>'+(direct?'':'<label>Tiêu đề<input required name="title" maxlength="180"></label><label>Ngày '+(kind==='task'?'đến hạn':'nhắc')+'<input type="date" name="due" required></label><label>Nội dung<textarea name="note" maxlength="6000"></textarea></label>')+'<label>'+(direct?'Người nhận':'Người thực hiện')+'</label>'+picker('performers',direct)+(direct?'':'<label>Người liên quan</label>'+picker('observers',false)+fileField)+'<button class="primary"> ' +(direct?'Mở trao đổi':'Lưu và mở trao đổi')+'</button></form>');
  const f=$('#edit');function filter(){const u=new FormData(f).getAll('unitChoice');f.querySelectorAll('[data-unit]').forEach(l=>{l.hidden=!u.includes(l.dataset.unit);if(l.hidden)l.querySelector('input').checked=false})}
  filter();f.onchange=e=>{if(e.target.name==='unitChoice')filter()};const id=crypto.randomUUID();
  submit(async fd=>{if(!fd.getAll('performers').length)throw Error('Chọn ít nhất một người nhận.');const files=await upload(fd);
  const r=await api('create',{kind,id,title:fd.get('title'),due:fd.get('due'),note:fd.get('note'),performers:fd.getAll('performers'),observers:fd.getAll('observers'),files});
  close();await refresh();await openThread(r.id);});
 }
-function messages(rows){return rows.map(m=>'<article class="msg"><strong>'+esc(m.sender?person(m.sender):'Thông báo hệ thống')+'</strong> <small>'+esc(new Date(m.sent).toLocaleString('vi-VN'))+'</small><div>'+esc(m.body)+'</div>'+m.files.map(f=>'<button data-file="'+esc(f.path)+'" data-msg="'+m.seq+'" data-image="'+(f.mime.startsWith('image/')?'1':'0')+'">'+esc(f.name)+'</button>').join('')+'</article>').join('');}
+function messages(rows){return rows.map(m=>'<article class="msg '+(m.sender===state.me.id?'mine':'')+'"><strong>'+esc(m.sender?person(m.sender):'Thông báo hệ thống')+'</strong> <small>'+esc(new Date(m.sent).toLocaleString('vi-VN'))+'</small><div>'+esc(m.body)+'</div>'+m.files.map(f=>'<button data-file="'+esc(f.path)+'" data-msg="'+m.seq+'" data-image="'+(f.mime.startsWith('image/')?'1':'0')+'">'+esc(f.name)+'</button>').join('')+'</article>').join('');}
 async function markSeen(){
- const s=$('#stream'),split=$('.split');if(!state.thread||!s||document.hidden||!$('#modal').open||s.scrollHeight-s.scrollTop-s.clientHeight>45)return;
+ const s=$('#stream'),split=$('.split');if(!state.thread||!s||(window.frameElement&&!window.frameElement.getClientRects().length)||document.hidden||!$('#modal').open||s.scrollHeight-s.scrollTop-s.clientHeight>45)return;
  if(matchMedia('(max-width:800px)').matches&&split.dataset.view==='detail')return;
  if(state.seen>=state.seq)return;const n=state.seq,id=state.thread;await api('read',{id,seq:n});if(state.thread===id)state.seen=Math.max(state.seen,n);
 }
 async function openThread(id){
  const epoch=state.dialog;
  const r=await api('thread',{id});if(state.dialog!==epoch)return;
+ if(r.viewOnly){const x=r.item;modal(x.title,'<p>Người thực hiện · '+esc(x.performers.map(person).join(', '))+'</p><p>Hạn · '+esc(x.due||'—')+'</p><p>Trạng thái · '+esc(x.status)+'</p><p>'+esc(x.note)+'</p>');return;}
  state.members=r.members;const t=r.item,isChat=t.kind==='chat',canUpdate=t.owner_id===state.me.id||t.performers.includes(state.me.id);
  const facts='<div class="details pane"><h3>'+names[t.kind]+'</h3><p>Đơn vị · '+esc(t.units.map(x=>units[x]).join(' / '))+'</p><p>Người tạo · '+esc(t.owner_id?person(t.owner_id):'Chưa ghi trong sổ')+'</p><p>Người thực hiện · '+esc(t.performers.map(person).join(', '))+'</p><p>Người liên quan · '+esc(t.observers.map(person).join(', ')||'—')+'</p><p style="white-space:pre-wrap">'+esc(t.note)+'</p><p>Ngày '+(t.kind==='reminder'?'nhắc':'đến hạn')+' · '+esc(t.due||'—')+'</p>'+(t.owner_id===state.me.id&&!isChat?'<button id="editTask">Sửa nội dung và hạn</button>':'')+(canUpdate&&!isChat?'<label>Trạng thái<select id="progress">'+options(Object.fromEntries(statuses.map(x=>[x,x])),t.status)+'</select></label><button id="saveStatus">Lưu trạng thái</button>':'')+'</div>';
- modal(rowTitle(t),'<div class="phoneTabs"><button data-view="detail">Chi tiết</button><button data-view="chat">Trò chuyện</button></div><div class="split" data-view="chat">'+facts+'<div class="discussion pane"><h3>'+esc(isChat?'Trao đổi riêng':'Trò chuyện '+names[t.kind].toLowerCase())+'</h3><small>'+esc(r.members.map(x=>x.name).join(', '))+'</small><div id="stream" class="stream"><button id="older" '+(r.rows.length<50?'hidden':'')+'>Xem tin cũ hơn</button><div id="messages">'+messages(r.rows)+'</div></div><form id="send"><label>Tin nhắn<textarea name="body" maxlength="6000" placeholder="Nhập nội dung, gõ @ để nhắc tên thành viên…"></textarea></label><div id="mentions"></div>'+fileField+' <button class="primary">Gửi ➤</button></form></div></div>');
+ modal(rowTitle(t),'<div class="phoneTabs"><button data-view="detail">Chi tiết</button><button data-view="chat">Trò chuyện</button></div><div class="split" data-view="chat">'+facts+'<div class="discussion pane"><h3>'+esc(isChat?'Trao đổi riêng':t.kind==='task'?'Trò chuyện giao việc':'Trò chuyện nhắc việc')+'</h3><small>'+esc(r.members.map(x=>x.name).join(', '))+'</small><div id="stream" class="stream"><button id="older" '+(r.rows.length<50?'hidden':'')+'>Xem tin cũ hơn</button><div id="messages">'+messages(r.rows)+'</div></div><form id="send"><label>Tin nhắn<textarea name="body" maxlength="6000" placeholder="Nhập nội dung, gõ @ để nhắc tên thành viên…"></textarea></label><div id="mentions"></div>'+fileField+' <button class="primary">Gửi ➤</button></form></div></div>');
+ if(!isChat){const received=r.received||[],bar=document.createElement('div');bar.className='receipt';bar.textContent='Đã nhận · '+(received.map(person).join(', ')||'Chưa có người xác nhận');
+ if(t.performers.includes(state.me.id)&&!received.includes(state.me.id)){const button=document.createElement('button');button.type='button';button.textContent='Xác nhận đã nhận';button.onclick=()=>run(async()=>{await api('receive',{id});await openThread(id)},button);bar.append(' ',button);}
+ $('.discussion h3').after(bar);}
  $('.modalbar').insertAdjacentHTML('beforeend','<button id="expand">Mở rộng</button>');$('#expand').onclick=()=>{$('#expand').textContent=$('#modal').classList.toggle('expanded')?'Thu gọn':'Mở rộng'};
  state.thread=id;state.seq=r.rows.at(-1)?.seq||0;state.seen=0;state.first=r.rows[0]?.seq||0;
  const stream=$('#stream');stream.scrollTop=stream.scrollHeight;stream.onscroll=()=>run(markSeen);

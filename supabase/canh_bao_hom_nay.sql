@@ -1,7 +1,7 @@
 create or replace function nk_work_alerts(who uuid, filter_kind text, skip_rows int) returns jsonb
 language sql stable as $$
  with alerts as materialized (
- select t.id,t.kind,t.title,t.status,t.due,t.updated,t.performers,owner.name as sender,
+ select t.id,t.kind,t.title,t.status,t.due,t.updated,t.performers,case when owner.admin and owner.staff_code is null then owner.username else owner.name end as sender,
  (now() at time zone 'Asia/Ho_Chi_Minh')::date as today,
  m.unread,m.preview,
  lower(coalesce(r.data->>'NHẮC HÀNG NGÀY',r.data->>'Nhắc hàng ngày','')) in ('có','true','1','x','yes') as daily
@@ -11,10 +11,10 @@ language sql stable as $$
  left join cx_reads seen on seen.thread=t.id and seen.person=who
  cross join lateral (
  select count(*) as unread,(array_agg(left(coalesce(nullif(body,''),'Ảnh / tài liệu'),180) order by seq desc))[1] as preview
- from cx_messages where thread=t.id and seq>coalesce(seen.seq,0) and sender is distinct from who
+ from cx_messages where (t.owner_id=who or who=any(t.performers||t.observers)) and thread=t.id and seq>coalesce(seen.seq,0) and sender is distinct from who
  ) m
  where t.units=array['surgery'] and t.kind in ('task','reminder')
- and (t.owner_id=who or who=any(t.performers||t.observers))
+ and (a.admin or a.legacy_operator or t.owner_id=who or who=any(t.performers||t.observers))
  ), eligible as (
  select * from alerts where unread>0 or (status<>'Hoàn thành' and
  (due<=today or (daily and due is null)))

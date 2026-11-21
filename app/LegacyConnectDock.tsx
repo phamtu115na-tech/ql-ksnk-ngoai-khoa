@@ -4,7 +4,7 @@ import {createElement,useEffect,useRef,useState} from 'react';
 
 type Update={id:string;kind:string;title:string;body:string;seq:number};
 const labels:Record<string,string>={task:'Việc được giao',reminder:'Nhắc việc',chat:'Trao đổi'};
-const link=(type:string,id?:string)=>'/connect/index.html'+(id?'?thread='+encodeURIComponent(id):'')+'#'+type;
+const link=(type:string,id?:string)=>'/ngoai-khoa?work='+type+(id?'&thread='+encodeURIComponent(id):'');
 
 export default function LegacyConnectDock(){
  const [counts,setCounts]=useState<Record<string,number>>({});
