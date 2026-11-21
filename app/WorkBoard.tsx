@@ -6,7 +6,7 @@ type Item={id:string;source_row:number;kind:Kind;title:string;note?:string;statu
 type Row={item:Item;unread:number};
 export function useWorkFeed(){return useContext(Feed);}
 const labels={task:'Giao việc',reminder:'Nhắc việc'};
-const Feed=createContext<{team:boolean;names:Record<string,string>;rows:Row[];open:(id:string)=>void;error:string;ready:boolean}>({team:false,names:{},rows:[],open:()=>{},error:'',ready:false});
+const Feed=createContext<{selection:string;select:(id:string)=>void;details:(id:string)=>void;team:boolean;names:Record<string,string>;rows:Row[];open:(id:string)=>void;error:string;ready:boolean}>({selection:'',select:()=>{},details:()=>{},team:false,names:{},rows:[],open:()=>{},error:'',ready:false});
 export function WorkProvider({children,team=false,legacy=false}:{legacy?:boolean;team?:boolean;children:React.ReactNode}){
  const [rows,setRows]=useState<Row[]>([]),[error,setError]=useState(''),[ready,setReady]=useState(false);
  const [names,setNames]=useState<Record<string,string>>({});
@@ -16,8 +16,16 @@ export function WorkProvider({children,team=false,legacy=false}:{legacy?:boolean
   return ()=>controller.abort();},[]);
  const [thread,setThread]=useState(''),[revision,reload]=useState(0);
  const dialog=useRef<HTMLDialogElement>(null),frame=useRef<HTMLIFrameElement>(null);
- useEffect(()=>{const q=new URLSearchParams(location.search);if(!legacy||q.get('work')==='chat')setThread(q.get('thread')||'');},[legacy]);
- function openWork(id:string){const work=rows.find(r=>r.item.id===id);if(legacy&&work){location.assign('/ngoai-khoa?work='+work.item.kind+'&thread='+encodeURIComponent(id));return;}setThread(id);}
+ const [selection,select]=useState('');
+ useEffect(()=>{const q=new URLSearchParams(location.search);const id=q.get('thread')||'';
+  if(q.get('work')==='chat')setThread(id);else select(id);
+ },[]);
+ function openWork(id:string){
+  const item=rows.find(row=>row.item.id===id)?.item;
+  if(!item)return;
+  if(document.querySelector('[data-work-area="'+item.kind+'"]'))select(id);
+  else location.assign('/ngoai-khoa?work='+item.kind+'&thread='+encodeURIComponent(id));
+ }
  useEffect(()=>{
   let active=true,busy=false;
   async function refresh(){
@@ -45,13 +53,28 @@ export function WorkProvider({children,team=false,legacy=false}:{legacy?:boolean
   function message(e:MessageEvent){if(e.origin===location.origin&&e.source===frame.current?.contentWindow&&e.data==='ksnk-close-thread')close();}
   window.addEventListener('message',message);return()=>window.removeEventListener('message',message);
  },[thread]);
- return <Feed.Provider value={{team,names,rows,open:openWork,error,ready}}>{children}{thread&&<dialog ref={dialog} className="nk-thread-dialog" aria-label="Chi tiết và trò chuyện" onCancel={close}><button onClick={close}>Đóng phiếu ×</button><iframe ref={frame} title="Chi tiết và trò chuyện" src={'/connect/index.html?detail=1&thread='+encodeURIComponent(thread)}/></dialog>}</Feed.Provider>;
+ return <Feed.Provider value={{selection,select,details:setThread,team,names,rows,open:openWork,error,ready}}>{children}{thread&&<dialog ref={dialog} className="nk-thread-dialog" aria-label="Chi tiết và trò chuyện" onCancel={close}><button onClick={close}>Đóng phiếu ×</button><iframe ref={frame} title="Chi tiết và trò chuyện" src={'/connect/index.html?detail=1&'+(rows.some(row=>row.item.id===thread)?'fields=1&':'')+'thread='+encodeURIComponent(thread)}/></dialog>}</Feed.Provider>;
+}
+export function WorkArea({kind,children}:{kind?:Kind;children:React.ReactNode}){
+ const {selection,select,rows,ready}=useWorkFeed();
+ const job=rows.find(row=>row.item.id===selection&&row.item.kind===kind)?.item;
+ const panel=useRef<HTMLElement>(null);
+ useEffect(()=>{if(job&&matchMedia('(max-width: 850px)').matches)panel.current?.scrollIntoView({block:'start'});},[job?.id]);
+ if(!kind)return <>{children}</>;
+ return <div className="work-task-area" data-work-area={kind} data-selected={!!job}>
+  <div className="work-task-list">{children}</div>
+  {job&&<aside ref={panel} className="work-task-chat" aria-label="Trao đổi trong tác vụ">
+   <header><div><small>{labels[kind]}</small><h3>{job.title}</h3></div><button type="button" onClick={()=>select('')}>Đóng trao đổi</button></header>
+   <iframe key={job.id} title={'Trao đổi · '+job.title} src={'/connect/index.html?inline=1&thread='+encodeURIComponent(job.id)}/>
+  </aside>}
+  {selection&&ready&&!rows.some(row=>row.item.id===selection)&&<p role="status">Tác vụ không còn trong phạm vi tài khoản.</p>}
+ </div>;
 }
 export function WorkMessage({source,compact=false}:{source:unknown;compact?:boolean}){
  const {rows,open}=useContext(Feed),row=rows.find(x=>String(x.item.source_row)===String(source));
- if(!row||(!row.item.latest_message&&!Number(row.unread)))return null;
- const value=<><b className={row.unread?(row.item.mentioned?'nk-mention':'nk-unread'):''}>{Number(row.unread)>0?(row.item.mentioned?'@ Có tin nhắc đến bạn':'Có tin nhắn mới')+' ('+row.unread+')':'Trao đổi'}</b> · {row.item.latest_message}</>;
- return compact?<span className="nk-row-message">{value}</span>:<button type="button" className="nk-row-message" onClick={()=>open(row.item.id)}>{value}</button>;
+ if(!row)return null;
+ const value=<><b className={row.unread?(row.item.mentioned?'nk-mention':'nk-unread'):''}>{Number(row.unread)>0?(row.item.mentioned?'@ Có tin nhắc đến bạn':'Có tin nhắn mới')+' ('+row.unread+')':'Trao đổi'}</b>{row.item.latest_message?' · '+row.item.latest_message:''}</>;
+ return compact?<span className="nk-row-message">{value}</span>:<button type="button" className="nk-row-message" onClick={e=>{e.stopPropagation();open(row.item.id)}}>{value}</button>;
 }
 export default function WorkBoard({kind,home=false,manager=false,who=''}:{kind?:Kind;home?:boolean;manager?:boolean;who?:string}){
  const {rows,open,error,ready,team,names}=useContext(Feed),[employee,setEmployee]=useState(''),[mine,setMine]=useState(false),[filter,setFilter]=useState('');

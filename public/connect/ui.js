@@ -1,7 +1,7 @@
 'use strict';
 const $=s=>document.querySelector(s);
 const units={surgery:'Bệnh viện Ngoại khoa 115 Nghệ An'};
-const embeddedWork=new URLSearchParams(location.search).has('row')&&window.parent!==window;
+const embeddedWork=(new URLSearchParams(location.search).has('row')||new URLSearchParams(location.search).has('inline'))&&window.parent!==window;
 if(embeddedWork)document.documentElement.classList.add('work-embed');
 const names={all:'Tổng quan',task:'Việc được giao',reminder:'Nhắc việc',chat:'Trao đổi',admin:'Quản trị nhân viên'};
 const statuses=['Mới','Đã nhận','Đang thực hiện','Hoàn thành'];
@@ -37,6 +37,7 @@ async function start(){
  if(q.has('thread'))args.set('thread',q.get('thread'));
  location.replace('/ngoai-khoa'+(args.size?'?'+args:''));return;
  }
+ if(new URLSearchParams(location.search).has('fields'))document.documentElement.classList.add('nk-fields-only');
  if(new URLSearchParams(location.search).has('detail'))document.documentElement.classList.add('nk-detail-only');
  if(!embeddedWork)document.documentElement.classList.add('nk-board-frame');
  state.tab=(target==='admin'&&r.me.admin)||['task','reminder','chat','account'].includes(target)?(target==='account'?'all':target):'reminder';lastUnread=0;
@@ -44,7 +45,9 @@ async function start(){
  const alerts=document.createElement('nk-work-alerts');document.body.append(alerts);
  alerts.addEventListener('work-selected',e=>{e.preventDefault();run(()=>openThread(e.detail));});
  }
- $('#identity').textContent=r.me.name+' · '+units[r.me.unit];$('#dock').hidden=false;dashboard();await refresh();
+ $('#identity').textContent=r.me.name+' · '+units[r.me.unit];$('#dock').hidden=false;
+ if(embeddedWork&&new URLSearchParams(location.search).has('inline')){try{await openThread(new URLSearchParams(location.search).get('thread'));}catch(e){document.body.append(document.createTextNode(e.message));}return;}
+ dashboard();await refresh();
  const q=new URLSearchParams(location.search);
  if(q.has('thread')){try{await openThread(q.get('thread'));}catch(e){modal('Không mở được phiếu','<p>'+esc(e.message)+'</p>');}}
  if(target==='account')changeCode();
@@ -66,7 +69,7 @@ function tone(){if(!audio||audio.state!=='running')return;const o=audio.createOs
 function tab(k){state.tab=k;state.rows=[];state.offset=0;state.screen++;paint();run(refresh);}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b&&state.me)tab(b.dataset.tab)});
 async function refresh(){
- if(!state.me)return;const current=++state.screen;
+ if(!state.me||new URLSearchParams(location.search).has('inline'))return;const current=++state.screen;
  const r=await api('board',{kind:state.tab==='admin'?'all':state.tab,scope:state.scope,offset:state.offset});
  if(current!==state.screen||!state.me)return;
  const counts=Object.fromEntries(r.badges.map(x=>[x.kind,Number(x.unread)]));
@@ -159,7 +162,7 @@ function compose(kind){
 }
 function messages(rows){return rows.map(m=>'<article class="msg '+(m.sender===state.me.id?'mine':'')+'"><strong>'+esc(m.sender?person(m.sender):'Thông báo hệ thống')+'</strong> <small>'+esc(new Date(m.sent).toLocaleString('vi-VN'))+'</small><div>'+esc(m.body)+'</div>'+m.files.map(f=>'<button data-file="'+esc(f.path)+'" data-msg="'+m.seq+'" data-image="'+(f.mime.startsWith('image/')?'1':'0')+'">'+esc(f.name)+'</button>').join('')+'</article>').join('');}
 async function markSeen(){
- const s=$('#stream'),split=$('.split');if(!state.thread||!s||(window.frameElement&&!window.frameElement.getClientRects().length)||document.hidden||!$('#modal').open||s.scrollHeight-s.scrollTop-s.clientHeight>45)return;
+ const s=$('#stream'),split=$('.split');if(document.documentElement.classList.contains('nk-fields-only')||!state.thread||!s||(window.frameElement&&!window.frameElement.getClientRects().length)||document.hidden||!$('#modal').open||s.scrollHeight-s.scrollTop-s.clientHeight>45)return;
  if(matchMedia('(max-width:800px)').matches&&split.dataset.view==='detail')return;
  if(state.seen>=state.seq)return;const n=state.seq,id=state.thread;await api('read',{id,seq:n});if(state.thread===id)state.seen=Math.max(state.seen,n);
 }
