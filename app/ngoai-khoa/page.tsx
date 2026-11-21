@@ -12,6 +12,6 @@ export default async function Dashboard({searchParams}:{searchParams:Promise<{wo
  const manager=user.admin||user.legacy_operator;
  const utility=['account','chat',...(user.admin?['admin']:[])].includes(params.work||'')&&!params.thread;
  return <WorkProvider><nav aria-label="Tài khoản bệnh viện" className="nk-account-nav"><a href="/ngoai-khoa">Trang chủ</a><a href="/ngoai-khoa?work=account">{user.name} · Tài khoản</a>{user.admin&&<a href="/ngoai-khoa?work=admin">Quản trị nhân viên</a>}</nav>
- {utility?<iframe className="nk-workboard" title="Tài khoản và trao đổi riêng" src={'/connect/index.html?utility=1#'+params.work}/>:<><Quick/>{manager&&<><Detail/><Images/></>}<LegacyDashboard manager={manager} who={user.id} openWork={Boolean(params.work)} creatorName={user.admin&&!user.staff_code?user.username:user.name}/></>}
+ {utility?<iframe className="nk-workboard" title="Tài khoản và trao đổi riêng" src={'/connect/index.html?utility=1#'+params.work}/>:<><Quick/>{manager&&<><Detail/><Images/></>}<LegacyDashboard initialReminder={params.work==='reminder'} manager={manager} who={user.id} openWork={Boolean(params.work)} creatorName={user.admin&&!user.staff_code?user.username:user.name}/></>}
  <Dock/></WorkProvider>;
 }
