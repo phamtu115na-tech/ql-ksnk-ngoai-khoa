@@ -3,7 +3,7 @@ import {WorkMessage} from './WorkBoard';
 import {useEffect,useState} from 'react';
 import {BOARD_COLUMNS,taskColumn,vietnamDay,type BoardTask,type BoardColumn} from '../lib/task-board';
 
-export default function TaskDeadlineBoard({rows,onEdit,onCreate,variant='tasks'}:{rows:BoardTask[];onCreate?:()=>void;onEdit:(row:BoardTask)=>void;variant?:'tasks'|'reminders'}) {
+export default function TaskDeadlineBoard({rows,onEdit,onCreate,variant='tasks'}:{rows:BoardTask[];onCreate:()=>void;onEdit:(row:BoardTask)=>void;variant?:'tasks'|'reminders'}) {
   const reminders=variant==='reminders';
   const itemLabel=reminders?'nhắc việc':'công việc';
   const reminderLabels:Record<BoardColumn,string>={overdue:'Đã qua ngày nhắc',today:'Nhắc hôm nay',week:'Nhắc tuần này',nextWeek:'Nhắc tuần sau',fortnight:'Nhắc trong 2 tuần',later:'Xa hơn',noDate:'Chưa có ngày nhắc',done:'Đã xong'};
@@ -17,7 +17,7 @@ export default function TaskDeadlineBoard({rows,onEdit,onCreate,variant='tasks'}
       {BOARD_COLUMNS.map(column=><section className="deadline-column" key={column.id} aria-label={reminders?reminderLabels[column.id]:column.label}>
         <h3 style={{background:column.color}}><span>{reminders?reminderLabels[column.id]:column.label}</span><b>{groups[column.id].length}</b></h3>
         <div className="deadline-column-cards">
-          {onCreate&&<button type="button" className="deadline-empty deadline-add" onClick={onCreate} aria-label={`Tạo ${itemLabel} mới — ${reminders?reminderLabels[column.id]:column.label}`} title={`Tạo ${itemLabel} mới`}>+</button>}
+          <button type="button" className="deadline-empty deadline-add" onClick={onCreate} aria-label={`Tạo ${itemLabel} mới — ${reminders?reminderLabels[column.id]:column.label}`} title={`Tạo ${itemLabel} mới`}>+</button>
           {groups[column.id].map((row,index)=><button type="button" key={row.row_no??row.id??index} className={'deadline-card '+(column.id==='overdue'?'deadline-card-overdue':'')} onClick={()=>onEdit(row)}>
             <span className="deadline-card-title">{row.title||'Chưa có tiêu đề'}</span><WorkMessage compact source={row.sourceId}/>
             {row.description&&<span className="deadline-description">{row.description}</span>}

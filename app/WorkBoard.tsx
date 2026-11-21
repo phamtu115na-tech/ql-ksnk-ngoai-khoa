@@ -2,18 +2,12 @@
 import {createContext,useContext,useEffect,useRef,useState} from 'react';
 
 type Kind='task'|'reminder';
-type Item={id:string;source_row:number;kind:Kind;title:string;note?:string;status:string;due:string;latest_message:string;owner_id:string;performers:string[];observers:string[]};
+type Item={id:string;source_row:number;kind:Kind;title:string;status:string;due:string;latest_message:string;owner_id:string;performers:string[];observers:string[]};
 type Row={item:Item;unread:number};
-export function useWorkFeed(){return useContext(Feed);}
 const labels={task:'Giao việc',reminder:'Nhắc việc'};
-const Feed=createContext<{names:Record<string,string>;rows:Row[];open:(id:string)=>void;error:string;ready:boolean}>({names:{},rows:[],open:()=>{},error:'',ready:false});
+const Feed=createContext<{rows:Row[];open:(id:string)=>void;error:string;ready:boolean}>({rows:[],open:()=>{},error:'',ready:false});
 export function WorkProvider({children}:{children:React.ReactNode}){
  const [rows,setRows]=useState<Row[]>([]),[error,setError]=useState(''),[ready,setReady]=useState(false);
- const [names,setNames]=useState<Record<string,string>>({});
- useEffect(()=>{const controller=new AbortController();
-  fetch('/api/connect',{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'me'})})
-  .then(r=>r.ok?r.json():null).then(data=>{if(data?.people)setNames(Object.fromEntries(data.people.map((p:{id:string;name:string;admin:boolean;username:string;staff_code?:string})=>[p.id,p.admin&&!p.staff_code?p.username:p.name])));}).catch(()=>{});
-  return ()=>controller.abort();},[]);
  const [thread,setThread]=useState(''),[revision,reload]=useState(0);
  const dialog=useRef<HTMLDialogElement>(null),frame=useRef<HTMLIFrameElement>(null);
  useEffect(()=>{setThread(new URLSearchParams(location.search).get('thread')||'');},[]);
@@ -44,7 +38,7 @@ export function WorkProvider({children}:{children:React.ReactNode}){
   function message(e:MessageEvent){if(e.origin===location.origin&&e.source===frame.current?.contentWindow&&e.data==='ksnk-close-thread')close();}
   window.addEventListener('message',message);return()=>window.removeEventListener('message',message);
  },[thread]);
- return <Feed.Provider value={{names,rows,open:setThread,error,ready}}>{children}{thread&&<dialog ref={dialog} className="nk-thread-dialog" aria-label="Chi tiết và trò chuyện" onCancel={close}><button onClick={close}>Đóng phiếu ×</button><iframe ref={frame} title="Chi tiết và trò chuyện" src={'/connect/index.html?detail=1&thread='+encodeURIComponent(thread)}/></dialog>}</Feed.Provider>;
+ return <Feed.Provider value={{rows,open:setThread,error,ready}}>{children}{thread&&<dialog ref={dialog} className="nk-thread-dialog" aria-label="Chi tiết và trò chuyện" onCancel={close}><button onClick={close}>Đóng phiếu ×</button><iframe ref={frame} title="Chi tiết và trò chuyện" src={'/connect/index.html?detail=1&thread='+encodeURIComponent(thread)}/></dialog>}</Feed.Provider>;
 }
 export function WorkMessage({source,compact=false}:{source:unknown;compact?:boolean}){
  const {rows,open}=useContext(Feed),row=rows.find(x=>String(x.item.source_row)===String(source));
@@ -58,9 +52,9 @@ export default function WorkBoard({kind,home=false,manager=false,who=''}:{kind?:
  const visible=rows.filter(({item:t})=>(!kind||t.kind===kind)&&(!mine||[t.owner_id,...t.performers,...t.observers].includes(who)));
  function matches(r:Row,k:string){const t=r.item;if(k==='Tin chưa đọc')return Number(r.unread)>0;if(k==='Mới giao')return t.status==='Mới';return t.status!=='Hoàn thành'&&!!t.due&&(k==='Quá hạn'?t.due<today:t.due===today);}
  const items=visible.filter(r=>filter?matches(r,filter):!home||['Tin chưa đọc','Quá hạn','Đến hạn hôm nay','Mới giao'].some(k=>matches(r,k)));
- return <main className="content-shell"><section className="home-alerts home-alerts-first"><div className="home-alerts-heading"><div className="section-title">⚠ CẢNH BÁO GIAO VIỆC &amp; NHẮC VIỆC</div>
- {manager&&<label>Phạm vi <select value={mine?'mine':'all'} onChange={e=>setMine(e.target.value==='mine')}><option value="all">Toàn viện</option><option value="mine">Của tôi</option></select></label>}</div>
- <div className="task-view-tabs">{['Mới giao','Đến hạn hôm nay','Quá hạn','Tin chưa đọc'].map(k=><button key={k} type="button" className={filter===k?'active':''} aria-pressed={filter===k} onClick={()=>setFilter(filter===k?'':k)}>{k} ({visible.filter(r=>matches(r,k)).length})</button>)}</div>
+ return <section className="panel-card nk-native"><h2>{home?'Công việc cần xử lý':kind==='task'?'Giao việc':'Nhắc việc & Ghi chú'}</h2>
+ {manager&&<label>Phạm vi <select value={mine?'mine':'all'} onChange={e=>setMine(e.target.value==='mine')}><option value="all">Toàn viện</option><option value="mine">Của tôi</option></select></label>}
+ <nav>{['Mới giao','Đến hạn hôm nay','Quá hạn','Tin chưa đọc'].map(k=><button key={k} aria-pressed={filter===k} onClick={()=>setFilter(filter===k?'':k)}>{k} ({visible.filter(r=>matches(r,k)).length})</button>)}</nav>
  {error&&<p role="alert">{error}</p>}{!error&&!ready&&<p>Đang tải phiếu…</p>}{ready&&!items.length&&<p>Không có phiếu trong phạm vi này.</p>}
- <div className="alert-strip">{items.map(({item,unread})=><article key={item.id} className="home-alert-item"><button className="home-alert-card" onClick={()=>open(item.id)}><b>{labels[item.kind]}</b><span>{item.title}</span><small>{item.status}{item.due?' · '+item.due.split('-').reverse().join('/'):''}</small>{Number(unread)>0&&<em>{unread} tin chưa đọc</em>}{item.latest_message&&<em className="home-alert-detail">{item.latest_message}</em>}</button></article>)}</div></section></main>;
+ <div className="nk-native-list">{items.map(({item,unread})=><button key={item.id} onClick={()=>open(item.id)}><strong>{item.title}</strong><small>{labels[item.kind]} · {item.status}{item.due?' · '+item.due.split('-').reverse().join('/'):''}</small>{Number(unread)>0&&<b>{unread} tin chưa đọc</b>}{item.latest_message&&<span>{item.latest_message}</span>}</button>)}</div></section>;
 }
