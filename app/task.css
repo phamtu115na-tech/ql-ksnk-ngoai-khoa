@@ -54,3 +54,5 @@
 .work-task-chat iframe{display:block;width:100%;height:min(68dvh,680px);border:0}
 .deadline-column-cards>div>.deadline-card{width:100%}
 @media(max-width:850px){.work-task-area[data-selected=true]{display:flex;flex-direction:column}.work-task-chat{position:static;order:-1;width:100%;scroll-margin-top:65px}.work-task-list{width:100%}}
+
+.work-inline-editor{scroll-margin-top:70px}.work-inline-editor>.task-form{width:100%;max-width:none;max-height:none;margin:0;overflow:visible;box-shadow:none}
