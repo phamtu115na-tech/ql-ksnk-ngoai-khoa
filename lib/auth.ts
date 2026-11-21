@@ -13,7 +13,7 @@ export async function actor():Promise<Person|null>{
  const session=await db().from('cx_sessions').select('person,version').eq('token',digest(value)).gt('expires',new Date().toISOString()).maybeSingle();
  if(session.error)throw session.error;
  if(!session.data)return null;
- const user=await db().from('cx_people').select(personFields).eq('id',session.data.person).eq('version',session.data.version).eq('active',true).maybeSingle();
+ const user=await db().from('cx_people').select(personFields).eq('id',session.data.person).eq('unit','surgery').eq('version',session.data.version).eq('active',true).maybeSingle();
  if(user.error)throw user.error;return user.data;
 }
 export async function hasSession(){return Boolean((await actor())?.admin);}
@@ -31,4 +31,4 @@ export async function signOut(){
  jar.delete(sessionCookie.name);
 }
 
-export async function canOperateLegacy(){const u=await actor();return Boolean(u&&(u.admin||(u.legacy_operator&&u.unit!=='general')));}
+export async function canOperateLegacy(){const u=await actor();return Boolean(u&&(u.admin||u.legacy_operator));}

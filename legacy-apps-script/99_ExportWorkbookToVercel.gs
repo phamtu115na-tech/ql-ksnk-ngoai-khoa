@@ -95,7 +95,7 @@ function loginToVercelForMigration_(password) {
   ), {
     method: 'post',
     contentType: 'application/json',
-    payload: JSON.stringify({ username: 'admin', unit: 'company', password: password }),
+    payload: JSON.stringify({ username: 'admin', unit: 'surgery', password: password }),
     muteHttpExceptions: true
   });
 

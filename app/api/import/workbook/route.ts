@@ -51,7 +51,7 @@ export async function POST(req:Request){
   if(!normalized.length)return NextResponse.json({ok:true,accepted:0});
   const db=supabaseAdmin();
   if(!db)throw new Error('SUPABASE_SERVICE_ROLE_KEY chưa cấu hình');
-  const {error}=await db.from('ksnk_legacy_rows').upsert(normalized,{onConflict:'sheet_name,row_no'});
+  const {error}=await db.from('nk_legacy_rows').upsert(normalized,{onConflict:'sheet_name,row_no'});
   if(error)throw error;
   return NextResponse.json({
    ok:true,

@@ -29,7 +29,7 @@ function validName(value:unknown,label='Tên bộ phận'){
 async function readRows(sheet?:string){
  const client=db();const rows:LegacyRow[]=[];
  for(let from=0;;from+=PAGE_SIZE){
-  let query=client.from('ksnk_legacy_rows').select('sheet_name,row_no,legacy_id,data').order('row_no',{ascending:true}).range(from,from+PAGE_SIZE-1);
+  let query=client.from('nk_legacy_rows').select('sheet_name,row_no,legacy_id,data').order('row_no',{ascending:true}).range(from,from+PAGE_SIZE-1);
   if(sheet)query=query.eq('sheet_name',sheet);
   const {data,error}=await query;if(error)throw error;
   const page=(data||[]) as LegacyRow[];rows.push(...page);
@@ -59,7 +59,7 @@ function publicCatalog(rows:LegacyRow[],allRows:LegacyRow[]){
  return {catalog,departments:[...new Set(departments)].sort((a,b)=>a.localeCompare(b,'vi')),references:refs,referenceCounts:Object.fromEntries(refs)};
 }
 async function saveCatalog(rowNo:number,data:AnyRecord){
- const {error}=await db().from('ksnk_legacy_rows').upsert({sheet_name:SHEET,row_no:rowNo,legacy_id:data['Mã bộ phận']||`BP:${rowNo}`,data},{onConflict:'sheet_name,row_no'});
+ const {error}=await db().from('nk_legacy_rows').upsert({sheet_name:SHEET,row_no:rowNo,legacy_id:data['Mã bộ phận']||`BP:${rowNo}`,data},{onConflict:'sheet_name,row_no'});
  if(error)throw error;return rowNo;
 }
 async function ensureCatalog(allRows:LegacyRow[],catalogRows:LegacyRow[]){
@@ -77,7 +77,7 @@ async function renameReferences(rows:LegacyRow[],oldName:string,newName:string){
  for(const row of references(rows,oldName)){
   const data={...row.data};let touched=false;
   for(const key of DEPARTMENT_KEYS){if(same(data[key],oldName)){data[key]=newName;touched=true;}}
-  if(touched){const {error}=await client.from('ksnk_legacy_rows').update({data}).eq('sheet_name',row.sheet_name).eq('row_no',row.row_no);if(error)throw error;changed++;}
+  if(touched){const {error}=await client.from('nk_legacy_rows').update({data}).eq('sheet_name',row.sheet_name).eq('row_no',row.row_no);if(error)throw error;changed++;}
  }
  return changed;
 }

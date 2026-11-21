@@ -1,9 +1,9 @@
 'use strict';
 const $=s=>document.querySelector(s);
-const units={company:'Công ty Cổ phần Bệnh viện 115 Nghệ An',general:'Bệnh viện Đa khoa 115 Nghệ An',surgery:'Bệnh viện Ngoại khoa 115 Nghệ An'};
+const units={surgery:'Bệnh viện Ngoại khoa 115 Nghệ An'};
 const embeddedWork=new URLSearchParams(location.search).has('row')&&window.parent!==window;
 if(embeddedWork)document.documentElement.classList.add('work-embed');
-const names={all:'Tổng quan',task:'Giao việc',reminder:'Nhắc việc',chat:'Trao đổi',admin:'Nhân viên'};
+const names={all:'Tổng quan',task:'Việc được giao',reminder:'Nhắc việc',chat:'Trao đổi',admin:'Quản trị nhân viên'};
 const statuses=['Mới','Đã nhận','Đang thực hiện','Hoàn thành'];
 const state={me:null,people:[],tab:'all',scope:'all',offset:0,rows:[],badges:{},screen:0,dialog:0,thread:null,seq:0,loading:false};
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -23,13 +23,16 @@ function modal(title,body){close();$('#dialogBody').innerHTML='<div class="modal
 $('#modal').addEventListener('cancel',()=>{state.thread=null;state.dialog++});
 function login(){
  close();$('#dock').hidden=true;$('#identity').textContent='Điều hành KSNK';
- $('#app').innerHTML='<form id="login" class="card login"><p>Không gian làm việc nội bộ</p><h1>Đăng nhập nhân viên</h1><p>Sử dụng tài khoản do quản trị viên cấp.</p><label>Đơn vị đăng nhập<select name="unit">'+options(units,localStorage.cxUnit||'surgery')+'</select></label><label>Tên đăng nhập<input required name="username" autocomplete="username"></label><label>Mã đăng nhập<input required type="password" name="password" autocomplete="current-password"></label><p class="error" id="loginError"></p><button class="primary">Đăng nhập</button><small>Mất mã? Liên hệ quản trị viên để được cấp lại.</small></form>';
+ $('#app').innerHTML='<form id="login" class="card login"><p>Không gian làm việc nội bộ</p><h1>Đăng nhập nhân viên</h1><p>Sử dụng tài khoản do quản trị viên cấp.</p><label>Đơn vị đăng nhập<select name="unit">'+options(units,'surgery')+'</select></label><label>Tên đăng nhập<input required name="username" autocomplete="username"></label><label>Mã đăng nhập<input required type="password" name="password" autocomplete="current-password"></label><p class="error" id="loginError"></p><button class="primary">Đăng nhập</button><small>Mất mã? Liên hệ quản trị viên để được cấp lại.</small></form>';
  $('#login').onsubmit=e=>{e.preventDefault();const form=e.currentTarget;run(async()=>{try{const data=Object.fromEntries(new FormData(form));await request('/api/auth',data);localStorage.cxUnit=data.unit;await start()}catch(err){$('#loginError').textContent=err.message}},form.querySelector('button'))};
 }
 async function start(){
- const r=await api('me');state.me=r.me;state.people=r.people;state.scope=r.me.unit==='company'?'all':r.me.unit;state.offset=0;state.tab=['task','reminder','chat'].includes(location.hash.slice(1))?location.hash.slice(1):'all';lastUnread=0;
+ const r=await api('me');state.me=r.me;state.people=r.people;state.scope='surgery';state.offset=0;const target=location.hash.slice(1);
+ if(!target&&!embeddedWork&&(r.me.admin||r.me.legacy_operator)){location.replace('/ngoai-khoa');return;}
+ state.tab=(target==='admin'&&r.me.admin)||['task','reminder','chat','account'].includes(target)?(target==='account'?'all':target):'reminder';lastUnread=0;
  $('#identity').textContent=r.me.name+' · '+units[r.me.unit];$('#dock').hidden=false;dashboard();await refresh();
  const q=new URLSearchParams(location.search);
+ if(q.has('thread'))await run(()=>openThread(q.get('thread')));
  if(q.has('row')){
  try{const result=await api('sourceThread',{kind:state.tab,row:Number(q.get('row')),ref:q.get('ref')});
  await openThread(result.id);}catch(e){if(embeddedWork){const panel=document.createElement('p');panel.setAttribute('role','status');panel.textContent=e.message;document.body.append(panel);}else notice(e.message);}
@@ -37,7 +40,7 @@ async function start(){
 }
 function dashboard(){
  const a=state.me;state.screen++;
- $('#app').innerHTML='<div class="bar"><div>'+(a.unit==='company'?'<label>Phạm vi đơn vị<select id="scope">'+options({all:'Toàn hệ thống',...units},state.scope)+'</select></label>':esc(units[a.unit]))+'</div><div class="actions"><button id="sound">'+(audio?'Tắt chuông':'Bật chuông')+'</button><select id="soundMode" aria-label="Kiểu chuông">'+options({normal:'Chuông thường',urgent:'Khẩn · lặp đến khi đọc'},localStorage.cxSoundMode||'normal')+'</select><button id="change">Đổi mã</button><button id="logout">Đăng xuất</button></div></div><section class="hero"><h1>'+esc(state.scope==='all'?'Toàn hệ thống':units[state.scope])+'</h1><p>Xin chào '+esc(a.name)+'. Theo dõi công việc và trao đổi của đơn vị.</p>'+((a.admin||a.legacy_operator)?'<a class="btn" href="/ngoai-khoa">Mở hệ thống nghiệp vụ KSNK Ngoại khoa ↗</a>':'')+'</section><nav class="tabs" id="tabs"></nav><section class="bar"><h2 id="heading"></h2><div id="actions" class="actions"></div></section><section id="rows" class="list"></section><div id="pager" class="actions"></div>';
+ $('#app').innerHTML='<div class="bar"><div>'+esc(units.surgery)+'</div><div class="actions"><button id="sound">'+(audio?'Tắt chuông':'Bật chuông')+'</button><select id="soundMode" aria-label="Kiểu chuông">'+options({normal:'Chuông thường',urgent:'Khẩn · lặp đến khi đọc'},localStorage.cxSoundMode||'normal')+'</select><button id="change">Đổi mã</button><button id="logout">Đăng xuất</button></div></div><section class="hero"><h1>'+'Công việc của tôi'+'</h1><p>Xin chào '+esc(a.name)+'. Theo dõi công việc và trao đổi của đơn vị.</p>'+((a.admin||a.legacy_operator)?'<a class="btn" href="/ngoai-khoa">Về trang nghiệp vụ</a>':'')+'</section><nav class="tabs" id="tabs"></nav><section class="bar"><h2 id="heading"></h2><div id="actions" class="actions"></div></section><div id="latest" class="actions" aria-live="polite"></div><section id="rows" class="list"></section><div id="pager" class="actions"></div>';
  if($('#scope'))$('#scope').onchange=e=>{state.scope=e.target.value;state.offset=0;dashboard();run(refresh)};
  $('#logout').onclick=()=>run(async()=>{await request('/api/auth',undefined,'DELETE');state.me=null;login()});
  $('#soundMode').onchange=e=>{localStorage.cxSoundMode=e.target.value};
@@ -52,6 +55,11 @@ async function refresh(){
  const r=await api('board',{kind:state.tab==='admin'?'all':state.tab,scope:state.scope,offset:state.offset});
  if(current!==state.screen||!state.me)return;
  const counts=Object.fromEntries(r.badges.map(x=>[x.kind,Number(x.unread)]));
+ const box=$('#latest'),item=r.latest;
+ if(box&&box.dataset.key!==(item?item.id+'/'+item.seq:'none')){
+ box.dataset.key=item?item.id+'/'+item.seq:'none';
+ box.innerHTML=item?'<button data-open="'+esc(item.id)+'"><strong>'+esc(item.kind==='chat'?'Tin nhắn mới':item.title)+'</strong> · '+esc(item.body)+'</button>':'';
+ }
  const sum=Object.values(counts).reduce((a,b)=>a+b,0);if(sum>0&&sum<=lastUnread&&localStorage.cxSoundMode==='urgent')tone();if(sum>lastUnread){tone();notice('Có '+sum+' cập nhật chưa đọc.')}lastUnread=sum;
  state.due=Object.fromEntries(r.due.map(x=>[x.kind,Number(x.quantity)]));state.badges=counts;state.rows=r.rows;paint();
 }
@@ -68,7 +76,7 @@ function deadlineGroup(t){
 }
 function paint(){
  if(!$('#rows')||!state.me)return;
- const k=state.tab,visible=Object.keys(names).filter(x=>x!=='task'&&(x!=='admin'||state.me.admin));
+ const k=state.tab,visible=Object.keys(names).filter(x=>(x!=='admin'||state.me.admin));
  $('#tabs').innerHTML=visible.map(t=>'<button data-tab="'+t+'" class="'+(t===k?'active':'')+'">'+names[t]+' '+badge(state.badges[t])+'</button>').join('');
  if(!$('#taskAlerts'))$('#dock').insertAdjacentHTML('beforeend','<button id="taskAlerts" data-tab="task" hidden></button>');
  $('#taskAlerts').hidden=!state.badges.task;
@@ -85,7 +93,7 @@ function paint(){
  $('#viewMode').onclick=()=>{localStorage.cxView=board?'list':'board';paint()};}
  const card=({item:t,unread})=>{
  const member=[t.owner_id,...t.performers,...t.observers].includes(state.me.id);
- return '<div class="row"><div><small>'+names[t.kind]+' · '+esc(t.units.map(x=>units[x]).join(' / '))+'</small><strong>'+esc(rowTitle(t))+' '+badge(unread)+'</strong><small>'+esc(t.status)+' · '+esc(t.performers.map(person).join(', '))+(t.due&&t.due<=new Date(Date.now()+7*3600000).toISOString().slice(0,10)&&t.status!=='Hoàn thành'?' · <b class="late">Đến hạn / quá hạn</b>':'')+(t.due?' · Hạn '+esc(t.due.split('-').reverse().join('/')):'')+'</small></div>'+(member?'<button data-open="'+t.id+'">Mở</button>':'<small>Theo dõi tiến độ</small>')+'</div>';
+ return '<div class="row"><div><small>'+names[t.kind]+' · '+esc(t.units.map(x=>units[x]).join(' / '))+'</small><strong>'+esc(rowTitle(t))+' '+badge(unread)+'</strong><small>'+esc(t.status)+' · '+esc(t.performers.map(person).join(', '))+(t.due&&t.due<=new Date(Date.now()+7*3600000).toISOString().slice(0,10)&&t.status!=='Hoàn thành'?' · <b class="late">Đến hạn / quá hạn</b>':'')+(t.due?' · Hạn '+esc(t.due.split('-').reverse().join('/')):'')+'</small>'+(member&&t.latest_message?'<p>'+esc(t.latest_message)+'</p>':'')+'</div>'+(member?'<button data-open="'+t.id+'">Mở</button>':'<small>Theo dõi tiến độ</small>')+'</div>';
  };
  if(board){
  const left=$('.deadlineGrid')?.scrollLeft||0;
@@ -125,7 +133,7 @@ async function upload(fd){
 }
 function compose(kind){
  const direct=kind==='chat',everyone=state.people.filter(x=>(x.active||(!direct&&x.pending_login))&&(!direct||x.id!==state.me.id));
- const allowed=state.me.unit==='company'?Object.keys(units):[state.me.unit,'company'];
+ const allowed=['surgery'];
  const picker=(name,radio)=>'<div class="picker">'+everyone.map(x=>'<label data-unit="'+x.unit+'"><input type="'+(radio?'radio':'checkbox')+'" name="'+name+'" value="'+x.id+'">'+esc(x.name)+' · '+esc([x.staff_code,x.department,x.pending_login?'Chưa cấp tài khoản':x.username].filter(Boolean).join(' · '))+'</label>').join('')+'</div>';
  modal(names[kind],'<form id="edit"><p>Người tạo · '+esc(state.me.name)+'</p><label>Đơn vị nhận</label><div class="picker">'+allowed.map(x=>'<label><input type="checkbox" name="unitChoice" value="'+x+'" '+(state.scope==='all'||state.scope===x?'checked':'')+'>'+esc(units[x])+'</label>').join('')+'</div>'+(direct?'':'<label>Tiêu đề<input required name="title" maxlength="180"></label><label>Ngày '+(kind==='task'?'đến hạn':'nhắc')+'<input type="date" name="due" required></label><label>Nội dung<textarea name="note" maxlength="6000"></textarea></label>')+'<label>'+(direct?'Người nhận':'Người thực hiện')+'</label>'+picker('performers',direct)+(direct?'':'<label>Người liên quan</label>'+picker('observers',false)+fileField)+'<button class="primary"> ' +(direct?'Mở trao đổi':'Lưu và mở trao đổi')+'</button></form>');
  const f=$('#edit');function filter(){const u=new FormData(f).getAll('unitChoice');f.querySelectorAll('[data-unit]').forEach(l=>{l.hidden=!u.includes(l.dataset.unit);if(l.hidden)l.querySelector('input').checked=false})}
