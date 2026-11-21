@@ -9,5 +9,5 @@ export default async function Dashboard(){
  const user=await actor();
  if(!user)redirect('/');
  if(!user.admin&&!user.legacy_operator)redirect('/connect/index.html#reminder');
- return <><nav aria-label="Tài khoản bệnh viện" style={{display:'flex',gap:16,padding:'8px 16px'}}><a href="/connect/index.html#account">Tài khoản của tôi</a>{user.admin&&<a href="/connect/index.html#admin">Quản trị nhân viên</a>}</nav><Quick/><Detail/><Images/><LegacyDashboard/><Dock/></>;
+ return <><nav aria-label="Tài khoản bệnh viện" style={{display:'flex',gap:16,padding:'8px 16px'}}><a href="/connect/index.html#account">Tài khoản của tôi</a>{user.admin&&<a href="/connect/index.html#admin">Quản trị nhân viên</a>}</nav><Quick/><Detail/><Images/><LegacyDashboard creatorName={user.admin&&!user.staff_code?user.username:user.name}/><Dock/></>;
 }

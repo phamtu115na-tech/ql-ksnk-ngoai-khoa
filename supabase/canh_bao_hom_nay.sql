@@ -1,7 +1,7 @@
 create or replace function nk_work_alerts(who uuid, filter_kind text, skip_rows int) returns jsonb
 language sql stable as $$
  with alerts as materialized (
- select t.id,t.kind,t.title,t.status,t.due,t.updated,t.performers,owner.name as sender,
+ select t.id,t.kind,t.title,t.status,t.due,t.updated,t.performers,case when owner.admin and owner.staff_code is null then owner.username else owner.name end as sender,
  (now() at time zone 'Asia/Ho_Chi_Minh')::date as today,
  m.unread,m.preview,
  lower(coalesce(r.data->>'NHẮC HÀNG NGÀY',r.data->>'Nhắc hàng ngày','')) in ('có','true','1','x','yes') as daily

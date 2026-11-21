@@ -7,7 +7,8 @@ const names={all:'Tổng quan',task:'Việc được giao',reminder:'Nhắc vi�
 const statuses=['Mới','Đã nhận','Đang thực hiện','Hoàn thành'];
 const state={me:null,people:[],tab:'all',scope:'all',offset:0,rows:[],badges:{},screen:0,dialog:0,thread:null,seq:0,loading:false};
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const person=id=>state.people.find(x=>x.id===id)?.name||state.members?.find(x=>x.id===id)?.name||'Thành viên';
+const accountLabel=p=>p?.admin&&!p.staff_code?p.username:p?.name;
+const person=id=>accountLabel(state.people.find(x=>x.id===id)||state.members?.find(x=>x.id===id))||'Thành viên';
 const options=(map,v)=>Object.entries(map).map(([k,n])=>'<option value="'+esc(k)+'" '+(k===v?'selected':'')+'>'+esc(n)+'</option>').join('');
 const badge=n=>n?'<b class="badge">'+Number(n)+'</b>':'';
 const api=(action,data={})=>request('/api/connect',{action,...data});
@@ -137,7 +138,7 @@ function compose(kind){
  const direct=kind==='chat',everyone=state.people.filter(x=>(x.active||(!direct&&x.pending_login))&&(!direct||x.id!==state.me.id));
  const allowed=['surgery'];
  const picker=(name,radio)=>'<div class="picker">'+everyone.map(x=>'<label data-unit="'+x.unit+'"><input type="'+(radio?'radio':'checkbox')+'" name="'+name+'" value="'+x.id+'">'+esc(x.name)+' · '+esc([x.staff_code,x.department,x.pending_login?'Chưa cấp tài khoản':x.username].filter(Boolean).join(' · '))+'</label>').join('')+'</div>';
- modal(names[kind],'<form id="edit"><p>Người tạo · '+esc(state.me.name)+'</p><label>Đơn vị nhận</label><div class="picker">'+allowed.map(x=>'<label><input type="checkbox" name="unitChoice" value="'+x+'" '+(state.scope==='all'||state.scope===x?'checked':'')+'>'+esc(units[x])+'</label>').join('')+'</div>'+(direct?'':'<label>Tiêu đề<input required name="title" maxlength="180"></label><label>Ngày '+(kind==='task'?'đến hạn':'nhắc')+'<input type="date" name="due" required></label><label>Nội dung<textarea name="note" maxlength="6000"></textarea></label>')+'<label>'+(direct?'Người nhận':'Người thực hiện')+'</label>'+picker('performers',direct)+(direct?'':'<label>Người liên quan</label>'+picker('observers',false)+fileField)+'<button class="primary"> ' +(direct?'Mở trao đổi':'Lưu và mở trao đổi')+'</button></form>');
+ modal(names[kind],'<form id="edit"><p>Người tạo · '+esc(accountLabel(state.me))+'</p><label>Đơn vị nhận</label><div class="picker">'+allowed.map(x=>'<label><input type="checkbox" name="unitChoice" value="'+x+'" '+(state.scope==='all'||state.scope===x?'checked':'')+'>'+esc(units[x])+'</label>').join('')+'</div>'+(direct?'':'<label>Tiêu đề<input required name="title" maxlength="180"></label><label>Ngày '+(kind==='task'?'đến hạn':'nhắc')+'<input type="date" name="due" required></label><label>Nội dung<textarea name="note" maxlength="6000"></textarea></label>')+'<label>'+(direct?'Người nhận':'Người thực hiện')+'</label>'+picker('performers',direct)+(direct?'':'<label>Người liên quan</label>'+picker('observers',false)+fileField)+'<button class="primary"> ' +(direct?'Mở trao đổi':'Lưu và mở trao đổi')+'</button></form>');
  const f=$('#edit');function filter(){const u=new FormData(f).getAll('unitChoice');f.querySelectorAll('[data-unit]').forEach(l=>{l.hidden=!u.includes(l.dataset.unit);if(l.hidden)l.querySelector('input').checked=false})}
  filter();f.onchange=e=>{if(e.target.name==='unitChoice')filter()};const id=crypto.randomUUID();
  submit(async fd=>{if(!fd.getAll('performers').length)throw Error('Chọn ít nhất một người nhận.');const files=await upload(fd);
