@@ -13,7 +13,7 @@ Bản nâng cấp này dùng cấu hình kết nối và mật khẩu quản tr�
 
 ### Trao đổi trực tiếp trong KSNK
 
-Sau khi đăng nhập, mở **Trang chủ** để xem việc cần xử lý. Trong menu **Giao việc & Nhắc việc**, chọn **Giao việc** hoặc **Nhắc việc & Ghi chú**. Từng phiếu hiển thị tin gần nhất và số tin chưa đọc của chính tài khoản. Mở phiếu để đọc lịch sử, gửi tin hoặc xác nhận đã nhận. Người giao có thể chọn nhiều nhân viên. Trên bảng thời hạn, mở thẻ công việc để vào trò chuyện. Dữ liệu phiếu và tin nhắn dùng các bảng hiện có.
+Sau khi đăng nhập, mở **Trang chủ** để xem việc cần xử lý. Trong menu **Giao việc & Nhắc việc**, chọn **Giao việc** hoặc **Nhắc việc & Ghi chú**. Từng tác vụ hiển thị tin gần nhất và số tin chưa đọc của chính tài khoản. Bấm **Trao đổi** ngay tại công việc hoặc nhắc việc để đọc lịch sử, gửi tin hoặc xác nhận đã nhận trong màn hình tác vụ. Người giao có thể chọn nhiều nhân viên. Trên bảng thời hạn, nút trao đổi nằm bên dưới từng thẻ. Trên máy tính, khung nội dung, tiến độ và trò chuyện nằm bên phải bảng. Nhân viên bấm **Cập nhật tác vụ** để sửa nội dung cá nhân. Quản lý có thể tạo, sửa ngay trong màn hình Giao việc hoặc Nhắc việc. Dữ liệu phiếu và tin nhắn dùng các bảng hiện có.
 
 ## Phân quyền trưởng khoa, tổ trưởng và nhân viên
 

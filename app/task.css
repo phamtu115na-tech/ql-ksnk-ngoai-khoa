@@ -45,3 +45,14 @@
 .nk-account-nav,.nk-native nav{display:flex;flex-wrap:wrap;gap:12px;padding:8px 16px}.nk-native nav{padding:12px 0}.nk-native nav button[aria-pressed=true]{background:#184787;color:white}.nk-native-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:8px;max-height:45vh;overflow:auto}.nk-native-list button,.nk-row-message{display:grid;gap:4px;text-align:left;padding:10px;border:1px solid #d4e2ee;border-radius:8px;background:#f8fbff;color:#183962}.nk-row-message{display:block;max-width:100%;overflow-wrap:anywhere}.nk-thread-dialog{position:fixed;inset:0;width:min(96vw,1500px);height:90dvh;padding:8px;border:0;border-radius:12px}.nk-thread-dialog iframe{display:block;width:100%;height:calc(100% - 40px);border:0}.nk-thread-dialog::backdrop{background:#10253b85}
 
 .nk-new-messages{border-left:5px solid #c63758}.nk-new-messages button{display:grid;gap:5px;text-align:left;width:100%;margin:6px 0;padding:12px;border:1px solid #cfdfec;background:#f2f8fa;border-radius:9px;color:#153757}.nk-new-messages small{color:#476377}.nk-mention,.nk-unread{display:inline-block;width:fit-content;border-radius:6px;padding:4px 7px}.nk-mention{color:#825300;background:#fff1cc}.nk-unread{color:#992744;background:#ffedf1}
+
+.work-task-area,.work-task-list{min-width:0}
+.work-task-area[data-selected=true]{display:grid;grid-template-columns:minmax(0,3fr) minmax(320px,2fr);gap:12px;align-items:start}
+.work-task-chat{position:sticky;top:8px;border:1px solid #c5d6e9;border-radius:12px;overflow:hidden;background:white}
+.work-task-chat header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;color:#18395a}
+.work-task-chat h3{margin:2px 0;overflow-wrap:anywhere}
+.work-task-chat iframe{display:block;width:100%;height:min(68dvh,680px);border:0}
+.deadline-column-cards>div>.deadline-card{width:100%}
+@media(max-width:850px){.work-task-area[data-selected=true]{display:flex;flex-direction:column}.work-task-chat{position:static;order:-1;width:100%;scroll-margin-top:65px}.work-task-list{width:100%}}
+
+.work-inline-editor{scroll-margin-top:70px}.work-inline-editor>.task-form{width:100%;max-width:none;max-height:none;margin:0;overflow:visible;box-shadow:none}

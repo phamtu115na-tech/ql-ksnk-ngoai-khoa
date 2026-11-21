@@ -1,7 +1,7 @@
 'use strict';
 const $=s=>document.querySelector(s);
 const units={surgery:'Bệnh viện Ngoại khoa 115 Nghệ An'};
-const embeddedWork=new URLSearchParams(location.search).has('row')&&window.parent!==window;
+const embeddedWork=(new URLSearchParams(location.search).has('row')||new URLSearchParams(location.search).has('inline'))&&window.parent!==window;
 if(embeddedWork)document.documentElement.classList.add('work-embed');
 const names={all:'Tổng quan',task:'Việc được giao',reminder:'Nhắc việc',chat:'Trao đổi',admin:'Quản trị nhân viên'};
 const statuses=['Mới','Đã nhận','Đang thực hiện','Hoàn thành'];
@@ -20,7 +20,7 @@ let noticeTimer,audio,lastUnread=0;
 function notice(v){const target=$('#modal').open?$('#modalError'):$('#notice');if(!target)return;target.textContent=v;target.hidden=false;clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>{target.hidden=true},6500);}
 async function run(fn,button){if(button?.disabled)return;if(button)button.disabled=true;try{await fn()}catch(e){notice(e.message)}finally{if(button)button.disabled=false}}
 function close(){$('#modal').classList.remove('expanded');if($('#modal').open)$('#modal').close();state.thread=null;state.dialog++;}
-function modal(title,body){close();$('#dialogBody').innerHTML='<div class="modalbar"><h2>'+esc(title)+'</h2><button id="close">Đóng ×</button></div><p id="modalError" class="error" role="alert" hidden></p>'+body;$('#close').onclick=()=>{if(new URLSearchParams(location.search).has('detail'))window.parent.postMessage('ksnk-close-thread',location.origin);else close()};$('#modal').showModal();}
+function modal(title,body){close();$('#dialogBody').innerHTML='<div class="modalbar"><h2>'+esc(title)+'</h2><button id="close">Đóng ×</button></div><p id="modalError" class="error" role="alert" hidden></p>'+body;$('#close').onclick=()=>{if(new URLSearchParams(location.search).has('detail'))window.parent.postMessage('ksnk-close-thread',location.origin);else close()};if(embeddedWork&&new URLSearchParams(location.search).has('inline'))$('#modal').show();else $('#modal').showModal();}
 $('#modal').addEventListener('cancel',()=>{state.thread=null;state.dialog++});
 function login(){
  if(window.parent!==window){window.top.location.replace('/');return;}
@@ -37,6 +37,7 @@ async function start(){
  if(q.has('thread'))args.set('thread',q.get('thread'));
  location.replace('/ngoai-khoa'+(args.size?'?'+args:''));return;
  }
+ if(new URLSearchParams(location.search).has('inline'))document.documentElement.classList.add('nk-inline-task');
  if(new URLSearchParams(location.search).has('detail'))document.documentElement.classList.add('nk-detail-only');
  if(!embeddedWork)document.documentElement.classList.add('nk-board-frame');
  state.tab=(target==='admin'&&r.me.admin)||['task','reminder','chat','account'].includes(target)?(target==='account'?'all':target):'reminder';lastUnread=0;
@@ -44,7 +45,9 @@ async function start(){
  const alerts=document.createElement('nk-work-alerts');document.body.append(alerts);
  alerts.addEventListener('work-selected',e=>{e.preventDefault();run(()=>openThread(e.detail));});
  }
- $('#identity').textContent=r.me.name+' · '+units[r.me.unit];$('#dock').hidden=false;dashboard();await refresh();
+ $('#identity').textContent=r.me.name+' · '+units[r.me.unit];$('#dock').hidden=false;
+ if(embeddedWork&&new URLSearchParams(location.search).has('inline')){try{await openThread(new URLSearchParams(location.search).get('thread'));}catch(e){document.body.append(document.createTextNode(e.message));}return;}
+ dashboard();await refresh();
  const q=new URLSearchParams(location.search);
  if(q.has('thread')){try{await openThread(q.get('thread'));}catch(e){modal('Không mở được phiếu','<p>'+esc(e.message)+'</p>');}}
  if(target==='account')changeCode();
@@ -66,7 +69,7 @@ function tone(){if(!audio||audio.state!=='running')return;const o=audio.createOs
 function tab(k){state.tab=k;state.rows=[];state.offset=0;state.screen++;paint();run(refresh);}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b&&state.me)tab(b.dataset.tab)});
 async function refresh(){
- if(!state.me)return;const current=++state.screen;
+ if(!state.me||new URLSearchParams(location.search).has('inline'))return;const current=++state.screen;
  const r=await api('board',{kind:state.tab==='admin'?'all':state.tab,scope:state.scope,offset:state.offset});
  if(current!==state.screen||!state.me)return;
  const counts=Object.fromEntries(r.badges.map(x=>[x.kind,Number(x.unread)]));
@@ -169,8 +172,9 @@ async function openThread(id){
  if(r.viewOnly){const x=r.item;modal(x.title,'<p>Người thực hiện · '+esc(x.performers.map(person).join(', '))+'</p><p>Hạn · '+esc(x.due||'—')+'</p><p>Trạng thái · '+esc(x.status)+'</p><p>'+esc(x.note)+'</p>');return;}
  state.members=r.members;const t=r.item,isChat=t.kind==='chat',canUpdate=r.writable&&(r.manage||t.owner_id===state.me.id||t.performers.includes(state.me.id));
  const shared=r.manage||t.owner_id===state.me.id;
- const facts='<div class="details pane"><h3>'+names[t.kind]+'</h3><p>Đơn vị · '+esc(t.units.map(x=>units[x]).join(' / '))+'</p><p>Người tạo · '+esc(t.owner_id?person(t.owner_id):'Chưa ghi trong sổ')+'</p><p>Người thực hiện · '+esc(t.performers.map(person).join(', '))+'</p><p>Người liên quan · '+esc(t.observers.map(person).join(', ')||'—')+'</p><p style="white-space:pre-wrap">'+esc(t.note)+'</p><p>Ngày '+(t.kind==='reminder'?'nhắc':'đến hạn')+' · '+esc(t.due||'—')+'</p>'+(!isChat?'<p>Bộ phận · '+esc(r.department||'—')+'</p><p>Ghi chú cá nhân · '+esc(r.personal||'—')+'</p><p>Ý kiến quản lý · '+esc(r.opinion||'—')+'</p>':'')+(r.writable&&!isChat?'<button id="editTask">Sửa chi tiết phiếu</button>':'')+(canUpdate&&!isChat?'<label>Trạng thái<select id="progress">'+options(Object.fromEntries(statuses.map(x=>[x,x])),t.status)+'</select></label><button id="saveStatus">Lưu trạng thái</button>':'')+'</div>';
- modal(rowTitle(t),'<div class="phoneTabs"><button data-view="detail">Chi tiết</button><button data-view="chat">Trò chuyện</button></div><div class="split" data-view="chat">'+facts+'<div class="discussion pane"><h3>'+esc(isChat?'Trao đổi riêng':t.kind==='task'?'Trò chuyện giao việc':'Trò chuyện nhắc việc')+'</h3><small>'+esc(r.members.map(x=>x.name).join(', '))+'</small><div id="stream" class="stream"><button id="older" '+(r.rows.length<50?'hidden':'')+'>Xem tin cũ hơn</button><div id="messages">'+messages(r.rows)+'</div></div><form id="send"><label>Tin nhắn<textarea name="body" maxlength="6000" placeholder="Nhập nội dung, gõ @ để nhắc tên thành viên…"></textarea></label><div id="mentions"></div>'+fileField+' <button class="primary">Gửi ➤</button></form></div></div>');
+ const facts='<div class="details pane"><h3>'+names[t.kind]+'</h3><p>Đơn vị · '+esc(t.units.map(x=>units[x]).join(' / '))+'</p><p>Người tạo · '+esc(t.owner_id?person(t.owner_id):'Chưa ghi trong sổ')+'</p><p>Người thực hiện · '+esc(t.performers.map(person).join(', '))+'</p><p>Người liên quan · '+esc(t.observers.map(person).join(', ')||'—')+'</p><p style="white-space:pre-wrap">'+esc(t.note)+'</p><p>Ngày '+(t.kind==='reminder'?'nhắc':'đến hạn')+' · '+esc(t.due||'—')+'</p>'+(!isChat?'<p>Bộ phận · '+esc(r.department||'—')+'</p><p>Ghi chú cá nhân · '+esc(r.personal||'—')+'</p><p>Ý kiến quản lý · '+esc(r.opinion||'—')+'</p>':'')+(r.writable&&!isChat?'<button id="editTask">Cập nhật tác vụ</button>':'')+(canUpdate&&!isChat?'<label>Trạng thái<select id="progress">'+options(Object.fromEntries(statuses.map(x=>[x,x])),t.status)+'</select></label><button id="saveStatus">Lưu trạng thái</button>':'')+'</div>';
+ const inline=new URLSearchParams(location.search).has('inline');
+ modal(rowTitle(t),'<div class="phoneTabs"><button data-view="detail">Chi tiết</button><button data-view="chat">Trò chuyện</button></div><div class="split" data-view="chat">'+(inline?'<details class="inline-info" open><summary>Nội dung và tiến độ</summary>'+facts+'</details>':facts)+'<div class="discussion pane"><h3>'+esc(isChat?'Trao đổi riêng':t.kind==='task'?'Trò chuyện giao việc':'Trò chuyện nhắc việc')+'</h3><small>'+esc(r.members.map(x=>x.name).join(', '))+'</small><div id="stream" class="stream"><button id="older" '+(r.rows.length<50?'hidden':'')+'>Xem tin cũ hơn</button><div id="messages">'+messages(r.rows)+'</div></div><form id="send"><label>Tin nhắn<textarea name="body" maxlength="6000" placeholder="Nhập nội dung, gõ @ để nhắc tên thành viên…"></textarea></label><div id="mentions"></div>'+fileField+' <button class="primary">Gửi ➤</button></form></div></div>');
  if(!isChat){const received=r.received||[],bar=document.createElement('div');bar.className='receipt';bar.textContent='Đã nhận · '+(received.map(person).join(', ')||'Chưa có người xác nhận');
  if(r.writable&&t.performers.includes(state.me.id)&&!received.includes(state.me.id)){const button=document.createElement('button');button.type='button';button.textContent='Xác nhận đã nhận';button.onclick=()=>run(async()=>{await api('receive',{id});await openThread(id)},button);bar.append(' ',button);}
  $('.discussion h3').after(bar);}
@@ -179,7 +183,8 @@ async function openThread(id){
  const stream=$('#stream');stream.scrollTop=stream.scrollHeight;stream.onscroll=()=>run(markSeen);
  $('.phoneTabs').onclick=e=>{if(e.target.dataset.view){$('.split').dataset.view=e.target.dataset.view;run(markSeen)}};
  if($('#editTask'))$('#editTask').onclick=()=>{
- modal('Sửa '+names[t.kind].toLowerCase(),'<form id="edit"><label>Tiêu đề<input name="title" required maxlength="180" value="'+esc(t.title)+'"></label><label>Ngày đến hạn<input name="due" required type="date" value="'+esc(t.due)+'"></label><label>Nội dung<textarea name="note" maxlength="6000">'+esc(t.note)+'</textarea></label><button class="primary">Lưu thay đổi</button></form>');
+ const editor='<form id="edit"><label>Tiêu đề<input name="title" required maxlength="180" value="'+esc(t.title)+'"></label><label>Ngày đến hạn<input name="due" required type="date" value="'+esc(t.due)+'"></label><label>Nội dung<textarea name="note" maxlength="6000">'+esc(t.note)+'</textarea></label><button class="primary">Lưu thay đổi</button></form>';
+ if(inline){$('#editTask').hidden=true;$('#editTask').insertAdjacentHTML('afterend',editor);}else modal('Sửa '+names[t.kind].toLowerCase(),editor);
  const edit=$('#edit');edit.elements.title.readOnly=!shared;edit.elements.note.readOnly=!shared;edit.elements.due.readOnly=!shared;edit.elements.due.required=false;
  edit.querySelector('button').insertAdjacentHTML('beforebegin','<label>Ghi chú cá nhân<textarea name="personal" maxlength="6000">'+esc(r.personal)+'</textarea></label>'+(r.manage?'<label>Ý kiến quản lý<textarea name="opinion" maxlength="6000">'+esc(r.opinion)+'</textarea></label>':''));
  const rid=crypto.randomUUID();submit(async fd=>{await api('detailSave',{...Object.fromEntries(fd),id,expected:t.seq,requestId:rid});await openThread(id);});};
