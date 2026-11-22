@@ -168,3 +168,16 @@
 .nk-message-time{margin-left:auto;font-size:10px;color:#9a3450;white-space:nowrap;font-weight:700}
 @media(max-width:750px){.nk-message-time{font-size:9px}}
 @media(max-width:440px){.nk-message-unread-label{font-size:10px}}
+
+/* Nhắc việc: chi tiết cùng cấu trúc Giao việc, giấu minh chứng khi không cần */
+.reminder-compact-detail{border-left:5px solid #174ea6!important;padding:14px!important;margin:10px 0}
+.reminder-compact-head{gap:10px}
+.reminder-compact-head h3{margin:5px 0 3px;font-size:17px}
+.reminder-compact-meta{grid-template-columns:repeat(3,minmax(135px,1fr));gap:8px}
+.reminder-compact-meta span{padding:8px 10px}
+.reminder-evidence-collapse{border-top:1px solid #e3e9f2;margin-top:10px;padding-top:9px}
+.reminder-evidence-collapse summary{cursor:pointer;color:#174ea6;font-size:13px;font-weight:800}
+.reminder-evidence-collapse .reminder-detail-evidence{margin-top:10px}
+.reminder-compact-actions{margin-top:10px}
+@media(max-width:750px){.reminder-compact-meta{grid-template-columns:1fr 1fr}}
+@media(max-width:440px){.reminder-compact-meta{grid-template-columns:1fr}}
