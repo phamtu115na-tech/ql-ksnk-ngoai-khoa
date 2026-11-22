@@ -37,7 +37,7 @@
 
 .task-area-tabs{margin:0;padding:6px;flex-wrap:wrap}.content-shell>[hidden]{display:none!important}
 .nk-workboard{display:block;width:100%;height:80dvh;border:0;background:white}
-.nk-work-layout{width:min(1620px,100%);height:min(94dvh,1050px);display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);overflow:hidden;background:white;border-radius:14px;box-shadow:0 16px 50px #16355638}
+.nk-work-layout{width:min(1620px,100%);height:min(94dvh,1050px);display:grid;grid-template-columns:minmax(0,11fr) minmax(0,9fr);overflow:hidden;background:white;border-radius:14px;box-shadow:0 16px 50px #16355638}
 .nk-work-switch{display:none}.nk-work-fields{overflow:auto;min-width:0;padding:18px}.nk-work-fields>.task-form{width:auto;max-height:none;overflow:visible;padding:0;box-shadow:none}.nk-work-fields .form-actions{position:sticky;bottom:-18px;padding:12px 0;background:white}
 .nk-work-chat{min-width:0;border-left:1px solid #d4e0ea}.nk-work-chat iframe{height:100%;width:100%;border:0;display:block}
 .reminder-detail-dialog:has(.nk-work-layout){width:min(1620px,100%);padding:0;overflow:hidden}.reminder-detail-dialog .nk-work-layout{width:100%;box-shadow:none}
@@ -75,7 +75,7 @@
 
 /* KSNK: một cửa sổ chung cho biểu mẫu nghiệp vụ và trò chuyện. */
 .work-dialog-backdrop{z-index:110;padding:clamp(5px,1.5vw,18px)}
-.work-detail-layout{width:min(1460px,99vw);height:min(95dvh,950px);max-height:97dvh;display:grid;grid-template-columns:minmax(310px,2fr) minmax(340px,3fr);gap:0;overflow:hidden;border:1px solid #d1dce9;border-radius:10px;background:#fff;box-shadow:0 22px 55px #0a23454d}
+.work-detail-layout{width:min(1460px,99vw);height:min(95dvh,950px);max-height:97dvh;display:grid;grid-template-columns:minmax(0,11fr) minmax(0,9fr);gap:0;overflow:hidden;border:1px solid #d1dce9;border-radius:10px;background:#fff;box-shadow:0 22px 55px #0a23454d}
 .work-detail-single{width:min(900px,96vw);max-height:95dvh;overflow:auto;background:#fff;border-radius:12px}
 .work-detail-fields{min-width:0;min-height:0;overflow:auto;border-right:1px solid #cad9e8}
 .work-detail-fields .task-form,.work-detail-single-fields .task-form{width:100%;max-width:none;max-height:none;min-height:100%;padding:16px;overflow:visible;margin:0;box-shadow:none;border-radius:0}
@@ -84,4 +84,4 @@
 .work-detail-chat>h3{margin:0;min-height:38px;padding:8px 12px;border-bottom:1px solid #dbe5ee;font-size:14px;color:#17375f}
 .work-detail-chat iframe{display:block;border:0;width:100%;flex:1;min-height:0;background:#fff}
 .work-detail-chat-empty{padding:16px;font-size:13px;color:#536980;line-height:1.5}
-@media(max-width:750px){.work-detail-layout{width:98vw;height:94dvh;grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) minmax(170px,40%)}.work-detail-fields{border-right:0;border-bottom:1px solid #cad9e8}.work-detail-chat>h3{min-height:35px}}
+@media(max-width:750px){.work-detail-layout{width:98vw;height:94dvh;grid-template-columns:1fr;grid-template-rows:minmax(0,3fr) minmax(180px,2fr)}.work-detail-fields{border-right:0;border-bottom:1px solid #cad9e8}.work-detail-chat>h3{min-height:35px}}
