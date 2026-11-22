@@ -187,11 +187,25 @@ async function dispatch(req:Request){
  const managedDepartment=a.team_department||a.department;
  const manages=a.admin||a.legacy_operator||(a.team_lead&&!!managedDepartment&&(dept?dept.trim().toLowerCase()===managedDepartment.trim().toLowerCase():assignments.length===t.performers.length&&assignments.length>0&&assignments.every(p=>p.department===managedDepartment)));
  const originalFields=t.kind==='task'?[
-  ['Phân loại công việc',source['Loại công việc']],['Từ ngày',source['Ngày bắt đầu']],
+  ['Mã công việc',source['ID']||source['Mã công việc']],
+  ['Phân loại công việc',source['Loại công việc']||source['Phân loại công việc']],
+  ['Từ ngày',source['Ngày bắt đầu']],
+  ['Trạng thái nhân viên',source['Trạng thái NV']||source['Trạng thái nhân viên']],
   ['Đánh giá quản lý',source['Đánh giá quản lý']||source['Đánh giá quản lý hiện tại']],
-  ['Ghi chú nhân viên',source['Ghi chú nhân viên']],['Người quản lý phê duyệt',source['Người quản lý phê duyệt']],
-  ['Phương án dự phòng',source['Phương án dự phòng']||source['Dự phòng / phương án dự phòng']]
- ]:t.kind==='reminder'?[['Nhắc hằng ngày',source['NHẮC HÀNG NGÀY']??source['Nhắc hàng ngày']]]:[];
+  ['Ghi chú nhân viên',source['Ghi chú NV']||source['Ghi chú nhân viên']],
+  ['Người quản lý phê duyệt',source['Người quản lý phê duyệt']],
+  ['Phương án dự phòng',source['Dự phòng']||source['Phương án dự phòng']||source['Dự phòng / phương án dự phòng']],
+  ['Nội dung xin phê duyệt',source['Nội dung xin phê duyệt']||source['Nội dung xin ý kiến quản lý']],
+  ['Phản hồi quản lý',source['Phản hồi quản lý']],
+  ['Ảnh minh chứng đã lưu',source['Ảnh minh chứng']||source['Hình ảnh']],
+  ['Tài liệu minh chứng đã lưu',source['Tài liệu minh chứng']||source['Tài liệu đính kèm']]
+ ]:t.kind==='reminder'?[
+  ['Mã nhắc việc',source['MÃ NHẮC VIỆC']||source['Mã nhắc việc']],
+  ['Nhắc hằng ngày',source['NHẮC HÀNG NGÀY']??source['Nhắc hàng ngày']],
+  ['Trạng thái nhắc việc',source['TRẠNG THÁI']||source['Trạng thái']],
+  ['Ảnh minh chứng đã lưu',source['Ảnh minh chứng']||source['Hình ảnh']],
+  ['Tài liệu minh chứng đã lưu',source['Tài liệu minh chứng']||source['Tài liệu đính kèm']]
+ ]:[];
  return {item:t,members,personal,originalFields:originalFields.filter(([,value])=>value!=null&&value!==''),approvalStatus:source['Trạng thái phê duyệt']||(t.kind==='task'?'CHƯA XIN Ý KIẾN':'KHÔNG YÊU CẦU'),approvalHistory:source['Lịch sử phê duyệt']||'[]',reviewer:source['Tài khoản duyệt']||'',canReview:a.admin||(manages&&(source['Tài khoản duyệt']===a.id||(!source['Tài khoản duyệt']&&a.staff_code&&source['Mã người quản lý']===a.staff_code))),opinion:source['Ý kiến quản lý']||'',department:dept,priority:source['Mức độ ưu tiên']||'',writable,manage:manages,received:(receipts||[]).filter(x=>x.sender===x.request_id).map(x=>x.sender),rows:rows.reverse()};
  }
  if(b.action==='edit'){
