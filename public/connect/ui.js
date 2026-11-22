@@ -191,7 +191,8 @@ async function openThread(id){
   (r.originalFields||[]).map(([label,value])=>field(esc(label),value===true?'Có':value===false?'Không':value)).join('')+
   '<label>Ghi chú cá nhân<textarea name="personal" maxlength="6000">'+esc(r.personal)+'</textarea></label>'+
   (r.manage?'<label>Ý kiến quản lý<textarea name="opinion" maxlength="6000">'+esc(r.opinion)+'</textarea></label>':field('Ý kiến quản lý',r.opinion))+
-  (editable?'<button type="submit" class="primary">Lưu thay đổi</button>':'')+'</form>'+
+  (editable?'<button type="submit" class="primary">LƯU DỮ LIỆU</button>':'')+'</form>'+ 
+  (editable?'<section class="work-evidence"><strong>ẢNH / TÀI LIỆU MINH CHỨNG</strong><form id="workEvidence"><label>Chọn ảnh hoặc tài liệu<input name="files" type="file" multiple accept="image/jpeg,image/png,image/webp,.pdf,.docx,.xlsx"></label><label>Chụp ảnh trực tiếp<input name="files" type="file" accept="image/*" capture="environment"></label><small>Tối đa 3 ảnh và 1 tài liệu mỗi lần; tệp được lưu trong lịch sử trao đổi tác vụ.</small><button type="submit" class="primary">LƯU MINH CHỨNG</button></form></section>':'')+
   (canUpdate&&editable?'<label>Trạng thái<select id="progress">'+options(Object.fromEntries(statuses.map(x=>[x,x])),t.status)+'</select></label><button id="saveStatus">Lưu trạng thái</button>':field('Trạng thái',t.status))+'</div>';
  const facts=legacyView?detailForm:summaryFacts;
  modal(rowTitle(t),'<div class="phoneTabs"><button data-view="detail">Chi tiết</button><button data-view="chat">Trò chuyện</button></div><div class="split" data-view="chat">'+(legacyView?'<section class="inline-info original-pane">'+facts+'</section>':facts)+'<div class="discussion pane"><h3>'+esc(isChat?'Trao đổi riêng':t.kind==='task'?'Trò chuyện giao việc':'Trò chuyện nhắc việc')+'</h3><small>'+esc(r.members.map(x=>x.name).join(', '))+'</small><div id="stream" class="stream"><button id="older" '+(r.rows.length<50?'hidden':'')+'>Xem tin cũ hơn</button><div id="messages">'+messages(r.rows)+'</div></div><form id="send"><label>Tin nhắn<textarea name="body" maxlength="6000" placeholder="Nhập nội dung, gõ @ để nhắc tên thành viên…"></textarea></label><div id="mentions"></div>'+fileField+' <button class="primary">Gửi ➤</button></form></div></div>');
@@ -203,6 +204,8 @@ async function openThread(id){
   if(editable){const rid=crypto.randomUUID();submit(async fd=>{await api('detailSave',{...Object.fromEntries(fd),id,expected:t.seq,requestId:rid});await openThread(id)});}
   else form.onsubmit=e=>e.preventDefault();
  }
+ const evidenceForm=$('#workEvidence');
+ if(evidenceForm)evidenceForm.onsubmit=e=>{e.preventDefault();run(async()=>{const files=await upload(new FormData(evidenceForm));if(!files.length)throw Error('Chọn ảnh hoặc tài liệu minh chứng trước khi lưu.');await api('send',{id,body:'Bổ sung ảnh / tài liệu minh chứng',files,requestId:crypto.randomUUID()});await openThread(id);},evidenceForm.querySelector('button.primary'))};
  if(!isChat && t.source_row && state.reviewSettingsReady){
   const status=r.approvalStatus,locked=status==='ĐÃ PHÊ DUYỆT';
   if(locked){$('#editTask')?.remove();$('#saveStatus')?.remove();$('#progress')?.closest('label')?.remove();}
