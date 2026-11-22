@@ -63,7 +63,7 @@ export function WorkArea({kind,children}:{kind?:Kind;children:React.ReactNode}){
  useEffect(()=>{if((job||creating)&&panel.current&&!panel.current.open)panel.current.showModal()},[job?.id,creating]);
  if(!kind)return <>{children}</>;
  return <div className="work-task-area" data-work-area={kind}>
-  {canAssign&&<button type="button" className="add-btn" onClick={()=>{select('');setCreating(true)}}>{kind==='task'?'+ Giao việc trong tổ':'+ Nhắc việc trong tổ'}</button>}<div className="work-task-list">{children}</div>
+  {canAssign&&kind==='reminder'&&<button type="button" className="add-btn" onClick={()=>{select('');setCreating(true)}}>+ Nhắc việc trong tổ</button>}<div className="work-task-list">{children}</div>
   {(job||creating)&&<dialog ref={panel} className="work-conversation" aria-label={labels[kind]+' và trao đổi'} onCancel={()=>{select('');setCreating(false)}}>
    <header><h3>{job?.title||labels[kind]}</h3><button type="button" onClick={()=>{select('');setCreating(false)}}>✕ Đóng</button></header>
    <iframe key={job?.id||kind} title={labels[kind]+' · Chi tiết và trò chuyện'} src={'/connect/index.html?inline=1&'+(job?'thread='+encodeURIComponent(job.id):'compose='+kind)}/>
