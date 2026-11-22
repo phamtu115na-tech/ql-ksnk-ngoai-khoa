@@ -18,7 +18,7 @@ let authenticated=true,downloads=0;
 const record={id:'test',storage_path:'tasks/1/image.png',file_name:'ảnh.png',mime_type:'image/png'};
 const query={select(){return this},eq(){return this},limit:async()=>({data:[record]}),order:async()=>({data:[record]})};
 const db={from:()=>query,storage:{from:()=>({download:async path=>{assert.equal(path,record.storage_path);downloads++;return {data:new Blob(['image-bytes'])}}})}};
-const route=load('app/api/evidence/route.ts',{'next/server':{NextResponse:{json:(data,init)=>Response.json(data,init)}},'../../../lib/auth':{canOperateLegacy:async()=>authenticated},'../../../lib/supabase':{supabaseAdmin:()=>db,effectiveSupabaseUrl:()=>origin},'../../../lib/evidence-url':urls});
+const route=load('app/api/evidence/route.ts',{'next/server':{NextResponse:{json:(data,init)=>Response.json(data,init)}},'../../../lib/auth':{actor:async()=>authenticated?{admin:true}:null,canOperateLegacy:async()=>authenticated},'../../../lib/supabase':{supabaseAdmin:()=>db,effectiveSupabaseUrl:()=>origin},'../../../lib/evidence-url':urls});
 (async()=>{
  let result=await route.GET(new Request('https://app.test/api/evidence?module=tasks&legacy_id=1'));
  const list=await result.json();assert.equal(list.files[0].url,'/api/evidence?open=1&id=test');assert.equal(list.files[0].storage_path,undefined);

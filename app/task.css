@@ -37,7 +37,7 @@
 
 .task-area-tabs{margin:0;padding:6px;flex-wrap:wrap}.content-shell>[hidden]{display:none!important}
 .nk-workboard{display:block;width:100%;height:80dvh;border:0;background:white}
-.nk-work-layout{width:min(1620px,100%);height:min(94dvh,1050px);display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);overflow:hidden;background:white;border-radius:14px;box-shadow:0 16px 50px #16355638}
+.nk-work-layout{width:min(1620px,100%);height:min(94dvh,1050px);display:grid;grid-template-columns:minmax(0,11fr) minmax(0,9fr);overflow:hidden;background:white;border-radius:14px;box-shadow:0 16px 50px #16355638}
 .nk-work-switch{display:none}.nk-work-fields{overflow:auto;min-width:0;padding:18px}.nk-work-fields>.task-form{width:auto;max-height:none;overflow:visible;padding:0;box-shadow:none}.nk-work-fields .form-actions{position:sticky;bottom:-18px;padding:12px 0;background:white}
 .nk-work-chat{min-width:0;border-left:1px solid #d4e0ea}.nk-work-chat iframe{height:100%;width:100%;border:0;display:block}
 .reminder-detail-dialog:has(.nk-work-layout){width:min(1620px,100%);padding:0;overflow:hidden}.reminder-detail-dialog .nk-work-layout{width:100%;box-shadow:none}
@@ -56,3 +56,87 @@
 @media(max-width:850px){.work-task-area[data-selected=true]{display:flex;flex-direction:column}.work-task-chat{position:static;order:-1;width:100%;scroll-margin-top:65px}.work-task-list{width:100%}}
 
 .work-inline-editor{scroll-margin-top:70px}.work-inline-editor>.task-form{width:100%;max-width:none;max-height:none;margin:0;overflow:visible;box-shadow:none}
+
+.work-conversation{width:min(97vw,1600px);height:90dvh;max-width:98vw;max-height:96dvh;padding:0;border:1px solid #c6d6e4;border-radius:12px;overflow:hidden;background:white;color:#19334e}
+.work-conversation[open]{display:flex;flex-direction:column}
+.work-conversation::backdrop{background:#16314c77}
+.work-conversation>header{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;gap:.75rem;border-bottom:1px solid #cedbe6}
+.work-conversation h3{margin:0;overflow-wrap:anywhere}
+.work-conversation iframe{border:0;width:100%;flex:1;min-height:0}
+.home-work-inbox{margin:.7rem clamp(.6rem,2vw,2rem);min-width:0}
+.home-work-inbox h2{font-size:1.1rem}.home-work-inbox nav{display:flex;flex-wrap:wrap;gap:.4rem}
+.home-work-inbox nav button{width:auto;padding:4px 10px}.home-work-inbox nav button[aria-pressed=true]{background:#dbeafe}
+.header-work-inbox,.ksnk-signout,.ksnk-chat-launch{border:1px solid #bdd0e1;border-radius:8px;padding:.45rem .7rem;font:600 .9rem system-ui;text-decoration:none;white-space:nowrap}
+.header-work-inbox{background:#edf5ff;color:#173f68}.header-work-inbox b,.ksnk-chat-launch b{display:inline-block;border-radius:1rem;padding:0 .4rem;background:#ba2946;color:white}
+.ksnk-signout{order:6;color:white;background:#21446b;cursor:pointer}
+.ksnk-chat-launch{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));z-index:45;background:#235b9f;color:white;border-radius:2rem;box-shadow:0 3px 9px #233c5c33}
+.header-quick-actions{flex-wrap:wrap}
+@media(max-width:740px){.work-conversation{width:98vw;height:95dvh}.header-work-inbox{font-size:.8rem}.header-quick-actions{width:100%}}
+
+/* KSNK: một cửa sổ chung cho biểu mẫu nghiệp vụ và trò chuyện. */
+.work-dialog-backdrop{z-index:110;padding:clamp(5px,1.5vw,18px)}
+.work-detail-layout{width:min(1460px,99vw);height:min(95dvh,950px);max-height:97dvh;display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:0;overflow:hidden;border:1px solid #d1dce9;border-radius:10px;background:#fff;box-shadow:0 22px 55px #0a23454d}
+.work-detail-single{width:min(900px,96vw);max-height:95dvh;overflow:auto;background:#fff;border-radius:12px}
+.work-detail-fields{min-width:0;min-height:0;overflow:auto;border-right:1px solid #cad9e8}
+.work-detail-fields .task-form,.work-detail-single-fields .task-form{width:100%;max-width:none;max-height:none;min-height:100%;padding:16px;overflow:visible;margin:0;box-shadow:none;border-radius:0}
+.work-detail-fields .form-actions{position:sticky;bottom:0;padding:10px 0 4px;background:#fff;z-index:1}
+.work-detail-chat{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden;background:#fff}
+.work-detail-chat>h3{margin:0;min-height:38px;padding:8px 12px;border-bottom:1px solid #dbe5ee;font-size:14px;color:#17375f}
+.work-detail-chat iframe{display:block;border:0;width:100%;flex:1;min-height:0;background:#fff}
+.work-detail-chat-empty{padding:16px;font-size:13px;color:#536980;line-height:1.5}
+@media(max-width:750px){.work-detail-layout{width:98vw;height:94dvh;grid-template-columns:1fr;grid-template-rows:minmax(0,3fr) minmax(180px,2fr)}.work-detail-fields{border-right:0;border-bottom:1px solid #cad9e8}.work-detail-chat>h3{min-height:35px}}
+
+/* Cửa sổ Giao việc, Nhắc việc và Xin phê duyệt: biểu mẫu 60%, trao đổi 40%.
+   Giữ nguyên cuộn dọc riêng biệt, không cho thành phần phê duyệt kéo giãn cột. */
+.work-detail-fields,.work-detail-fields .task-form,
+.work-detail-fields .approval-form,.work-detail-fields .task-approval-record,
+.work-detail-fields .task-approval-evaluation,.work-detail-fields .approval-steps,
+.work-detail-chat{min-width:0;max-width:100%;box-sizing:border-box}
+.work-detail-fields{overflow-x:hidden;overflow-y:auto}
+.work-detail-fields .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.work-detail-fields .form-grid .wide{grid-column:1/-1;min-width:0}
+.work-detail-fields .task-approval-record-grid,
+.work-detail-fields .task-approval-evaluation-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-width:100%}
+.work-detail-fields .task-approval-record-grid>*,
+.work-detail-fields .task-approval-evaluation-grid>*,
+.work-detail-fields .task-approval-record-block,
+.work-detail-fields .task-approval-record-head>*,
+.work-detail-fields .task-approval-evaluation-head>*,
+.work-detail-fields .task-approval-record-evidence>*{min-width:0;overflow-wrap:anywhere}
+.work-detail-fields .task-approval-record-head,
+.work-detail-fields .task-approval-evaluation-head{display:flex;flex-wrap:wrap;gap:8px;align-items:start;justify-content:space-between}
+.work-detail-fields .task-approval-record-evidence{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.work-detail-fields .approval-steps ol{max-width:100%;padding-left:1.4rem;overflow-wrap:anywhere}
+.work-detail-fields .task-approval-record p,
+.work-detail-fields .task-approval-record small{white-space:normal;overflow-wrap:anywhere}
+.work-detail-chat iframe{min-width:0}
+@media(max-width:750px){
+ .work-detail-fields .task-approval-record-grid,
+ .work-detail-fields .task-approval-evaluation-grid,
+ .work-detail-fields .task-approval-record-evidence{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:420px){
+ .work-detail-fields .task-approval-record-grid,
+ .work-detail-fields .task-approval-evaluation-grid,
+ .work-detail-fields .task-approval-record-evidence{grid-template-columns:minmax(0,1fr)}
+}
+
+/* Nút Đóng chung cho cửa sổ Giao việc, Nhắc việc và Xin phê duyệt.
+   Nằm ở góc PHẢI trên ngoài hai cột, không chen vào tiêu đề biểu mẫu. */
+.work-detail-layout{position:relative}
+.work-detail-layout .work-dialog-close{
+ position:absolute;top:8px;right:8px;z-index:30;
+ display:flex;align-items:center;justify-content:center;gap:6px;
+ min-width:86px;min-height:44px;padding:7px 12px;
+ border:1px solid #c6d4e3;border-radius:9px;
+ background:#fff;color:#16365e;box-shadow:0 2px 8px rgba(9,35,69,.16);
+ font-size:18px;font-weight:750;line-height:1;cursor:pointer;
+}
+.work-detail-layout .work-dialog-close span{font-size:13px}
+.work-detail-layout .work-dialog-close:hover{background:#eaf2fe;border-color:#2761b7}
+.work-detail-layout .work-dialog-close:focus-visible{outline:3px solid #2761b7;outline-offset:2px}
+.work-detail-layout .work-detail-chat>h3{padding-right:106px}
+@media(max-width:750px){
+ .work-detail-layout .work-dialog-close{top:6px;right:6px;min-height:44px;min-width:76px}
+ .work-detail-layout .work-dialog-close span{font-size:12px}
+}

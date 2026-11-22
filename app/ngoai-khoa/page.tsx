@@ -1,3 +1,4 @@
+import {reportAccess} from '../../lib/report-access';
 import Dock from '../LegacyConnectDock';
 import {redirect} from 'next/navigation';
 import {actor} from '../../lib/auth';
@@ -10,8 +11,9 @@ export default async function Dashboard({searchParams}:{searchParams:Promise<{wo
  const params=await searchParams,user=await actor();
  if(!user)redirect('/');
  const manager=user.admin||(user.legacy_operator&&user.work_view&&user.work_edit);
+ const grant=await reportAccess(user);
  const utility=['account','chat',...(user.admin?['admin']:[])].includes(params.work||'')&&!params.thread;
  return <WorkProvider legacy={manager} team={user.team_lead||(user.legacy_operator&&!manager)}><nav aria-label="Tài khoản bệnh viện" className="nk-account-nav">{utility&&<a href="/ngoai-khoa">Trang chủ</a>}<a href="/ngoai-khoa?work=account">{user.name} · Tài khoản</a>{user.admin&&<a href="/ngoai-khoa?work=admin">Quản trị nhân viên</a>}</nav>
- {utility?<iframe className="nk-workboard" title="Tài khoản và trao đổi riêng" src={'/connect/index.html?utility=1#'+params.work}/>:<><Quick/>{manager&&<><Detail/><Images/></>}<LegacyDashboard initialReminder={params.work==='reminder'} manager={manager} who={user.id} openWork={Boolean(params.work)} creatorName={user.admin&&!user.staff_code?user.username:user.name}/></>}
+ {utility?<iframe className="nk-workboard" title="Tài khoản và trao đổi riêng" src={'/connect/index.html?utility=1#'+params.work}/>:<><Quick/>{manager&&<><Detail/><Images/></>}<LegacyDashboard matrixAccess={grant.scope!=='none'} initialReminder={params.work==='reminder'} manager={manager} who={user.id} openWork={Boolean(params.work)} creatorName={user.admin&&!user.staff_code?user.username:user.name}/></>}
  <Dock/></WorkProvider>;
 }

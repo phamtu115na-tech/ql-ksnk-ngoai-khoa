@@ -3,6 +3,7 @@ const $=s=>document.querySelector(s);
 const units={surgery:'Bệnh viện Ngoại khoa 115 Nghệ An'};
 const embeddedWork=(new URLSearchParams(location.search).has('row')||new URLSearchParams(location.search).has('inline'))&&window.parent!==window;
 if(embeddedWork)document.documentElement.classList.add('work-embed');
+if(new URLSearchParams(location.search).has('chatOnly'))document.documentElement.classList.add('nk-chat-only');
 const names={all:'Tổng quan',task:'Việc được giao',reminder:'Nhắc việc',chat:'Trao đổi',admin:'Quản trị nhân viên'};
 const statuses=['Mới','Đã nhận','Đang thực hiện','Hoàn thành'];
 const state={me:null,people:[],tab:'all',scope:'all',offset:0,rows:[],badges:{},screen:0,dialog:0,thread:null,seq:0,loading:false};
@@ -30,7 +31,7 @@ function login(){
  $('#login').onsubmit=e=>{e.preventDefault();const form=e.currentTarget;run(async()=>{try{const data=Object.fromEntries(new FormData(form));await request('/api/auth',data);localStorage.cxUnit=data.unit;await start()}catch(err){$('#loginError').textContent=err.message}},form.querySelector('button'))};
 }
 async function start(){
- const r=await api('me');state.me=r.me;state.people=r.people;state.scope='surgery';state.offset=0;const target=location.hash.slice(1);
+ const r=await api('me');state.me=r.me;state.people=r.people;state.reviewSettingsReady=!!r.reviewSettingsReady;state.scope='surgery';state.offset=0;const target=location.hash.slice(1);
  if(!embeddedWork&&window.parent===window){
  const q=new URLSearchParams(location.search),args=new URLSearchParams();
  if(target)args.set('work',target);
@@ -38,7 +39,7 @@ async function start(){
  location.replace('/ngoai-khoa'+(args.size?'?'+args:''));return;
  }
  if(new URLSearchParams(location.search).has('inline'))document.documentElement.classList.add('nk-inline-task');
- if(new URLSearchParams(location.search).has('detail'))document.documentElement.classList.add('nk-detail-only');
+ if(new URLSearchParams(location.search).has('detail')){document.documentElement.classList.add('nk-detail-only');document.documentElement.classList.add('nk-inline-task');}
  if(!embeddedWork)document.documentElement.classList.add('nk-board-frame');
  state.tab=(target==='admin'&&r.me.admin)||['task','reminder','chat','account'].includes(target)?(target==='account'?'all':target):'reminder';lastUnread=0;
  if(window.parent===window&&!embeddedWork&&!document.querySelector('nk-work-alerts')){
@@ -46,7 +47,7 @@ async function start(){
  alerts.addEventListener('work-selected',e=>{e.preventDefault();run(()=>openThread(e.detail));});
  }
  $('#identity').textContent=r.me.name+' · '+units[r.me.unit];$('#dock').hidden=false;
- if(embeddedWork&&new URLSearchParams(location.search).has('inline')){try{await openThread(new URLSearchParams(location.search).get('thread'));}catch(e){document.body.append(document.createTextNode(e.message));}return;}
+ if(embeddedWork&&new URLSearchParams(location.search).has('inline')){try{const q=new URLSearchParams(location.search);if(['task','reminder'].includes(q.get('compose')))compose(q.get('compose'));else await openThread(q.get('thread'));}catch(e){document.body.append(document.createTextNode(e.message));}return;}
  dashboard();await refresh();
  const q=new URLSearchParams(location.search);
  if(q.has('thread')){try{await openThread(q.get('thread'));}catch(e){modal('Không mở được phiếu','<p>'+esc(e.message)+'</p>');}}
@@ -131,12 +132,13 @@ function changeCode(){
 }
 function submit(fn){$('#edit').onsubmit=e=>{e.preventDefault();const form=e.currentTarget;run(()=>fn(new FormData(form)),form.querySelector('button[type=submit],button.primary'))};}
 function account(x,staff){
- modal(x?'Cập nhật nhân viên':'Cấp tài khoản','<form id="edit"><label>Họ tên<input name="name" required value="'+esc(staff?.name||x?.name)+'"></label><label>Tên đăng nhập<input name="username" pattern="[a-z0-9._\\-]{3,50}" required value="'+esc(x?.pending_login?'':x?.username)+'"></label><label>Đơn vị<select name="unit">'+options(units,staff?.unit||x?.unit||'surgery')+'</select></label><label>Mã mới '+(x&&!x.pending_login?'(để trống để giữ mã)':'')+'<input type="password" name="code" minlength="12" '+(x&&!x.pending_login?'':'required')+'></label><label>Trạng thái<select name="active">'+options({on:'Đang hoạt động',off:'Khóa tài khoản'},x?.active===false&&!x.pending_login?'off':'on')+'</select></label><label>Phân quyền nghiệp vụ<select name="role">'+options({staff:'Nhân viên · hồ sơ cá nhân',team:'Tổ trưởng · hồ sơ bộ phận',chief:'Trưởng khoa / Điều dưỡng trưởng · toàn viện'},x?.legacy_operator?'chief':x?.team_lead?'team':'staff')+'</select></label><label id="teamDept">Bộ phận phụ trách<select name="department"><option value="">Chọn bộ phận</option>'+options(Object.fromEntries([...new Set(state.people.map(p=>p.department).filter(Boolean))].map(d=>[d,d])),x?.team_department||x?.department||staff?.department)+'</select></label><fieldset><legend>Quyền trên phiếu giao việc và nhắc việc</legend><label><input type="checkbox" name="view" '+(x?.work_view===false?'':'checked')+'> Được xem</label><label><input type="checkbox" name="editWork" '+(x?.work_edit===false?'':'checked')+'> Được sửa</label></fieldset><button class="primary">Lưu tài khoản</button></form>');
+ modal(x?'Cập nhật nhân viên':'Cấp tài khoản','<form id="edit"><label>Họ tên<input name="name" required value="'+esc(staff?.name||x?.name)+'"></label><label>Tên đăng nhập<input name="username" pattern="[a-z0-9._\\-]{3,50}" required value="'+esc(x?.pending_login?'':x?.username)+'"></label><label>Đơn vị<select name="unit">'+options(units,staff?.unit||x?.unit||'surgery')+'</select></label><label>Mã mới '+(x&&!x.pending_login?'(để trống để giữ mã)':'')+'<input type="password" name="code" minlength="12" '+(x&&!x.pending_login?'':'required')+'></label><label>Trạng thái<select name="active">'+options({on:'Đang hoạt động',off:'Khóa tài khoản'},x?.active===false&&!x.pending_login?'off':'on')+'</select></label><label>Phân quyền nghiệp vụ<select name="role">'+options({staff:'Nhân viên · hồ sơ cá nhân',team:'Tổ trưởng · tất cả nhân viên trong bộ phận',chief:'Trưởng khoa / Điều dưỡng trưởng · toàn khoa'},x?.legacy_operator?'chief':x?.team_lead?'team':'staff')+'</select></label><label id="teamDept">Bộ phận phụ trách<select name="department"><option value="">Chọn bộ phận</option>'+options(Object.fromEntries([...new Set(state.people.map(p=>p.department).filter(Boolean))].map(d=>[d,d])),x?.team_department||x?.department||staff?.department)+'</select></label><fieldset><legend>Quyền xem và cập nhật công việc của nhân viên</legend><label><input type="checkbox" name="view" '+(x?.work_view===false?'':'checked')+'> Được xem</label><label><input type="checkbox" name="editWork" '+(x?.work_edit===false?'':'checked')+'> Được sửa</label></fieldset><button class="primary">Lưu tài khoản</button></form>');
  const roles=$('#edit').elements;
+ if(state.reviewSettingsReady){const label=document.createElement('label'),cb=document.createElement('input');cb.type='checkbox';cb.name='canApproveWork';cb.checked=!!x?.can_approve_work;label.append(cb,' Được phê duyệt tác vụ khi được chỉ định');roles.role.closest('label').after(label);}
  function syncRole(){roles.editWork.disabled=!roles.view.checked;if(!roles.view.checked)roles.editWork.checked=false;$('#teamDept').hidden=roles.role.value!=='team';}
  roles.role.onchange=roles.view.onchange=syncRole;syncRole();
  if(staff||x?.staff_code){$('#edit [name=name]').readOnly=true;$('#edit [name=unit]').disabled=true;}
- submit(async fd=>{await api('account',{...Object.fromEntries(fd),unit:staff?.unit||$('#edit [name=unit]').value,staffCode:staff?.code||x?.staff_code,id:x?.id,version:x?.version,active:fd.get('active')==='on',role:fd.get('role'),department:fd.get('department'),view:fd.has('view'),edit:fd.has('editWork')});state.people=(await api('me')).people;close();paint();notice('Đã lưu tài khoản.')});
+ submit(async fd=>{await api('account',{...Object.fromEntries(fd),unit:staff?.unit||$('#edit [name=unit]').value,staffCode:staff?.code||x?.staff_code,id:x?.id,version:x?.version,active:fd.get('active')==='on',role:fd.get('role'),department:fd.get('department'),view:fd.has('view'),edit:fd.has('editWork'),canApproveWork:state.reviewSettingsReady?fd.has('canApproveWork'):undefined});state.people=(await api('me')).people;close();paint();notice('Đã lưu tài khoản.')});
 }
 const fileField='<label>Ảnh / tài liệu<input type="file" name="files" multiple accept="image/jpeg,image/png,image/webp,.pdf,.docx,.xlsx"></label><small>Tối đa 3 ảnh và 1 tài liệu, mỗi tệp tối đa 8 MB.</small>';
 async function upload(fd){
@@ -150,7 +152,7 @@ async function upload(fd){
  result.push({name:file.name,path:f.path});}return result;
 }
 function compose(kind){
- const direct=kind==='chat',everyone=state.people.filter(x=>(x.active||(!direct&&x.pending_login))&&(!direct||x.id!==state.me.id));
+ const direct=kind==='chat',everyone=state.people.filter(x=>(x.active||(!direct&&x.pending_login))&&(!direct||x.id!==state.me.id)&&(direct||!state.me.team_lead||state.me.admin||state.me.legacy_operator||x.department?.trim().toLocaleLowerCase('vi')===(state.me.team_department||state.me.department||'').trim().toLocaleLowerCase('vi')));
  const allowed=['surgery'];
  const picker=(name,radio)=>'<div class="picker">'+everyone.map(x=>'<label data-unit="'+x.unit+'"><input type="'+(radio?'radio':'checkbox')+'" name="'+name+'" value="'+x.id+'">'+esc(x.name)+' · '+esc([x.staff_code,x.department,x.pending_login?'Chưa cấp tài khoản':x.username].filter(Boolean).join(' · '))+'</label>').join('')+'</div>';
  modal(names[kind],'<form id="edit"><p>Người tạo · '+esc(accountLabel(state.me))+'</p><label>Đơn vị nhận</label><div class="picker">'+allowed.map(x=>'<label><input type="checkbox" name="unitChoice" value="'+x+'" '+(state.scope==='all'||state.scope===x?'checked':'')+'>'+esc(units[x])+'</label>').join('')+'</div>'+(direct?'':'<label>Tiêu đề<input required name="title" maxlength="180"></label><label>Ngày '+(kind==='task'?'đến hạn':'nhắc')+'<input type="date" name="due" required></label><label>Nội dung<textarea name="note" maxlength="6000"></textarea></label>')+'<label>'+(direct?'Người nhận':'Người thực hiện')+'</label>'+picker('performers',direct)+(direct?'':'<label>Người liên quan</label>'+picker('observers',false)+fileField)+'<button class="primary"> ' +(direct?'Mở trao đổi':'Lưu và mở trao đổi')+'</button></form>');
@@ -169,12 +171,63 @@ async function markSeen(){
 async function openThread(id){
  const epoch=state.dialog;
  const r=await api('thread',{id});if(state.dialog!==epoch)return;
- if(r.viewOnly){const x=r.item;modal(x.title,'<p>Người thực hiện · '+esc(x.performers.map(person).join(', '))+'</p><p>Hạn · '+esc(x.due||'—')+'</p><p>Trạng thái · '+esc(x.status)+'</p><p>'+esc(x.note)+'</p>');return;}
- state.members=r.members;const t=r.item,isChat=t.kind==='chat',canUpdate=r.writable&&(r.manage||t.owner_id===state.me.id||t.performers.includes(state.me.id));
- const shared=r.manage||t.owner_id===state.me.id;
- const facts='<div class="details pane"><h3>'+names[t.kind]+'</h3><p>Đơn vị · '+esc(t.units.map(x=>units[x]).join(' / '))+'</p><p>Người tạo · '+esc(t.owner_id?person(t.owner_id):'Chưa ghi trong sổ')+'</p><p>Người thực hiện · '+esc(t.performers.map(person).join(', '))+'</p><p>Người liên quan · '+esc(t.observers.map(person).join(', ')||'—')+'</p><p style="white-space:pre-wrap">'+esc(t.note)+'</p><p>Ngày '+(t.kind==='reminder'?'nhắc':'đến hạn')+' · '+esc(t.due||'—')+'</p>'+(!isChat?'<p>Bộ phận · '+esc(r.department||'—')+'</p><p>Ghi chú cá nhân · '+esc(r.personal||'—')+'</p><p>Ý kiến quản lý · '+esc(r.opinion||'—')+'</p>':'')+(r.writable&&!isChat?'<button id="editTask">Cập nhật tác vụ</button>':'')+(canUpdate&&!isChat?'<label>Trạng thái<select id="progress">'+options(Object.fromEntries(statuses.map(x=>[x,x])),t.status)+'</select></label><button id="saveStatus">Lưu trạng thái</button>':'')+'</div>';
+
+ state.members=r.members;const t=r.item,isChat=t.kind==='chat',canUpdate=r.writable&&(r.manage||[t.owner_id,...t.performers,...t.observers].includes(state.me.id));
+ const shared=canUpdate;
+ const summaryFacts='<div class="details pane"><h3>'+names[t.kind]+'</h3><p>Đơn vị · '+esc(t.units.map(x=>units[x]).join(' / '))+'</p><p>Người tạo · '+esc(t.owner_id?person(t.owner_id):'Chưa ghi trong sổ')+'</p><p>Người thực hiện · '+esc(t.performers.map(person).join(', '))+'</p><p>Người liên quan · '+esc(t.observers.map(person).join(', ')||'—')+'</p><p style="white-space:pre-wrap">'+esc(t.note)+'</p><p>Ngày '+(t.kind==='reminder'?'nhắc':'đến hạn')+' · '+esc(t.due||'—')+'</p>'+(!isChat?'<p>Bộ phận · '+esc(r.department||'—')+'</p><p>Ghi chú cá nhân · '+esc(r.personal||'—')+'</p><p>Ý kiến quản lý · '+esc(r.opinion||'—')+'</p>':'')+(r.writable&&!isChat?'<button id="editTask">Cập nhật tác vụ</button>':'')+(canUpdate&&!isChat?'<label>Trạng thái<select id="progress">'+options(Object.fromEntries(statuses.map(x=>[x,x])),t.status)+'</select></label><button id="saveStatus">Lưu trạng thái</button>':'')+'</div>';
  const inline=new URLSearchParams(location.search).has('inline');
- modal(rowTitle(t),'<div class="phoneTabs"><button data-view="detail">Chi tiết</button><button data-view="chat">Trò chuyện</button></div><div class="split" data-view="chat">'+(inline?'<details class="inline-info" open><summary>Nội dung và tiến độ</summary>'+facts+'</details>':facts)+'<div class="discussion pane"><h3>'+esc(isChat?'Trao đổi riêng':t.kind==='task'?'Trò chuyện giao việc':'Trò chuyện nhắc việc')+'</h3><small>'+esc(r.members.map(x=>x.name).join(', '))+'</small><div id="stream" class="stream"><button id="older" '+(r.rows.length<50?'hidden':'')+'>Xem tin cũ hơn</button><div id="messages">'+messages(r.rows)+'</div></div><form id="send"><label>Tin nhắn<textarea name="body" maxlength="6000" placeholder="Nhập nội dung, gõ @ để nhắc tên thành viên…"></textarea></label><div id="mentions"></div>'+fileField+' <button class="primary">Gửi ➤</button></form></div></div>');
+ const chatOnly=new URLSearchParams(location.search).has('chatOnly');
+ const legacyView=!isChat&&!chatOnly; // Chỉ hiện cuộc trao đổi bên phải, giữ mẫu nghiệp vụ trong cột chính.
+ const reminder=t.kind==='reminder';
+ const locked=r.approvalStatus==='ĐÃ PHÊ DUYỆT';
+ const editable=r.writable&&!locked;
+ function field(label,value){return '<div class="work-static-field"><small>'+label+'</small><div>'+esc(value||'—')+'</div></div>';}
+ const detailForm='<div class="details pane work-original">'+
+  '<section class="original-unit"><strong>'+(reminder?'Đơn vị được nhắc việc':'Đơn vị được giao việc')+'</strong><p>'+esc(t.units.map(x=>units[x]).join(' / '))+'</p></section>'+
+  field(reminder?'Người nhắc việc':'Người giao việc',t.owner_id?person(t.owner_id):'Chưa ghi nhận')+
+  '<form id="edit"><label>'+(reminder?'Ngày nhắc':'Đến ngày')+'<input name="due" type="date" value="'+esc(t.due)+'"></label>'+
+  '<label>'+(reminder?'Tiêu đề nhắc việc':'Tiêu đề công việc')+'<input name="title" required maxlength="180" value="'+esc(t.title)+'"></label>'+
+  field('Người thực hiện',t.performers.map(person).join(', '))+field('Người liên quan',t.observers.map(person).join(', '))+field('Bộ phận',r.department)+
+  '<label>Nội dung / Mô tả<textarea name="note" maxlength="6000" rows="4">'+esc(t.note)+'</textarea></label>'+
+  (!reminder?field('Mức độ ưu tiên',r.priority):'')+
+  (r.originalFields||[]).map(([label,value])=>field(esc(label),value===true?'Có':value===false?'Không':value)).join('')+
+  '<label>Ghi chú cá nhân<textarea name="personal" maxlength="6000">'+esc(r.personal)+'</textarea></label>'+
+  (r.manage?'<label>Ý kiến quản lý<textarea name="opinion" maxlength="6000">'+esc(r.opinion)+'</textarea></label>':field('Ý kiến quản lý',r.opinion))+
+  (editable?'<button type="submit" class="primary">LƯU DỮ LIỆU</button>':'')+'</form>'+ 
+  (editable?'<section class="work-evidence"><strong>ẢNH / TÀI LIỆU MINH CHỨNG</strong><form id="workEvidence"><label>Chọn ảnh hoặc tài liệu<input name="files" type="file" multiple accept="image/jpeg,image/png,image/webp,.pdf,.docx,.xlsx"></label><label>Chụp ảnh trực tiếp<input name="files" type="file" accept="image/*" capture="environment"></label><small>Tối đa 3 ảnh và 1 tài liệu mỗi lần; tệp được lưu trong lịch sử trao đổi tác vụ.</small><button type="submit" class="primary">LƯU MINH CHỨNG</button></form></section>':'')+
+  (canUpdate&&editable?'<label>Trạng thái<select id="progress">'+options(Object.fromEntries(statuses.map(x=>[x,x])),t.status)+'</select></label><button id="saveStatus">Lưu trạng thái</button>':field('Trạng thái',t.status))+'</div>';
+ const facts=chatOnly?'':legacyView?detailForm:summaryFacts;
+ modal(rowTitle(t),'<div class="phoneTabs"><button data-view="detail">Chi tiết</button><button data-view="chat">Trò chuyện</button></div><div class="split" data-view="chat">'+(chatOnly?'':legacyView?'<section class="inline-info original-pane">'+facts+'</section>':facts)+'<div class="discussion pane"><h3>'+esc(isChat?'Trao đổi riêng':t.kind==='task'?'Trò chuyện giao việc':'Trò chuyện nhắc việc')+'</h3><small>'+esc(r.members.map(x=>x.name).join(', '))+'</small><div id="stream" class="stream"><button id="older" '+(r.rows.length<50?'hidden':'')+'>Xem tin cũ hơn</button><div id="messages">'+messages(r.rows)+'</div></div><form id="send"><label>Tin nhắn<textarea name="body" maxlength="6000" placeholder="Nhập nội dung, gõ @ để nhắc tên thành viên…"></textarea></label><div id="mentions"></div>'+fileField+' <button class="primary">Gửi ➤</button></form></div></div>');
+ if(legacyView){
+  const form=$('#edit');
+  for(const name of ['title','due','note'])form.elements[name].readOnly=!editable;
+  form.elements.personal.readOnly=!editable;
+  if(form.elements.opinion)form.elements.opinion.readOnly=!editable;
+  if(editable){const rid=crypto.randomUUID();submit(async fd=>{await api('detailSave',{...Object.fromEntries(fd),id,expected:t.seq,requestId:rid});await openThread(id)});}
+  else form.onsubmit=e=>e.preventDefault();
+ }
+ const evidenceForm=$('#workEvidence');
+ if(evidenceForm)evidenceForm.onsubmit=e=>{e.preventDefault();run(async()=>{const files=await upload(new FormData(evidenceForm));if(!files.length)throw Error('Chọn ảnh hoặc tài liệu minh chứng trước khi lưu.');await api('send',{id,body:'Bổ sung ảnh / tài liệu minh chứng',files,requestId:crypto.randomUUID()});await openThread(id);},evidenceForm.querySelector('button.primary'))};
+ if(!isChat && t.source_row && state.reviewSettingsReady){
+  const status=r.approvalStatus,locked=status==='ĐÃ PHÊ DUYỆT';
+  if(locked){$('#editTask')?.remove();$('#saveStatus')?.remove();$('#progress')?.closest('label')?.remove();}
+  const panel=document.createElement('details');panel.className='inline-info';panel.open=true;
+  const summary=document.createElement('summary');summary.textContent='Phê duyệt · '+status;panel.append(summary);
+  const note=document.createElement('textarea');note.maxLength=2000;note.placeholder='Nội dung xin duyệt hoặc ý kiến xử lý';note.setAttribute('aria-label','Ý kiến phê duyệt');
+  const reviewer=document.createElement('select');reviewer.setAttribute('aria-label','Người phê duyệt');
+  reviewer.add(new Option('Chọn người phê duyệt',''));
+  for(const p of state.people.filter(p=>p.active&&p.id!==state.me.id&&(p.admin||p.can_approve_work&&p.work_edit&&(p.legacy_operator||p.team_lead&&p.work_role_reviewed)))){reviewer.add(new Option(p.name+' · '+(p.department||p.username),p.id));}
+  const request=r.writable&&(t.owner_id===state.me.id||t.performers.includes(state.me.id))&&!locked&&status!=='CHỜ PHÊ DUYỆT';
+  if(request)panel.append(reviewer);
+  if(request||r.writable&&r.canReview)panel.append(note);
+  const decide=(op,label)=>{const button=document.createElement('button');button.textContent=label;const rid=crypto.randomUUID();button.onclick=()=>run(async()=>{await api('decision',{id,operation:op,reviewer:op==='request'?reviewer.value:null,expected:status,note:note.value,requestId:rid});await openThread(id)},button);panel.append(button)};
+  if(request)decide('request','Xin phê duyệt');
+  if(t.owner_id!==state.me.id&&r.writable&&r.canReview&&(state.me.admin||state.people.find(p=>p.id===state.me.id)?.can_approve_work)&&status==='CHỜ PHÊ DUYỆT'){decide('approve','Phê duyệt');decide('supplement','Yêu cầu bổ sung');decide('reject','Từ chối')}
+  if(t.owner_id!==state.me.id&&r.writable&&r.canReview&&(state.me.admin||state.people.find(p=>p.id===state.me.id)?.can_approve_work)&&locked)decide('reopen','Mở lại tác vụ');
+  let history=[];try{history=JSON.parse(r.approvalHistory)}catch{}
+  if(Array.isArray(history)&&history.length){const list=document.createElement('ol');for(const event of history){const li=document.createElement('li');li.textContent=[event.at,event.managerName,event.status,event.opinion||event.request].filter(Boolean).join(' · ');list.append(li)}panel.append(list);}
+  $('.details.pane')?.append(panel);
+ }
  if(!isChat){const received=r.received||[],bar=document.createElement('div');bar.className='receipt';bar.textContent='Đã nhận · '+(received.map(person).join(', ')||'Chưa có người xác nhận');
  if(r.writable&&t.performers.includes(state.me.id)&&!received.includes(state.me.id)){const button=document.createElement('button');button.type='button';button.textContent='Xác nhận đã nhận';button.onclick=()=>run(async()=>{await api('receive',{id});await openThread(id)},button);bar.append(' ',button);}
  $('.discussion h3').after(bar);}

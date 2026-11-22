@@ -1,6 +1,7 @@
 'use client';
 
 import {useEffect,useState} from 'react';
+import {useWorkFeed} from './WorkBoard';
 import {createPortal} from 'react-dom';
 
 function normalized(value:string|null|undefined){
@@ -8,6 +9,7 @@ function normalized(value:string|null|undefined){
 }
 
 export default function HeaderQuickActions(){
+ const {rows}=useWorkFeed();
  const[host,setHost]=useState<HTMLElement|null>(null);
  useEffect(()=>{
   const sync=()=>setHost(document.querySelector<HTMLElement>('.app-header'));
@@ -19,37 +21,21 @@ export default function HeaderQuickActions(){
  if(!host)return null;
 
  const goHome=()=>{
-  const back=document.querySelector<HTMLButtonElement>('.module-toolbar .back-btn');
-  if(back){back.click();window.scrollTo({top:0,behavior:'smooth'});return;}
-  window.scrollTo({top:0,behavior:'smooth'});
+  const home=document.querySelector<HTMLButtonElement>('[data-module="home"]');
+  if(home){home.click();window.scrollTo({top:0,behavior:'smooth'});return;}
+  window.location.assign('/ngoai-khoa');
  };
-
  const openReminders=()=>{
-  const taskButton=Array.from(document.querySelectorAll<HTMLButtonElement>('.side-menu nav button')).find(button=>{
-   const label=normalized(button.textContent);
-   return label.includes('giao viec')&&label.includes('nhac viec');
-  });
-  if(taskButton)taskButton.click();
-  let attempts=0;
-  const openTab=()=>{
-   const reminderTab=Array.from(document.querySelectorAll<HTMLButtonElement>('.task-view-tabs button')).find(button=>{
-    const label=normalized(button.textContent);
-    return label.includes('nhac viec')&&label.includes('ghi chu');
-   });
-   if(reminderTab){reminderTab.click();window.scrollTo({top:0,behavior:'smooth'});return true;}
-   return false;
-  };
-  if(openTab())return;
-  const timer=window.setInterval(()=>{
-   attempts+=1;
-   if(openTab()||attempts>=25)window.clearInterval(timer);
-  },120);
+  const button=document.querySelector<HTMLButtonElement>('[data-module="reminders"]');
+  if(button){button.click();window.scrollTo({top:0,behavior:'smooth'});return;}
+  window.location.assign('/ngoai-khoa?work=reminder');
  };
 
  return createPortal(<>
   <nav className="header-quick-actions" aria-label="Truy cập nhanh">
    <button type="button" className="header-quick-action header-home-action" onClick={goHome} title="Về trang chủ"><span aria-hidden="true">⌂</span><b>TRANG CHỦ</b></button>
    <button type="button" className="header-quick-action header-reminder-action" onClick={openReminders} title="Mở Nhắc việc & Ghi chú"><span aria-hidden="true">📝</span><b>NHẮC VIỆC &amp; GHI CHÚ</b></button>
+   {(['reminder','task'] as const).map(k=><a className="header-work-inbox" key={k} href={'/ngoai-khoa?inbox='+k+'#tin-cong-viec'}>{k==='reminder'?'Tin nhắc việc':'Tin giao việc'} <b aria-label="số tác vụ có tin mới">{rows.filter(r=>r.item.kind===k&&r.unread>0).length}</b></a>)}
   </nav>
   <style>{`
    .app-header{justify-content:flex-start!important}
