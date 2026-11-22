@@ -21,10 +21,10 @@ export default function TaskDeadlineBoard({rows,onEdit,onCreate,variant='tasks'}
           {groups[column.id].map((row,index)=><div key={row.row_no??row.id??index}><button type="button" className={'deadline-card '+(column.id==='overdue'?'deadline-card-overdue':'')} onClick={()=>onEdit(row)}>
             <span className="deadline-card-title">{row.title||'Chưa có tiêu đề'}</span>
             {row.description&&<span className="deadline-description">{row.description}</span>}
-            <span className="deadline-tags"><span>{column.id==='done'?(reminders?'✓ Đã xong':'✓ Đã hoàn thành'):row.endDate?`${reminders?'Ngày nhắc':'Hạn'}: ${row.endDate.slice(0,10).split('-').reverse().join('/')}`:(reminders?'Chưa có ngày nhắc':'Không có hạn chót')}</span>{row.priority&&<span>{row.priority}</span>}</span>
+            <span className="deadline-tags"><span>{row.endDate?`${reminders?'Ngày nhắc':'Hạn'}: ${row.endDate.slice(0,10).split('-').reverse().join('/')}`:(reminders?'Chưa có ngày nhắc':'Không có hạn chót')}</span>{row.priority&&<span>{row.priority}</span>}</span>
             {row.workType&&<span className="deadline-worktype">{row.workType}</span>}
             <span className="deadline-person"><span className="deadline-avatar" aria-hidden="true">{(row.assignee||'?').trim().split(/\s+/).slice(-2).map(word=>word[0]).join('')}</span><span><b>{row.assignee||(reminders?'Chưa chọn người liên quan':'Chưa giao')}</b>{(!reminders||row.department)&&<small>{row.department||'Chưa chọn bộ phận'}</small>}</span></span>
-            <span className="deadline-card-footer">{row.status||'Chưa bắt đầu'}{row.approvalStatus&&<small>{row.approvalStatus}</small>}</span>
+            <span className="deadline-card-footer">{row.status||'Chưa bắt đầu'}{row.endDate&&<time dateTime={row.endDate.slice(0,10)}>{reminders?'Nhắc':'Đến hạn'}: {row.endDate.slice(0,10).split('-').reverse().join('/')}</time>}{row.approvalStatus&&<small>{row.approvalStatus}</small>}</span>
           </button><WorkMessage kind={reminders?"reminder":"task"} source={row.sourceId} compact/></div>)}
         </div>
       </section>)}

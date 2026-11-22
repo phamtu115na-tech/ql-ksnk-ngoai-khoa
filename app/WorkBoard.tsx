@@ -78,9 +78,11 @@ export function WorkMessage({source,kind,compact=false}:{source:unknown;kind:Kin
  if(compact){
   if(Number(row.unread)<=0)return null;
   const label=row.item.mentioned?'@ Có tin nhắn mới':'Có tin nhắn mới';
+  const lastMessageAt=row.item.message_time?new Date(row.item.message_time):null;
+  const when=lastMessageAt&&!Number.isNaN(lastMessageAt.getTime())?lastMessageAt.toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
   return <button type="button" className={'nk-row-message-compact'+(row.item.mentioned?' is-mentioned':'')}
     title={row.item.latest_message||label} aria-label={label+' ('+row.unread+' tin chưa đọc) — '+row.item.title}
-    onClick={e=>{e.stopPropagation();open(row.item.id)}}><span aria-hidden="true">▤</span> {label} <b>({row.unread})</b></button>;
+    onClick={e=>{e.stopPropagation();open(row.item.id)}}><span aria-hidden="true">▤</span> <span className="nk-message-unread-label">{label}</span> <b>({row.unread})</b>{when&&<time className="nk-message-time" dateTime={row.item.message_time}>{when}</time>}</button>;
  }
  return <button type="button" className="nk-row-message" onClick={e=>{e.stopPropagation();open(row.item.id)}}>{value}</button>;
 }

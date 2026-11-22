@@ -160,3 +160,11 @@
 .nk-row-message-compact:hover{background:#ffe0e8;border-color:#cd3e61}
 .nk-row-message-compact:focus-visible{outline:3px solid #facc15;outline-offset:2px}
 @media(max-width:700px){.deadline-column-cards>div:has(>.nk-row-message-compact)>.deadline-card{padding-top:44px}}
+
+/* Gọn tương tự giao việc, ngày và tin mới hiển thị trực tiếp trên thẻ */
+.deadline-card-footer time{display:block;margin-top:5px;color:#5b7091;font-size:11px;font-weight:750}
+.nk-row-message-compact{font-family:inherit!important;font-size:11px!important;font-weight:800!important;line-height:1.25!important}
+.nk-message-unread-label{overflow:hidden;text-overflow:ellipsis;min-width:0;white-space:nowrap}
+.nk-message-time{margin-left:auto;font-size:10px;color:#9a3450;white-space:nowrap;font-weight:700}
+@media(max-width:750px){.nk-message-time{font-size:9px}}
+@media(max-width:440px){.nk-message-unread-label{font-size:10px}}
