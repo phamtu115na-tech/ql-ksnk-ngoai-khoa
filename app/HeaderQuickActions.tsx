@@ -26,9 +26,7 @@ export default function HeaderQuickActions(){
   window.location.assign('/ngoai-khoa');
  };
  const openReminders=()=>{
-  const button=document.querySelector<HTMLButtonElement>('[data-module="reminders"]');
-  if(button){button.click();window.scrollTo({top:0,behavior:'smooth'});return;}
-  window.location.assign('/ngoai-khoa?work=reminder');
+  window.dispatchEvent(new CustomEvent('ksnk-open-module',{detail:'reminders'}));
  };
 
  return createPortal(<>

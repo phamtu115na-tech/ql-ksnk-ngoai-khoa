@@ -5,6 +5,7 @@ import {requireManagerEvaluation} from '../../../lib/task-evaluation';
 import {NextResponse} from 'next/server';
 import {actor,canOperateLegacy} from '../../../lib/auth';
 import {buildLeavePlanning} from '../../../lib/leave-policy';
+import {reportAccess} from '../../../lib/report-access';
 import {supabaseAdmin} from '../../../lib/supabase';
 
 export const runtime='nodejs';
@@ -265,7 +266,7 @@ async function buildReportsParity(f:Filters,staff:AnyRecord[],departments:string
 async function buildModule(moduleName:string,f:Filters){
  const [staffRows,departmentRows]=await Promise.all([readSheet(S.staff),readSheet(S.departments)]);const staff=getStaff(staffRows);const managers=managerDirectory(staff);const departments=departmentOptions(departmentRows,staff);const map=staffMap(staff);
  if(moduleName==='checklists')return buildChecklistParity(f,staff,departments);
- if(moduleName==='reports'){const user=await actor();return {...await buildReportsParity(f,staff,departments,map),canExport:user?.admin===true};}
+ if(moduleName==='reports'){const user=await actor();const access=user?await reportAccess(user):null;return {...await buildReportsParity(f,staff,departments,map),canExport:access?.can_export===true};}
  if(moduleName==='staff'){
   const rows=staff.filter(x=>(!f.department||same(x.department,f.department))&&(!f.person||norm(x.name).includes(norm(f.person))));
   const leavePlanning=buildLeavePlanning(rows,departments);
@@ -507,7 +508,7 @@ export async function GET(req:Request){const viewer=await actor();if(!viewer)ret
   const result:AnyRecord=await buildModule(moduleName,f);
   const staff=(result.staff||[]).filter((x:AnyRecord)=>same(x.department,department)&&(teamScope||same(x.name,ownName)));
   const safe:AnyRecord={...result,staff,departments:[department],scope:teamScope?'department':'self',fixedDepartment:department,
-    fixedPerson:teamScope?'':ownName,canExport:false,
+    fixedPerson:teamScope?'':ownName,canExport:moduleName==='reports'&&result.canExport===true,
     permissions:{scope:teamScope?'department':'self',canManage:teamScope,canEdit:teamScope,
       canRecordViolation:teamScope,canManageErrorCatalog:teamScope,canManageStaff:teamScope,
       canManageTemplates:teamScope,canManageKpiRules:false}};

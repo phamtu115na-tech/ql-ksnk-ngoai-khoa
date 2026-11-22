@@ -105,14 +105,14 @@ function addTablePages(pptx:any,heading:string,scope:string,period:string,table:
  }
  return Math.max(0,table.rows.length-rows.length)
 }
-export default function ScreenReportExport({root,regions,scope,period}:{
- root:RefObject<HTMLDivElement|null>;regions:Region[];scope:string;period:string
+export default function ScreenReportExport({root,regions,scope,period,canExport}:{
+ root:RefObject<HTMLDivElement|null>;regions:Region[];scope:string;period:string;canExport:boolean
 }){
  const [region,setRegion]=useState(''),[mode,setMode]=useState<ExportMode>('summary')
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('')
  const active=regions.some(r=>r.id===region)?region:''
  async function download(){
-  if(!root.current||busy)return
+  if(!canExport||!root.current||busy)return
   const targets=Array.from(root.current.querySelectorAll<HTMLElement>('[data-report-region]'))
    .filter(card=>shown(card)&&(!active||card.dataset.reportRegion===active))
   if(!targets.length){setError('Chưa có vùng báo cáo đang hiển thị để xuất.');return}
@@ -199,8 +199,8 @@ export default function ScreenReportExport({root,regions,scope,period}:{
     <option value="summary">Gọn · 12 dòng/mục</option>
     <option value="detailed">Chi tiết · 60 dòng/mục</option>
    </select></label>
-   <button type="button" className="add-btn" disabled={busy||!regions.length} onClick={download}>{busy?'ĐANG TẠO POWERPOINT…':'⇩ XUẤT POWERPOINT (.PPTX)'}</button>
+   <button type="button" className="add-btn" disabled={!canExport||busy||!regions.length} onClick={download}>{busy?'ĐANG TẠO POWERPOINT…':'⇩ XUẤT POWERPOINT (.PPTX)'}</button>
   </div>
-  {error&&<p role="alert">{error}</p>}{notice&&<p role="status">{notice}</p>}
+  {!canExport&&<p role="status">Chưa được cấp quyền xuất báo cáo. Quản trị viên có thể bật quyền trong Cài đặt → Phân quyền báo cáo.</p>}{error&&<p role="alert">{error}</p>}{notice&&<p role="status">{notice}</p>}
  </section>
 }

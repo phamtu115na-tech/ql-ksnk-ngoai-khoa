@@ -33,7 +33,7 @@ export default function Dock(){
  async function ack(id:number,handled:boolean){try{await load({action:'ackEvent',eventId:id,handled});setEvents(old=>handled?old.filter(e=>e.id!==id):old.map(e=>e.id===id?{...e,read_at:new Date().toISOString()}:e))}catch(e){setError(String(e))}}
  const unread=Object.values(badges).reduce((a,b)=>a+b,0)+Number(events[0]?.unread_total??events.filter(e=>!e.read_at).length)
  if(!host)return null
- return createPortal(<><div className="ksnk-bell"><button type="button" ref={bell} aria-label={'Thông báo, '+unread+' tin chưa đọc'} aria-expanded={open} onClick={()=>setOpen(!open)}>🔔 {unread}</button>
+ return createPortal(<><div className="ksnk-bell"><button type="button" ref={bell} aria-label={'Thông báo, '+unread+' tin chưa đọc'} aria-expanded={open} onClick={()=>setOpen(!open)}>Thông báo{unread>0?' ('+unread+')':''}</button>
  {open&&<section aria-label="Trung tâm thông báo" onKeyDown={e=>{if(e.key==='Escape'){setOpen(false);bell.current?.focus()}}}><header><b>Trung tâm thông báo</b><button onClick={()=>setOpen(false)}>Đóng</button></header><p><a href={link('chat')}>Tin nhắn riêng ({badges.chat||0})</a></p>
  <button aria-pressed={sound} onClick={async()=>{if(ctx.current){await ctx.current.close();ctx.current=null;setSound(false)}else{ctx.current=new AudioContext();await ctx.current.resume();setSound(true)}}}>{sound?'Tắt âm báo':'Bật âm báo'}</button>
  {events.map(e=><article key={e.id}><a className="ksnk-notice" href={link(e.cx_threads.kind,e.thread)} onClick={()=>{void ack(e.id,false)}}><strong>{e.cx_threads.title}</strong><small>{e.kind} · {e.cx_people?.name} · {new Date(e.created_at).toLocaleString('vi-VN')}</small><span>{e.body}</span></a><button onClick={()=>ack(e.id,true)}>Đã xử lý</button></article>)}
