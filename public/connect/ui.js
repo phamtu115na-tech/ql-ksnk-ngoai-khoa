@@ -188,6 +188,7 @@ async function openThread(id){
   field('Người thực hiện',t.performers.map(person).join(', '))+field('Người liên quan',t.observers.map(person).join(', '))+field('Bộ phận',r.department)+
   '<label>Nội dung / Mô tả<textarea name="note" maxlength="6000" rows="4">'+esc(t.note)+'</textarea></label>'+
   (!reminder?field('Mức độ ưu tiên',r.priority):'')+
+  (r.originalFields||[]).map(([label,value])=>field(esc(label),value===true?'Có':value===false?'Không':value)).join('')+
   '<label>Ghi chú cá nhân<textarea name="personal" maxlength="6000">'+esc(r.personal)+'</textarea></label>'+
   (r.manage?'<label>Ý kiến quản lý<textarea name="opinion" maxlength="6000">'+esc(r.opinion)+'</textarea></label>':field('Ý kiến quản lý',r.opinion))+
   (editable?'<button type="submit" class="primary">Lưu thay đổi</button>':'')+'</form>'+

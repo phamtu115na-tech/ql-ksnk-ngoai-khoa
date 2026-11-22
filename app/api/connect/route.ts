@@ -182,7 +182,13 @@ async function dispatch(req:Request){
  const assignments=t.performers.length&&a.team_lead?(await people(true)).filter(p=>t.performers.includes(p.id)):[];
  const managedDepartment=a.team_department||a.department;
  const manages=a.admin||a.legacy_operator||(a.team_lead&&!!managedDepartment&&(dept?dept.trim().toLowerCase()===managedDepartment.trim().toLowerCase():assignments.length===t.performers.length&&assignments.length>0&&assignments.every(p=>p.department===managedDepartment)));
- return {item:t,members,personal,approvalStatus:source['Trạng thái phê duyệt']||(t.kind==='task'?'CHƯA XIN Ý KIẾN':'KHÔNG YÊU CẦU'),approvalHistory:source['Lịch sử phê duyệt']||'[]',reviewer:source['Tài khoản duyệt']||'',canReview:a.admin||(manages&&(source['Tài khoản duyệt']===a.id||(!source['Tài khoản duyệt']&&a.staff_code&&source['Mã người quản lý']===a.staff_code))),opinion:source['Ý kiến quản lý']||'',department:dept,priority:source['Mức độ ưu tiên']||'',writable,manage:manages,received:(receipts||[]).filter(x=>x.sender===x.request_id).map(x=>x.sender),rows:rows.reverse()};
+ const originalFields=t.kind==='task'?[
+  ['Phân loại công việc',source['Loại công việc']],['Từ ngày',source['Ngày bắt đầu']],
+  ['Đánh giá quản lý',source['Đánh giá quản lý']||source['Đánh giá quản lý hiện tại']],
+  ['Ghi chú nhân viên',source['Ghi chú nhân viên']],['Người quản lý phê duyệt',source['Người quản lý phê duyệt']],
+  ['Phương án dự phòng',source['Phương án dự phòng']||source['Dự phòng / phương án dự phòng']]
+ ]:t.kind==='reminder'?[['Nhắc hằng ngày',source['NHẮC HÀNG NGÀY']??source['Nhắc hàng ngày']]]:[];
+ return {item:t,members,personal,originalFields:originalFields.filter(([,value])=>value!=null&&value!==''),approvalStatus:source['Trạng thái phê duyệt']||(t.kind==='task'?'CHƯA XIN Ý KIẾN':'KHÔNG YÊU CẦU'),approvalHistory:source['Lịch sử phê duyệt']||'[]',reviewer:source['Tài khoản duyệt']||'',canReview:a.admin||(manages&&(source['Tài khoản duyệt']===a.id||(!source['Tài khoản duyệt']&&a.staff_code&&source['Mã người quản lý']===a.staff_code))),opinion:source['Ý kiến quản lý']||'',department:dept,priority:source['Mức độ ưu tiên']||'',writable,manage:manages,received:(receipts||[]).filter(x=>x.sender===x.request_id).map(x=>x.sender),rows:rows.reverse()};
  }
  if(b.action==='edit'){
  const title=str(b.title,180);must(title&&uuid(b.requestId)&&Number.isInteger(b.expected)&&/^\d{4}-\d{2}-\d{2}$/.test(b.due));
