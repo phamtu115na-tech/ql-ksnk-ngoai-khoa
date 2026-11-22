@@ -56,3 +56,34 @@
 @media(max-width:850px){.work-task-area[data-selected=true]{display:flex;flex-direction:column}.work-task-chat{position:static;order:-1;width:100%;scroll-margin-top:65px}.work-task-list{width:100%}}
 
 .work-inline-editor{scroll-margin-top:70px}.work-inline-editor>.task-form{width:100%;max-width:none;max-height:none;margin:0;overflow:visible;box-shadow:none}
+
+/* Inline unread notification – same kanban card hierarchy as the supplied mockup */
+.deadline-column-cards>div{position:relative;min-width:0}
+.deadline-column-cards>div>.deadline-card{padding-top:43px;min-height:168px}
+.deadline-column-cards>div>.nk-row-message-compact{
+ position:absolute;z-index:2;top:8px;left:9px;right:9px;width:calc(100% - 18px);
+ max-width:calc(100% - 18px);min-height:29px;display:block;
+ padding:3px 5px;border:1px solid #f5a8b5;border-radius:6px;
+ background:#fff0f3;box-shadow:none;text-align:left;cursor:pointer;
+ overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+}
+.nk-row-message-compact .nk-message-indicator{
+ color:#aa183a;background:transparent!important;padding:0;
+ border:0;font-size:11px;font-weight:800;line-height:19px;
+}
+.nk-row-message-compact:hover{background:#ffe2e9;border-color:#d94360}
+.nk-row-message-compact:focus-visible{outline:3px solid #ffbe40;outline-offset:2px}
+.nk-row-message:not(.nk-row-message-compact){
+ display:flex;flex-direction:column;align-items:flex-start;gap:4px;
+ width:fit-content;max-width:100%;padding:5px 8px;margin:6px 0;
+ border-radius:6px;background:#fff0f3;border:1px solid #ffc0cb;
+ color:#a0193c;cursor:pointer;text-align:left;
+}
+.nk-row-message:not(.nk-has-unread){background:#f2f7ff;border-color:#cfdef7;color:#214d92}
+.nk-row-message .nk-message-preview{display:block;max-width:100%;font-size:11px;line-height:1.35;color:#56647d;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nk-new-messages{border-left:4px solid #e33c58}
+.nk-new-messages button{border-color:#f6cad3;background:#fff7f9}
+@media(max-width:700px){
+ .deadline-column-cards>div>.deadline-card{padding-top:44px}
+ .nk-row-message-compact .nk-message-indicator{font-size:11px}
+}
