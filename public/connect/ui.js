@@ -173,9 +173,35 @@ async function openThread(id){
  if(r.viewOnly){const x=r.item;modal(x.title,'<p>Người thực hiện · '+esc(x.performers.map(person).join(', '))+'</p><p>Hạn · '+esc(x.due||'—')+'</p><p>Trạng thái · '+esc(x.status)+'</p><p>'+esc(x.note)+'</p>');return;}
  state.members=r.members;const t=r.item,isChat=t.kind==='chat',canUpdate=r.writable&&(r.manage||t.owner_id===state.me.id||t.performers.includes(state.me.id));
  const shared=r.manage||t.owner_id===state.me.id;
- const facts='<div class="details pane"><h3>'+names[t.kind]+'</h3><p>Đơn vị · '+esc(t.units.map(x=>units[x]).join(' / '))+'</p><p>Người tạo · '+esc(t.owner_id?person(t.owner_id):'Chưa ghi trong sổ')+'</p><p>Người thực hiện · '+esc(t.performers.map(person).join(', '))+'</p><p>Người liên quan · '+esc(t.observers.map(person).join(', ')||'—')+'</p><p style="white-space:pre-wrap">'+esc(t.note)+'</p><p>Ngày '+(t.kind==='reminder'?'nhắc':'đến hạn')+' · '+esc(t.due||'—')+'</p>'+(!isChat?'<p>Bộ phận · '+esc(r.department||'—')+'</p><p>Ghi chú cá nhân · '+esc(r.personal||'—')+'</p><p>Ý kiến quản lý · '+esc(r.opinion||'—')+'</p>':'')+(r.writable&&!isChat?'<button id="editTask">Cập nhật tác vụ</button>':'')+(canUpdate&&!isChat?'<label>Trạng thái<select id="progress">'+options(Object.fromEntries(statuses.map(x=>[x,x])),t.status)+'</select></label><button id="saveStatus">Lưu trạng thái</button>':'')+'</div>';
+ const summaryFacts='<div class="details pane"><h3>'+names[t.kind]+'</h3><p>Đơn vị · '+esc(t.units.map(x=>units[x]).join(' / '))+'</p><p>Người tạo · '+esc(t.owner_id?person(t.owner_id):'Chưa ghi trong sổ')+'</p><p>Người thực hiện · '+esc(t.performers.map(person).join(', '))+'</p><p>Người liên quan · '+esc(t.observers.map(person).join(', ')||'—')+'</p><p style="white-space:pre-wrap">'+esc(t.note)+'</p><p>Ngày '+(t.kind==='reminder'?'nhắc':'đến hạn')+' · '+esc(t.due||'—')+'</p>'+(!isChat?'<p>Bộ phận · '+esc(r.department||'—')+'</p><p>Ghi chú cá nhân · '+esc(r.personal||'—')+'</p><p>Ý kiến quản lý · '+esc(r.opinion||'—')+'</p>':'')+(r.writable&&!isChat?'<button id="editTask">Cập nhật tác vụ</button>':'')+(canUpdate&&!isChat?'<label>Trạng thái<select id="progress">'+options(Object.fromEntries(statuses.map(x=>[x,x])),t.status)+'</select></label><button id="saveStatus">Lưu trạng thái</button>':'')+'</div>';
  const inline=new URLSearchParams(location.search).has('inline');
- modal(rowTitle(t),'<div class="phoneTabs"><button data-view="detail">Chi tiết</button><button data-view="chat">Trò chuyện</button></div><div class="split" data-view="chat">'+(inline?'<details class="inline-info" open><summary>Nội dung và tiến độ</summary>'+facts+'</details>':facts)+'<div class="discussion pane"><h3>'+esc(isChat?'Trao đổi riêng':t.kind==='task'?'Trò chuyện giao việc':'Trò chuyện nhắc việc')+'</h3><small>'+esc(r.members.map(x=>x.name).join(', '))+'</small><div id="stream" class="stream"><button id="older" '+(r.rows.length<50?'hidden':'')+'>Xem tin cũ hơn</button><div id="messages">'+messages(r.rows)+'</div></div><form id="send"><label>Tin nhắn<textarea name="body" maxlength="6000" placeholder="Nhập nội dung, gõ @ để nhắc tên thành viên…"></textarea></label><div id="mentions"></div>'+fileField+' <button class="primary">Gửi ➤</button></form></div></div>');
+ const legacyView=inline&&!isChat;
+ const reminder=t.kind==='reminder';
+ const locked=r.approvalStatus==='ĐÃ PHÊ DUYỆT';
+ const editable=r.writable&&!locked;
+ function field(label,value){return '<label>'+label+'<input readonly value="'+esc(value||'—')+'"></label>';}
+ const detailForm='<div class="details pane work-original">'+
+  '<section class="original-unit"><strong>'+(reminder?'Đơn vị được nhắc việc':'Đơn vị được giao việc')+'</strong><p>'+esc(t.units.map(x=>units[x]).join(' / '))+'</p></section>'+
+  field(reminder?'Người nhắc việc':'Người giao việc',t.owner_id?person(t.owner_id):'Chưa ghi nhận')+
+  '<form id="edit"><label>'+(reminder?'Ngày nhắc':'Đến ngày')+'<input name="due" type="date" value="'+esc(t.due)+'"></label>'+
+  '<label>'+(reminder?'Tiêu đề nhắc việc':'Tiêu đề công việc')+'<input name="title" required maxlength="180" value="'+esc(t.title)+'"></label>'+
+  field('Người thực hiện',t.performers.map(person).join(', '))+field('Người liên quan',t.observers.map(person).join(', '))+field('Bộ phận',r.department)+
+  '<label>Nội dung / Mô tả<textarea name="note" maxlength="6000" rows="4">'+esc(t.note)+'</textarea></label>'+
+  (!reminder?field('Mức độ ưu tiên',r.priority):'')+
+  '<label>Ghi chú cá nhân<textarea name="personal" maxlength="6000">'+esc(r.personal)+'</textarea></label>'+
+  (r.manage?'<label>Ý kiến quản lý<textarea name="opinion" maxlength="6000">'+esc(r.opinion)+'</textarea></label>':field('Ý kiến quản lý',r.opinion))+
+  (editable?'<button type="submit" class="primary">Lưu thay đổi</button>':'')+'</form>'+
+  (canUpdate&&editable?'<label>Trạng thái<select id="progress">'+options(Object.fromEntries(statuses.map(x=>[x,x])),t.status)+'</select></label><button id="saveStatus">Lưu trạng thái</button>':field('Trạng thái',t.status))+'</div>';
+ const facts=legacyView?detailForm:summaryFacts;
+ modal(rowTitle(t),'<div class="phoneTabs"><button data-view="detail">Chi tiết</button><button data-view="chat">Trò chuyện</button></div><div class="split" data-view="chat">'+(legacyView?'<section class="inline-info original-pane">'+facts+'</section>':facts)+'<div class="discussion pane"><h3>'+esc(isChat?'Trao đổi riêng':t.kind==='task'?'Trò chuyện giao việc':'Trò chuyện nhắc việc')+'</h3><small>'+esc(r.members.map(x=>x.name).join(', '))+'</small><div id="stream" class="stream"><button id="older" '+(r.rows.length<50?'hidden':'')+'>Xem tin cũ hơn</button><div id="messages">'+messages(r.rows)+'</div></div><form id="send"><label>Tin nhắn<textarea name="body" maxlength="6000" placeholder="Nhập nội dung, gõ @ để nhắc tên thành viên…"></textarea></label><div id="mentions"></div>'+fileField+' <button class="primary">Gửi ➤</button></form></div></div>');
+ if(legacyView){
+  const form=$('#edit');
+  for(const name of ['title','due','note'])form.elements[name].readOnly=!editable||!shared;
+  form.elements.personal.readOnly=!editable;
+  if(form.elements.opinion)form.elements.opinion.readOnly=!editable;
+  if(editable){const rid=crypto.randomUUID();submit(async fd=>{await api('detailSave',{...Object.fromEntries(fd),id,expected:t.seq,requestId:rid});await openThread(id)});}
+  else form.onsubmit=e=>e.preventDefault();
+ }
  if(!isChat && t.source_row && state.reviewSettingsReady){
   const status=r.approvalStatus,locked=status==='ĐÃ PHÊ DUYỆT';
   if(locked){$('#editTask')?.remove();$('#saveStatus')?.remove();$('#progress')?.closest('label')?.remove();}
