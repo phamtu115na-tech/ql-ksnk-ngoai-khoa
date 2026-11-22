@@ -47,6 +47,7 @@ export function WorkProvider({children,team=false,legacy=false}:{legacy?:boolean
   void refresh();const timer=setInterval(refresh,16000);window.addEventListener('focus',refresh);
   return ()=>{active=false;clearInterval(timer);window.removeEventListener('focus',refresh);};
  },[revision]);
+ useEffect(()=>{const onOpen=(event:Event)=>{const id=(event as CustomEvent<string>).detail;if(typeof id==='string'&&/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(id))openWork(id)};window.addEventListener('ksnk-open-work-thread',onOpen);return()=>window.removeEventListener('ksnk-open-work-thread',onOpen)},[]);
  function close(){setThread('');reload(n=>n+1);const u=new URL(location.href);u.searchParams.delete('thread');history.replaceState(null,'',u);}
  useEffect(()=>{if(!thread)return;dialog.current?.showModal();
   function message(e:MessageEvent){if(e.origin===location.origin&&e.source===frame.current?.contentWindow&&e.data==='ksnk-close-thread')close();}
