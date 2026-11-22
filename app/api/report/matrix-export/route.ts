@@ -18,8 +18,8 @@ export async function POST(req:Request){
  if(setting.error)return Response.json({error:'Không đọc được thang cảnh báo'},{status:503})
  const scale=setting.data?.data?.scale??defaults
  const rankedRows=ranked(matrix.marks as Mark[],dimension,kind,limit)
- const rows=rankedRows.map(r=>{const level=severity(r,mode,scale);return [r.label,r.key,r.forms,r.total,r.pass,r.fail,r.poor,r.errors,r.passRate,r.errorRate,level<0?(r.total?'Chưa đủ lượt':'Chưa có dữ liệu'):levels[level]]})
- const data={title:[reportData.reportHero?.title,matrix.formName,dimensions[dimension as Dimension]].filter(Boolean).join(' · '),period:[filters?.from,filters?.to].join(' – '),department:reportData.reportHero?.department||filters?.department||'Ngoại khoa 115 Nghệ An',columns,rows}
+ const rows=rankedRows.map(r=>{const level=severity(r,mode,scale);return [r.label,r.key,r.forms,r.total,r.pass,r.fail,r.poor,r.errors,r.passRate,r.errorRate,level<0?(r.total?'Chưa đủ lượt':'Chưa có dữ liệu'):(scale.labels||levels)[level]]})
+ const data={palette:scale.colors,labels:scale.labels,kind,accent:reportData.reportHero?.accent,slogan:reportData.reportHero?.slogan,chart:{labels:rankedRows.map(r=>r.label),pass:rankedRows.map(r=>r.passRate),fail:rankedRows.map(r=>r.errorRate),errors:rankedRows.map(r=>r.errors),passed:rankedRows.map(r=>r.pass)},title:[reportData.reportHero?.title,matrix.formName,dimensions[dimension as Dimension]].filter(Boolean).join(' · '),period:[filters?.from,filters?.to].join(' – '),department:reportData.reportHero?.department||filters?.department||'Ngoại khoa 115 Nghệ An',columns,rows}
  const bytes=format==='xlsx'?await excel(data):await powerpoint(data)
  return new Response(bytes as ArrayBuffer,{headers:{'Content-Type':format==='xlsx'?'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':'application/vnd.openxmlformats-officedocument.presentationml.presentation','Content-Disposition':'attachment; filename="ma-tran.'+format+'"','Cache-Control':'private, no-store'}})
 }

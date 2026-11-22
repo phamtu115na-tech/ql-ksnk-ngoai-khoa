@@ -29,7 +29,12 @@ async function dispatch(req:Request){
  const page=checked(await q)||[];result.push(...page);if(page.length<500)break;
  }return result;
  }
- if(b.action==='me')return {me:a,people:await people(a.admin)};
+ if(b.action==='me'){
+ const directory=await people(a.admin);
+ const reviewers=await client.from('cx_people').select('id').eq('unit',unit).eq('can_approve_work',true).eq('active',true);
+ const granted=new Set((reviewers.data||[]).map(p=>p.id));
+ return {me:a,reviewSettingsReady:!reviewers.error,people:directory.map(p=>({...p,can_approve_work:granted.has(p.id)}))};
+ }
  if(b.action==='sourceThread'){
  must(['reminder','task'].includes(b.kind)&&Number.isSafeInteger(b.row)&&b.row>0);
  const source=checked(await client.from('nk_legacy_rows').select('id,legacy_id,data').eq('sheet_name',b.kind==='task'?'GIAO VIỆC':'NHAC_VIEC_GHI_CHU').eq('row_no',b.row).maybeSingle());
@@ -73,6 +78,7 @@ async function dispatch(req:Request){
  must((await people(true)).some(p=>p.department===dep),'Bộ phận chưa có trong danh mục nhân sự.');patch.team_department=dep;
  }
  }
+ if(typeof b.canApproveWork==='boolean')patch.can_approve_work=b.canApproveWork&&b.edit===true&&['chief','team'].includes(b.role);
  if(b.staffCode){must(typeof b.staffCode==='string'&&b.staffCode.length<=150);patch.staff_code=b.staffCode;}
  if(b.code)patch.pending_login=false;
  if(b.code||!b.id){const code=str(b.code,72);must(code.length>=12&&Buffer.byteLength(code)<=72,'Mã cần ít nhất 12 ký tự và tối đa 72 byte.');patch.credential=await hash(code,12);}
@@ -81,6 +87,18 @@ async function dispatch(req:Request){
  const row=await client.from('cx_people').update(patch).eq('id',b.id).eq('unit',unit).eq('admin',false).eq('version',b.version).select('id').maybeSingle();if(row.error?.code==='23505')throw new Fail('Tên đăng nhập hoặc hồ sơ nhân viên đã được sử dụng');must(checked(row),'Tài khoản đã thay đổi. Hãy tải lại.',409);
  }else{const r=await client.from('cx_people').insert(patch);if(r.error?.code==='23505')throw new Fail('Tên đăng nhập hoặc hồ sơ nhân viên đã được sử dụng');checked(r);}
  return {ok:true};
+ }
+ if(b.action==='approvalEvents'){
+  const result=await client.rpc('nk_my_work_events',{who:a.id});
+  if(result.error?.code==='PGRST202')return [];
+  return checked(result);
+
+ }
+ if(b.action==='ackEvent'){
+  must(Number.isSafeInteger(b.eventId)&&b.eventId>0);
+  const now=new Date().toISOString();
+  const result=await client.from('nk_work_events').update(b.handled?{read_at:now,handled_at:now}:{read_at:now}).eq('id',b.eventId).eq('recipient',a.id).select('id').maybeSingle();
+  must(checked(result),'Ngoài phạm vi thông báo',403);return {ok:true};
  }
  if(b.action==='workAlerts'){
  const kind=b.kind||'all',offset=b.offset??0;
@@ -117,24 +135,34 @@ async function dispatch(req:Request){
  }
  if(b.action==='create'){
  const kind=b.kind;must(kinds.includes(kind)&&uuid(b.id));
- if(kind!=='chat')must(a.admin||(a.work_view&&a.work_edit&&a.legacy_operator),'Chưa có quyền sửa phiếu.',403);
+ if(kind!=='chat')must(a.admin||(a.work_view&&a.work_edit&&(a.legacy_operator||a.team_lead&&a.work_role_reviewed)),'Chưa có quyền tạo tác vụ.',403);
  const p=ids(b.performers),o=ids(b.observers||[]);must(p.length,'Chọn người thực hiện hoặc người nhận.');
  if(kind==='chat')must(p.length===1&&p[0]!==a.id&&!o.length);
  const selected=(await people()).filter(x=>(x.active||(kind!=='chat'&&x.pending_login))&&(p.includes(x.id)||o.includes(x.id)));
  must(new Set([...p,...o]).size===selected.length,'Người nhận không thuộc phạm vi tài khoản.',403);
+ if(kind!=='chat'&&a.team_lead&&!a.admin&&!a.legacy_operator){const department=(a.team_department||a.department||'').trim().toLocaleLowerCase('vi');must(department&&selected.every(p=>p.department?.trim().toLocaleLowerCase('vi')===department),'Chỉ được giao việc cho nhân viên trong bộ phận phụ trách.',403);}
  const u=[...new Set([a.unit,...selected.map(x=>x.unit)])],label=kind==='chat'?'Trao đổi riêng':str(b.title,180);
  must(label);const d=b.due||null;must(!d||/^\d{4}-\d{2}-\d{2}$/.test(d));
  const id=await rpc('cx_create',{t:b.id,k:kind,label,who:a.id,p,o,u,d,details:str(b.note||'',6000),pk:kind==='chat'?[a.id,p[0]].sort().join(':'):null,attachments:await attachments()});return {id};
  }
  must(uuid(b.id));const t=checked(await client.from('cx_threads').select('*').eq('id',b.id).maybeSingle()) as Thread;
  const access=t&&await rpc('nk_check_work',{who:a.id,work_id:t.id});
- must(access,'Phiếu ngoài phạm vi tài khoản.',403);
+ must(access,'Tác vụ ngoài phạm vi tài khoản.',403);
  if(!a.admin&&!a.work_role_reviewed&&!member(t,a)){
  if(b.action==='thread')return {viewOnly:true,item:{title:t.title,note:t.note,status:t.status,performers:t.performers,due:t.due}};
  throw new Fail('Cần quản trị viên xác nhận phạm vi trao đổi.',403);
  }
- const writable=t.kind==='chat'||a.admin||a.work_edit;
+ const writable=t.kind==='chat'||a.admin||a.work_edit||t.owner_id===a.id;
+ if(t.source_row&&['status','detailSave','edit'].includes(b.action)){
+  const source=checked(await client.from('nk_legacy_rows').select('data').eq('id',t.source_row).maybeSingle());
+  must(source?.data?.['Trạng thái phê duyệt']!=='ĐÃ PHÊ DUYỆT','Hãy mở lại tác vụ trước khi sửa.',409);
+ }
  if(['edit','detailSave','send','status','receive'].includes(b.action))must(writable,'Tài khoản chỉ có quyền xem.',403);
+ if(b.action==='decision'){
+  must(writable&&t.kind!=='chat'&&uuid(b.requestId)&&['request','approve','supplement','reject','reopen'].includes(b.operation));
+  must(b.operation!=='request'||uuid(b.reviewer));
+  must(await rpc('nk_work_decision',{who:a.id,work_id:t.id,rid:b.requestId,operation:b.operation,reviewer:b.reviewer||null,note:str(b.note||'',2000),expected:str(b.expected||'',120)}),'Quyền hoặc trạng thái tác vụ vừa thay đổi. Mở lại để kiểm tra.',409);return {ok:true};
+ }
  if(b.action==='detailSave'){
  const label=str(b.title,180);must(label&&uuid(b.requestId)&&b.requestId!==a.id&&Number.isInteger(b.expected));
  must(!b.due||/^\d{4}-\d{2}-\d{2}$/.test(b.due));
@@ -154,7 +182,7 @@ async function dispatch(req:Request){
  const assignments=t.performers.length&&a.team_lead?(await people(true)).filter(p=>t.performers.includes(p.id)):[];
  const managedDepartment=a.team_department||a.department;
  const manages=a.admin||a.legacy_operator||(a.team_lead&&!!managedDepartment&&(dept?dept.trim().toLowerCase()===managedDepartment.trim().toLowerCase():assignments.length===t.performers.length&&assignments.length>0&&assignments.every(p=>p.department===managedDepartment)));
- return {item:t,members,personal,opinion:source['Ý kiến quản lý']||'',department:dept,priority:source['Mức độ ưu tiên']||'',writable,manage:manages,received:(receipts||[]).filter(x=>x.sender===x.request_id).map(x=>x.sender),rows:rows.reverse()};
+ return {item:t,members,personal,approvalStatus:source['Trạng thái phê duyệt']||(t.kind==='task'?'CHƯA XIN Ý KIẾN':'KHÔNG YÊU CẦU'),approvalHistory:source['Lịch sử phê duyệt']||'[]',reviewer:source['Tài khoản duyệt']||'',canReview:a.admin||(manages&&(source['Tài khoản duyệt']===a.id||(!source['Tài khoản duyệt']&&a.staff_code&&source['Mã người quản lý']===a.staff_code))),opinion:source['Ý kiến quản lý']||'',department:dept,priority:source['Mức độ ưu tiên']||'',writable,manage:manages,received:(receipts||[]).filter(x=>x.sender===x.request_id).map(x=>x.sender),rows:rows.reverse()};
  }
  if(b.action==='edit'){
  const title=str(b.title,180);must(title&&uuid(b.requestId)&&Number.isInteger(b.expected)&&/^\d{4}-\d{2}-\d{2}$/.test(b.due));
@@ -171,7 +199,7 @@ async function dispatch(req:Request){
  }
  if(b.action==='send'||b.action==='status'){
  must(uuid(b.requestId)&&b.requestId!==a.id);const status=b.action==='status'?b.status:null;
- if(status!==null)must(t.kind!=='chat'&&statuses.includes(status)&&(t.owner_id===a.id||t.performers.includes(a.id)||a.admin||a.legacy_operator||(!member(t,a)&&a.team_lead)),'Bạn không có quyền cập nhật trạng thái.',403);
+ if(status!==null)must(t.kind!=='chat'&&statuses.includes(status)&&(t.owner_id===a.id||t.performers.includes(a.id)||a.admin||a.legacy_operator||a.team_lead),'Bạn không có quyền cập nhật trạng thái.',403);
  const body=status?'Cập nhật trạng thái: '+status:str(b.body||'',6000),list=await attachments();must(body||list.length,'Nhập nội dung hoặc chọn tệp.');
  await rpc('cx_append',{t:t.id,who:a.id,txt:body,attachments:list,rid:b.requestId,new_status:status});return {ok:true};
  }

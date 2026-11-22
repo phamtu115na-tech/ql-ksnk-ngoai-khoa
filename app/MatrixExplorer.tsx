@@ -7,10 +7,10 @@ const charts={table:'Bảng chi tiết',stack:'Thanh chồng 100%',bar:'Cột nh
 const fmt=(n:number|null)=>n===null?'—':n.toLocaleString('vi-VN',{maximumFractionDigits:1})+'%'
 export default function MatrixExplorer({marks,form,code,filters,canExport}:{marks:Mark[];form:string;code:string;filters:Record<string,string>;canExport:boolean}){
  const [scale,setScale]=useState(defaults),[dim,setDim]=useState<Dimension>('criterion'),[kind,setKind]=useState('stack'),[limit,setLimit]=useState(10),[mode,setMode]=useState<'count'|'rate'>('rate'),[selected,select]=useState<string|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false)
- useEffect(()=>{let active=true;fetch('/api/settings/matrix').then(async r=>{const v=await r.json();if(!r.ok)throw Error(v.error);if(active){setScale(v.scale);setDim(v.scale.mode)}}).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[])
+ useEffect(()=>{let active=true;fetch('/api/settings/matrix').then(async r=>{const v=await r.json();if(!r.ok)throw Error(v.error);if(active){setScale({...defaults,...v.scale});setDim(v.scale.mode)}}).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[])
  const dimension=kind==='line'||kind==='area'?'day':dim
  const rows=useMemo(()=>ranked(marks,dimension,kind,limit),[marks,dimension,kind,limit])
- const tag=(r:Metric)=>{const level=severity(r,mode,scale);return level<0?(r.total?'Chưa đủ lượt':'Chưa có dữ liệu'):levels[level]}
+ const tag=(r:Metric)=>{const level=severity(r,mode,scale);return level<0?(r.total?'Chưa đủ lượt':'Chưa có dữ liệu'):scale.labels[level]}
  async function download(format:'xlsx'|'pptx'){
   setBusy(true);setError('')
   try{const response=await fetch('/api/report/matrix-export',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({format,filters,code,dimension,kind,limit,mode})})
@@ -23,7 +23,7 @@ export default function MatrixExplorer({marks,form,code,filters,canExport}:{mark
  <label>Hiển thị <select value={limit} onChange={e=>setLimit(+e.target.value)}><option value={5}>Top 5</option><option value={10}>Top 10</option><option value={0}>Tất cả</option></select></label>
  <label>Cảnh báo theo <select value={mode} onChange={e=>setMode(e.target.value as typeof mode)}><option value="rate">Tỷ lệ không đạt</option><option value="count">Số lỗi</option></select></label></div>
  {rows.length>0&&!['table','heat'].includes(kind)&&<Chart rows={rows} kind={kind} percent={true}/>}
- <div className="table-wrap"><table><thead><tr>{columns.map(c=><th key={c}>{c}</th>)}</tr></thead><tbody>{rows.map(r=><tr key={r.key}><td><button onClick={()=>select(selected===r.key?null:r.key)}>{r.label}</button></td><td>{r.key}</td><td>{r.forms}</td><td>{r.total}</td><td>{r.pass}</td><td>{r.fail}</td><td>{r.poor}</td><td>{r.errors}</td><td>{fmt(r.passRate)}</td><td>{fmt(r.errorRate)}</td><td style={{borderLeft:'8px solid '+(colors[severity(r,mode,scale)]||'#aaa'),background:kind==='heat'?(colors[severity(r,mode,scale)]||'#aaa')+'40':undefined}}>{tag(r)}</td></tr>)}</tbody></table></div>
+ <div className="table-wrap"><table><thead><tr>{columns.map(c=><th key={c}>{c}</th>)}</tr></thead><tbody>{rows.map(r=><tr key={r.key}><td><button onClick={()=>select(selected===r.key?null:r.key)}>{r.label}</button></td><td>{r.key}</td><td>{r.forms}</td><td>{r.total}</td><td>{r.pass}</td><td>{r.fail}</td><td>{r.poor}</td><td>{r.errors}</td><td>{fmt(r.passRate)}</td><td>{fmt(r.errorRate)}</td><td style={{borderLeft:'8px solid '+(scale.colors[severity(r,mode,scale)]||'#aaa'),background:kind==='heat'?(scale.colors[severity(r,mode,scale)]||'#aaa')+'40':undefined}}>{tag(r)}</td></tr>)}</tbody></table></div>
  {!rows.length&&<p>Chưa có dữ liệu giám sát trong kỳ.</p>}
  {selected!==null&&<details open><summary>Lịch sử chấm</summary><ul>{marks.filter(m=>identify(m,dimension)[0]===selected).map(m=><li key={m.row_no}>{[m.date,m.formId,m.name,m.content,m.result||'Chưa đánh giá'].join(' · ')}</li>)}</ul></details>}
  {canExport&&rows.length>0&&<div><button disabled={busy} onClick={()=>download('xlsx')}>Xuất Excel</button> <button disabled={busy} onClick={()=>download('pptx')}>Xuất PowerPoint</button></div>}{error&&<p role="alert">{error}</p>}</section>

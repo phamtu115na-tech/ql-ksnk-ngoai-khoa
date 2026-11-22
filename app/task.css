@@ -56,3 +56,19 @@
 @media(max-width:850px){.work-task-area[data-selected=true]{display:flex;flex-direction:column}.work-task-chat{position:static;order:-1;width:100%;scroll-margin-top:65px}.work-task-list{width:100%}}
 
 .work-inline-editor{scroll-margin-top:70px}.work-inline-editor>.task-form{width:100%;max-width:none;max-height:none;margin:0;overflow:visible;box-shadow:none}
+
+.work-conversation{width:min(97vw,1600px);height:90dvh;max-width:98vw;max-height:96dvh;padding:0;border:1px solid #c6d6e4;border-radius:12px;overflow:hidden;background:white;color:#19334e}
+.work-conversation[open]{display:flex;flex-direction:column}
+.work-conversation::backdrop{background:#16314c77}
+.work-conversation>header{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;gap:.75rem;border-bottom:1px solid #cedbe6}
+.work-conversation h3{margin:0;overflow-wrap:anywhere}
+.work-conversation iframe{border:0;width:100%;flex:1;min-height:0}
+.home-work-inbox{margin:.7rem clamp(.6rem,2vw,2rem);min-width:0}
+.home-work-inbox h2{font-size:1.1rem}.home-work-inbox nav{display:flex;flex-wrap:wrap;gap:.4rem}
+.home-work-inbox nav button{width:auto;padding:4px 10px}.home-work-inbox nav button[aria-pressed=true]{background:#dbeafe}
+.header-work-inbox,.ksnk-signout,.ksnk-chat-launch{border:1px solid #bdd0e1;border-radius:8px;padding:.45rem .7rem;font:600 .9rem system-ui;text-decoration:none;white-space:nowrap}
+.header-work-inbox{background:#edf5ff;color:#173f68}.header-work-inbox b,.ksnk-chat-launch b{display:inline-block;border-radius:1rem;padding:0 .4rem;background:#ba2946;color:white}
+.ksnk-signout{order:6;color:white;background:#21446b;cursor:pointer}
+.ksnk-chat-launch{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));z-index:45;background:#235b9f;color:white;border-radius:2rem;box-shadow:0 3px 9px #233c5c33}
+.header-quick-actions{flex-wrap:wrap}
+@media(max-width:740px){.work-conversation{width:98vw;height:95dvh}.header-work-inbox{font-size:.8rem}.header-quick-actions{width:100%}}

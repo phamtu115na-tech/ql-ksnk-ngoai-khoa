@@ -1,7 +1,7 @@
 import {NextResponse} from 'next/server';
 import {supabaseAdmin,effectiveSupabaseUrl} from '../../../lib/supabase';
 import {evidenceStoragePath} from '../../../lib/evidence-url';
-import {canOperateLegacy} from '../../../lib/auth';
+import {actor,canOperateLegacy,type Person} from '../../../lib/auth';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -23,12 +23,20 @@ async function ensureEvidenceBucket(db:ReturnType<typeof supabaseAdmin>){
  if(!after.data)throw created.error;
 }
 
+async function evidenceAllowed(user:Person,module:string,reference:string,editing=false){
+ if(user.admin||user.legacy_operator&&user.work_view&&(!editing||user.work_edit))return true;
+ if(!user.team_lead||module!=='checklists'||!reference)return false;
+ const response=await supabaseAdmin()?.rpc('nk_checklist_evidence_access',{who:user.id,ref:reference,editing});
+ return response?.data===true;
+}
+
 export async function POST(req:Request){
- if(!await canOperateLegacy(true))return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});
+ const user=await actor();if(!user)return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});
  try{
   const db=supabaseAdmin();if(!db)throw new Error('SUPABASE_SERVICE_ROLE_KEY chưa cấu hình');
   const form=await req.formData();const file=form.get('file');
   const module=String(form.get('module')||'');const legacyId=String(form.get('legacy_id')||'');
+  if(!await evidenceAllowed(user,module,legacyId,true))return NextResponse.json({ok:false,error:'Minh chứng ngoài phạm vi bộ phận'},{status:403});
   if(!(file instanceof File)||!module||!legacyId)return NextResponse.json({ok:false,error:'Thiếu tệp hoặc mã công việc'},{status:400});
   if(file.size>MAX_FILE_SIZE||!ALLOWED.has(file.type))return NextResponse.json({ok:false,error:'Chỉ nhận JPG, PNG, WEBP, PDF, DOC, DOCX, XLS, XLSX, ZIP, 7Z, RAR hoặc EXE tối đa 8 MB'},{status:400});
   await ensureEvidenceBucket(db);
@@ -42,23 +50,25 @@ export async function POST(req:Request){
 }
 
 export async function GET(req:Request){
- if(!await canOperateLegacy())return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});
+ const user=await actor();if(!user)return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});
  try{
   const db=supabaseAdmin();if(!db)throw new Error('SUPABASE_SERVICE_ROLE_KEY chưa cấu hình');
   const u=new URL(req.url),module=u.searchParams.get('module')||'',legacyId=u.searchParams.get('legacy_id')||'';
   if(u.searchParams.get('open')==='1'){
    const id=u.searchParams.get('id');const reference=u.searchParams.get('reference');
-   let query=db.from('ksnk_evidence').select('id,file_name,storage_path,mime_type');
+   let query=db.from('ksnk_evidence').select('id,file_name,storage_path,mime_type,module,legacy_id');
    if(id)query=query.eq('id',id);
    else if(reference){const path=evidenceStoragePath(reference,effectiveSupabaseUrl(),BUCKET);if(!path)return NextResponse.json({ok:false,error:'Liên kết không thuộc kho minh chứng của hệ thống.'},{status:400});query=query.eq('storage_path',path);}
    else return NextResponse.json({ok:false,error:'Thiếu mã tệp.'},{status:400});
    const {data:records,error:lookupError}=await query.limit(1);if(lookupError)throw lookupError;
    const record=records?.[0];if(!record)return NextResponse.json({ok:false,error:'Không tìm thấy tệp minh chứng hoặc tệp đã bị xóa.'},{status:404});
+   if(!await evidenceAllowed(user,record.module,record.legacy_id))return NextResponse.json({ok:false,error:'Minh chứng ngoài phạm vi bộ phận'},{status:403});
    const {data:file,error:downloadError}=await db.storage.from(BUCKET).download(record.storage_path);
    if(downloadError||!file)throw new Error('Không tải được tệp minh chứng. '+(downloadError?.message||''));
    const inline=['image/jpeg','image/png','image/webp','application/pdf'].includes(record.mime_type);
    return new Response(file.stream(),{headers:{'Content-Type':record.mime_type||'application/octet-stream','Content-Disposition':`${inline?'inline':'attachment'}; filename="${safeName(record.file_name)}"; filename*=UTF-8''${encodeURIComponent(record.file_name).replace(/'/g,'%27')}`,'Cache-Control':'private, no-store, max-age=0','X-Content-Type-Options':'nosniff'}});
   }
+  if(!await evidenceAllowed(user,module,legacyId))return NextResponse.json({ok:false,error:'Minh chứng ngoài phạm vi bộ phận'},{status:403});
   const {data,error}=await db.from('ksnk_evidence').select('id,file_name,storage_path,mime_type,created_at').eq('module',module).eq('legacy_id',legacyId).order('created_at',{ascending:false});
   if(error)throw error;
   const files=(data||[]).map(f=>({...f,storage_path:undefined,url:'/api/evidence?open=1&id='+encodeURIComponent(String(f.id))}));

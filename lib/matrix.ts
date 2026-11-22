@@ -40,10 +40,10 @@ export function aggregate(marks:Mark[],d:Dimension){
 export type Metric=ReturnType<typeof aggregate>[number]
 export const levels=['Không ghi nhận lỗi','Thấp','Trung bình','Cao','Rất cao']
 export const colors=['#187649','#e6c534','#e5a02e','#d65c22','#981e31']
-export const defaults={count:[0,2,5,10],rate:[0,5,10,20],minimum:1,mode:'criterion' as Dimension}
+export const defaults={count:[0,2,5,10],rate:[0,5,10,20],minimum:1,colors:[...colors],labels:[...levels],mode:'criterion' as Dimension}
 export type Scale=typeof defaults
 export function validScale(s:Scale){
- return !!s&&['criterion','staff'].includes(s.mode)&&Number.isInteger(s.minimum)&&s.minimum>0&&
+ return !!s&&[s.colors??colors,s.labels??levels].every(v=>Array.isArray(v)&&v.length===5)&& (s.colors??colors).every(v=>/^#[0-9a-f]{6}$/i.test(v))&&(s.labels??levels).every(v=>typeof v==='string'&&v.trim()&&v.length<=60)&&['criterion','staff'].includes(s.mode)&&Number.isInteger(s.minimum)&&s.minimum>0&&
  [s.count,s.rate].every((list,i)=>Array.isArray(list)&&list.length===4&&list[0]===0&&list.every((v,j)=>Number.isFinite(v)&&(!j||v>list[j-1])&&(i?v<100:Number.isInteger(v))))
 }
 export function severity(r:Metric,mode:'count'|'rate',s:Scale){
