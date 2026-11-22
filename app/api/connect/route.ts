@@ -40,7 +40,7 @@ async function dispatch(req:Request){
  const source=checked(await client.from('nk_legacy_rows').select('id,legacy_id,data').eq('sheet_name',b.kind==='task'?'GIAO VIỆC':'NHAC_VIEC_GHI_CHU').eq('row_no',b.row).maybeSingle());
  must(source&&(!b.ref||[source.legacy_id,source.data?.ID,source.data?.['MÃ NHẮC VIỆC']].includes(b.ref)),'Hồ sơ đã thay đổi. Tải lại danh sách.',404);
  const item=checked(await client.from('cx_threads').select('*').eq('source_row',source.id).maybeSingle());
- must(item&&(a.admin||a.work_role_reviewed||member(item,a))&&await rpc('nk_check_work',{who:a.id,work_id:item.id}),'Chỉ người tham gia việc này được mở trò chuyện.',403);
+ must(item&&await rpc('nk_check_work',{who:a.id,work_id:item.id}),'Chỉ người tham gia việc này được mở trò chuyện.',403);
  return {id:item.id};
  }
  if(b.action==='history'){
@@ -148,11 +148,7 @@ async function dispatch(req:Request){
  must(uuid(b.id));const t=checked(await client.from('cx_threads').select('*').eq('id',b.id).maybeSingle()) as Thread;
  const access=t&&await rpc('nk_check_work',{who:a.id,work_id:t.id});
  must(access,'Tác vụ ngoài phạm vi tài khoản.',403);
- if(!a.admin&&!a.work_role_reviewed&&!member(t,a)){
- if(b.action==='thread')return {viewOnly:true,item:{title:t.title,note:t.note,status:t.status,performers:t.performers,due:t.due}};
- throw new Fail('Cần quản trị viên xác nhận phạm vi trao đổi.',403);
- }
- const writable=t.kind==='chat'||a.admin||a.work_edit||t.owner_id===a.id;
+ const writable=t.kind==='chat'||a.admin||a.work_edit||member(t,a);
  if(t.source_row&&['status','detailSave','edit'].includes(b.action)){
   const source=checked(await client.from('nk_legacy_rows').select('data').eq('id',t.source_row).maybeSingle());
   must(source?.data?.['Trạng thái phê duyệt']!=='ĐÃ PHÊ DUYỆT','Hãy mở lại tác vụ trước khi sửa.',409);
