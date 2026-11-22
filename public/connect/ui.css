@@ -34,3 +34,29 @@
 .work-original input[readonly],.work-original textarea[readonly]{background:#f3f6fa;color:#354963}
 .work-original .original-unit{padding:14px;border:1px solid #d9e6f1;border-radius:8px;background:#f1f6fb}
 .nk-inline-task #modal .work-original details.inline-info{height:auto}
+
+/* Một cửa sổ tác vụ KSNK cho nhân viên, tổ trưởng và cấp quản lý. */
+.nk-inline-task #modal #dialogBody{height:100%;min-height:0;display:flex;flex-direction:column}
+.nk-inline-task #modal .split{flex:1;min-height:0}
+.nk-inline-task #modal .original-pane{min-width:0;overflow-y:auto}
+.nk-inline-task #modal .work-original .work-static-field{border:1px solid #d6e2ef;background:#f8fbff;border-radius:7px;padding:9px 11px;margin:9px 0;overflow-wrap:anywhere}
+.nk-inline-task #modal .work-static-field small{display:block;font-size:.72rem;font-weight:750;letter-spacing:.015em;text-transform:uppercase;color:#335579}
+.nk-inline-task #modal .work-static-field div{margin-top:4px;color:#203951;white-space:pre-wrap}
+.nk-inline-task #modal .work-evidence{margin:12px 0;border:1px dashed #93b8eb;border-radius:8px;padding:12px;background:#f7fbff}
+.nk-inline-task #modal .work-evidence form{display:grid;gap:8px}
+.nk-inline-task #modal .work-evidence label{margin:0}
+.nk-inline-task #modal .work-evidence input{font-size:.83rem}
+.nk-inline-task #modal .discussion{display:flex;flex-direction:column;min-height:0}
+.nk-inline-task #modal .stream{flex:1;min-height:120px;height:auto}
+.nk-inline-task #modal .discussion #send{flex:none}
+.nk-inline-task #modal .inline-info.original-pane .details{max-height:none}
+@media(max-width:739px){
+ .nk-inline-task #modal .split{display:flex;flex-direction:column;overflow:hidden}
+ .nk-inline-task #modal .original-pane{flex:1;max-height:none}
+ .nk-inline-task #modal .discussion{flex:1}
+ .nk-inline-task #modal .split[data-view=detail] .original-pane{display:block}
+ .nk-inline-task #modal .split[data-view=detail] .discussion{display:none}
+ .nk-inline-task #modal .split[data-view=chat] .original-pane{display:none}
+ .nk-inline-task #modal .split[data-view=chat] .discussion{display:flex}
+ .nk-inline-task #modal .phoneTabs{display:flex}
+}
