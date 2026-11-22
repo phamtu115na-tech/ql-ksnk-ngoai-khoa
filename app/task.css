@@ -75,7 +75,7 @@
 
 /* KSNK: một cửa sổ chung cho biểu mẫu nghiệp vụ và trò chuyện. */
 .work-dialog-backdrop{z-index:110;padding:clamp(5px,1.5vw,18px)}
-.work-detail-layout{width:min(1460px,99vw);height:min(95dvh,950px);max-height:97dvh;display:grid;grid-template-columns:minmax(0,11fr) minmax(0,9fr);gap:0;overflow:hidden;border:1px solid #d1dce9;border-radius:10px;background:#fff;box-shadow:0 22px 55px #0a23454d}
+.work-detail-layout{width:min(1460px,99vw);height:min(95dvh,950px);max-height:97dvh;display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:0;overflow:hidden;border:1px solid #d1dce9;border-radius:10px;background:#fff;box-shadow:0 22px 55px #0a23454d}
 .work-detail-single{width:min(900px,96vw);max-height:95dvh;overflow:auto;background:#fff;border-radius:12px}
 .work-detail-fields{min-width:0;min-height:0;overflow:auto;border-right:1px solid #cad9e8}
 .work-detail-fields .task-form,.work-detail-single-fields .task-form{width:100%;max-width:none;max-height:none;min-height:100%;padding:16px;overflow:visible;margin:0;box-shadow:none;border-radius:0}
@@ -85,3 +85,38 @@
 .work-detail-chat iframe{display:block;border:0;width:100%;flex:1;min-height:0;background:#fff}
 .work-detail-chat-empty{padding:16px;font-size:13px;color:#536980;line-height:1.5}
 @media(max-width:750px){.work-detail-layout{width:98vw;height:94dvh;grid-template-columns:1fr;grid-template-rows:minmax(0,3fr) minmax(180px,2fr)}.work-detail-fields{border-right:0;border-bottom:1px solid #cad9e8}.work-detail-chat>h3{min-height:35px}}
+
+/* Cửa sổ Giao việc, Nhắc việc và Xin phê duyệt: biểu mẫu 60%, trao đổi 40%.
+   Giữ nguyên cuộn dọc riêng biệt, không cho thành phần phê duyệt kéo giãn cột. */
+.work-detail-fields,.work-detail-fields .task-form,
+.work-detail-fields .approval-form,.work-detail-fields .task-approval-record,
+.work-detail-fields .task-approval-evaluation,.work-detail-fields .approval-steps,
+.work-detail-chat{min-width:0;max-width:100%;box-sizing:border-box}
+.work-detail-fields{overflow-x:hidden;overflow-y:auto}
+.work-detail-fields .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.work-detail-fields .form-grid .wide{grid-column:1/-1;min-width:0}
+.work-detail-fields .task-approval-record-grid,
+.work-detail-fields .task-approval-evaluation-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-width:100%}
+.work-detail-fields .task-approval-record-grid>*,
+.work-detail-fields .task-approval-evaluation-grid>*,
+.work-detail-fields .task-approval-record-block,
+.work-detail-fields .task-approval-record-head>*,
+.work-detail-fields .task-approval-evaluation-head>*,
+.work-detail-fields .task-approval-record-evidence>*{min-width:0;overflow-wrap:anywhere}
+.work-detail-fields .task-approval-record-head,
+.work-detail-fields .task-approval-evaluation-head{display:flex;flex-wrap:wrap;gap:8px;align-items:start;justify-content:space-between}
+.work-detail-fields .task-approval-record-evidence{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.work-detail-fields .approval-steps ol{max-width:100%;padding-left:1.4rem;overflow-wrap:anywhere}
+.work-detail-fields .task-approval-record p,
+.work-detail-fields .task-approval-record small{white-space:normal;overflow-wrap:anywhere}
+.work-detail-chat iframe{min-width:0}
+@media(max-width:750px){
+ .work-detail-fields .task-approval-record-grid,
+ .work-detail-fields .task-approval-evaluation-grid,
+ .work-detail-fields .task-approval-record-evidence{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:420px){
+ .work-detail-fields .task-approval-record-grid,
+ .work-detail-fields .task-approval-evaluation-grid,
+ .work-detail-fields .task-approval-record-evidence{grid-template-columns:minmax(0,1fr)}
+}
