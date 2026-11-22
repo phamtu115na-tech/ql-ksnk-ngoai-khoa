@@ -19,13 +19,11 @@ export function WorkProvider({children,team=false,legacy=false}:{legacy?:boolean
  const dialog=useRef<HTMLDialogElement>(null),frame=useRef<HTMLIFrameElement>(null);
  const [selection,select]=useState('');
  useEffect(()=>{const q=new URLSearchParams(location.search);const id=q.get('thread')||'';
-  if(q.get('work')==='chat')setThread(id);else select(id);
+  if(id)setThread(id); // Mọi đường mở đều dùng một khung chi tiết + trò chuyện.
  },[]);
  function openWork(id:string){
-  const item=rows.find(row=>row.item.id===id)?.item;
-  if(!item)return;
-  if(document.querySelector('[data-work-area="'+item.kind+'"]'))select(id);
-  else location.assign('/ngoai-khoa?work='+item.kind+'&thread='+encodeURIComponent(id));
+  if(!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(id))return;
+  select('');setThread(id); // Không phụ thuộc bộ lọc, tab hay danh sách được tải.
  }
  useEffect(()=>{
   let active=true,busy=false;
@@ -54,7 +52,7 @@ export function WorkProvider({children,team=false,legacy=false}:{legacy?:boolean
   function message(e:MessageEvent){if(e.origin===location.origin&&e.source===frame.current?.contentWindow&&e.data==='ksnk-close-thread')close();}
   window.addEventListener('message',message);return()=>window.removeEventListener('message',message);
  },[thread]);
- return <Feed.Provider value={{selection,select,team,canAssign,names,rows,open:openWork,error,ready}}>{children}{thread&&<dialog ref={dialog} className="nk-thread-dialog" aria-label="Chi tiết và trò chuyện" onCancel={close}><button onClick={close}>Đóng trao đổi ×</button><iframe ref={frame} title="Chi tiết và trò chuyện" src={'/connect/index.html?detail=1&thread='+encodeURIComponent(thread)}/></dialog>}</Feed.Provider>;
+ return <Feed.Provider value={{selection,select,team,canAssign,names,rows,open:openWork,error,ready}}>{children}{thread&&<dialog ref={dialog} className="nk-thread-dialog" aria-label="Chi tiết và trò chuyện" onCancel={close}><button onClick={close}>Đóng trao đổi ×</button><iframe ref={frame} title="Chi tiết và trò chuyện" src={'/connect/index.html?detail=1&inline=1&thread='+encodeURIComponent(thread)}/></dialog>}</Feed.Provider>;
 }
 export function WorkArea({kind,children}:{kind?:Kind;children:React.ReactNode}){
  const {selection,select,rows,ready,canAssign}=useWorkFeed();
