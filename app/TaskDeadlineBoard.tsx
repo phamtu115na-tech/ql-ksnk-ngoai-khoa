@@ -25,7 +25,7 @@ export default function TaskDeadlineBoard({rows,onEdit,onCreate,variant='tasks'}
             {row.workType&&<span className="deadline-worktype">{row.workType}</span>}
             <span className="deadline-person"><span className="deadline-avatar" aria-hidden="true">{(row.assignee||'?').trim().split(/\s+/).slice(-2).map(word=>word[0]).join('')}</span><span><b>{row.assignee||(reminders?'Chưa chọn người liên quan':'Chưa giao')}</b>{(!reminders||row.department)&&<small>{row.department||'Chưa chọn bộ phận'}</small>}</span></span>
             <span className="deadline-card-footer">{row.status||'Chưa bắt đầu'}{row.approvalStatus&&<small>{row.approvalStatus}</small>}</span>
-          </button><WorkMessage source={row.sourceId}/></div>)}
+          </button><WorkMessage source={row.sourceId} compact/></div>)}
         </div>
       </section>)}
     </div>

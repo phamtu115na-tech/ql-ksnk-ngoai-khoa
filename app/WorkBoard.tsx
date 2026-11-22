@@ -73,8 +73,18 @@ export function WorkArea({kind,children}:{kind?:Kind;children:React.ReactNode}){
 export function WorkMessage({source,compact=false}:{source:unknown;compact?:boolean}){
  const {rows,open}=useContext(Feed),row=rows.find(x=>String(x.item.source_row)===String(source));
  if(!row)return null;
- const value=<><b className={row.unread?(row.item.mentioned?'nk-mention':'nk-unread'):''}>{Number(row.unread)>0?(row.item.mentioned?'@ Có tin nhắc đến bạn':'Có tin nhắn mới')+' ('+row.unread+')':'Trao đổi'}</b>{row.item.latest_message?' · '+row.item.latest_message:''}</>;
- return compact?<span className="nk-row-message">{value}</span>:<button type="button" className="nk-row-message" onClick={e=>{e.stopPropagation();open(row.item.id)}}>{value}</button>;
+ const count=Number(row.unread)||0;
+ if(compact&&!count)return null;
+ const label=count>0?(row.item.mentioned?'@ Có tin nhắn mới':'Có tin nhắn mới'):'Mở trò chuyện';
+ const summary=row.item.latest_message||'';
+ return <button type="button"
+  className={'nk-row-message '+(compact?'nk-row-message-compact ':'')+(count?'nk-has-unread':'')}
+  title={summary?label+' · '+summary:label}
+  aria-label={label+(count?' ('+count+' tin chưa đọc)':'')+' — '+row.item.title}
+  onClick={event=>{event.stopPropagation();open(row.item.id)}}>
+  <span className={'nk-message-indicator '+(count?(row.item.mentioned?'nk-mention':'nk-unread'):'')}>▤ {label}{count?' ('+count+')':''}</span>
+  {!compact&&summary&&<small className="nk-message-preview">{summary}</small>}
+ </button>;
 }
 export default function WorkBoard({kind,home=false,manager=false,who=''}:{kind?:Kind;home?:boolean;manager?:boolean;who?:string}){
  const {rows,open,error,ready,team,names}=useContext(Feed),[employee,setEmployee]=useState(''),[mine,setMine]=useState(false),[filter,setFilter]=useState('');

@@ -683,3 +683,24 @@ th,td{padding:10px 11px;line-height:1.4}
 .report-inline-table .report-evidence-empty,.report-issue-inline-table .report-evidence-empty{display:block;min-width:110px}
 @media(max-width:780px){.checklist-score-config-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.checklist-kpi-band-grid{grid-template-columns:1fr}.checklist-score-config-grid>div.wide{grid-column:1/-1}.checklist-score-config-summary,.checklist-score-config-editor{padding:10px}}
 .report-section-group{display:flex;flex-direction:column;gap:3px;min-width:250px;padding:5px 8px;border:1px solid #dbe7f5;border-radius:8px;background:#f8fbff}.report-section-group>label{font-weight:900!important;color:#123b8f!important}.report-section-children{display:flex;flex-wrap:wrap;gap:4px 10px;padding-left:21px}.report-section-children label{font-size:13px!important;font-weight:700!important;color:#4b6280!important}.report-task-category{margin-top:16px;padding:14px 0 0;border-top:2px solid #dbe7f5}.report-task-category h4{margin:0 0 8px;padding-left:10px;border-left:4px solid #1677ff;color:#123b8f;font-size:1.1rem;line-height:1.35}.report-task-category:first-of-type{margin-top:10px}
+
+/* PowerPoint export: visually separate selection from publication */
+.report-pptx-actions{
+ display:flex;align-items:center;justify-content:space-between;
+ flex-wrap:wrap;gap:14px;border:1px solid #cddcf4;
+ border-left:5px solid #333892;
+ background:linear-gradient(115deg,#f7f9ff 0%,#fff 70%);
+}
+.report-pptx-actions h3{margin:0 0 5px;color:#273679;font-size:18px}
+.report-pptx-actions p{max-width:850px;margin:3px 0;line-height:1.55;color:#56647d;font-size:13px}
+.report-pptx-controls{display:flex;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-left:auto}
+.report-pptx-controls label{display:grid;gap:5px;min-width:265px;font-size:12px;font-weight:750;color:#273679}
+.report-pptx-controls select{min-height:40px;padding:8px 10px;border:1px solid #b8cae7;border-radius:8px;background:white;font:inherit;color:#273679}
+.report-pptx-controls .add-btn{min-height:40px;border:0;border-radius:8px;padding:9px 18px;background:#333892!important;color:white;font-weight:800;cursor:pointer}
+.report-pptx-controls .add-btn:hover{background:#273679!important}
+.report-pptx-notice{width:100%;flex-basis:100%;color:#176743!important;font-weight:700}
+.report-pptx-actions>.error-box{width:100%;flex-basis:100%}
+@media(max-width:720px){
+ .report-pptx-controls{width:100%;margin:0}
+ .report-pptx-controls label,.report-pptx-controls .add-btn{width:100%;min-width:0}
+}
