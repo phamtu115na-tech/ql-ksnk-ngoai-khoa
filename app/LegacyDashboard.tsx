@@ -8,6 +8,7 @@ import TeamRecords from './TeamRecords';
 import {teamRecords,TeamModule} from '../lib/team-records';
 import WorkBoard,{WorkArea,WorkMessage,useWorkFeed} from './WorkBoard';
 import TaskDeadlineBoard from './TaskDeadlineBoard';
+import {exportReportPowerPoint} from '../lib/report-pptx';
 
 type MainModule='staff'|'tasks'|'violations'|'checklists'|'plans'|'reports'|'kpi'|'alerts'|'settings';
 type FormModule=MainModule|'reminders'|'issues'|'violationError'|'checklistForm'|'checklistCriterion'|'feedback'|'rule'|'taskApproval';
@@ -350,6 +351,20 @@ function ScriptReportsView({payload,onCreate,onEdit,onRemove,onInline}:{payload:
  const summary=payload.summary||{},hero=payload.reportHero,matrices=(payload.formMatrices||[]) as AnyRecord[];
  const[selectedMatrixCode,setSelectedMatrixCode]=useState('');useEffect(()=>{if(matrices.length&&!selectedMatrixCode)setSelectedMatrixCode(text(matrices[0].formCode));if(selectedMatrixCode&&!matrices.some(item=>sameValue(item.formCode,selectedMatrixCode)))setSelectedMatrixCode(text(matrices[0]?.formCode||''));},[matrices,selectedMatrixCode]);const visibleMatrices=selectedMatrixCode?matrices.filter(item=>sameValue(item.formCode,selectedMatrixCode)):matrices;
  const reportRows=(payload.rows||[]) as AnyRecord[];
+ const [powerPointMode,setPowerPointMode]=useState<'summary'|'detailed'>('summary');
+ const [powerPointExportError,setPowerPointExportError]=useState('');
+ const [powerPointExportNotice,setPowerPointExportNotice]=useState('');
+ const selectedSections=selected.length?selected:REPORT_DEFAULT_SECTION_IDS;
+ function handlePowerPointExport(){
+  setPowerPointExportError('');setPowerPointExportNotice('');
+  try{
+   const result=exportReportPowerPoint({
+    payload,sections:selectedSections,matrixCode:selectedMatrixCode||undefined,
+    mode:powerPointMode,unitName:'BỆNH VIỆN NGOẠI KHOA 115 NGHỆ AN'
+   });
+   setPowerPointExportNotice('Đã tạo '+result.slides+' slide · '+result.name+(result.omitted?' · '+result.omitted+' dòng vượt giới hạn trình chiếu; xem đầy đủ trên phần mềm.':''));
+  }catch(err){setPowerPointExportError(err instanceof Error?err.message:'Không thể xuất PowerPoint.');}
+ }
  const heroFocus:Record<string,string[]>={
   vsmt:['Vệ sinh buồng bệnh, khu vực chung','Vệ sinh hành lang, cầu thang, thang máy','Thu gom, phân loại, vận chuyển chất thải','Kiểm tra dụng cụ và phương tiện vệ sinh','Đảm bảo môi trường xanh – sạch – đẹp'],
   cssd:['Tiếp nhận, phân loại dụng cụ','Làm sạch, khử khuẩn, tiệt khuẩn','Kiểm tra chất lượng sau tiệt khuẩn','Lưu trữ, bảo quản dụng cụ vô khuẩn','Cấp phát dụng cụ an toàn, đúng quy trình'],
@@ -359,6 +374,15 @@ function ScriptReportsView({payload,onCreate,onEdit,onRemove,onInline}:{payload:
  const focus=heroFocus[hero?.key||'']||[];
  const issueRows=(payload.issues||[]) as AnyRecord[];
  return <div className="module-stack">
+  <section className="panel-card report-pptx-actions" aria-label="Xuất PowerPoint từ dữ liệu báo cáo hiện tại">
+   <div><h3>TRÌNH CHIẾU POWERPOINT · 16:9</h3><p>Xuất đúng kỳ báo cáo, bộ phận và các mục hiển thị đã chọn. Bố cục theo mẫu KSNK 115, tự chia trang và giới hạn nội dung để dễ trình chiếu.</p></div>
+   <div className="report-pptx-controls">
+    <label>Độ chi tiết<select value={powerPointMode} onChange={e=>setPowerPointMode(e.target.value as 'summary'|'detailed')}><option value="summary">Trình chiếu gọn · tối đa 12 dòng/mục</option><option value="detailed">Chi tiết · tối đa 60 dòng/mục</option></select></label>
+    <button type="button" className="add-btn" onClick={handlePowerPointExport}>⇩ XUẤT POWERPOINT (.PPTX)</button>
+   </div>
+   {powerPointExportError&&<p className="error-box" role="alert">{powerPointExportError}</p>}
+   {powerPointExportNotice&&<p className="report-pptx-notice" role="status">{powerPointExportNotice}</p>}
+  </section>
   {hero&&<div className="panel-card report-hero" style={{borderTopColor:hero.accent,borderBottomColor:hero.accent}}><div className="report-hero-main"><div className="report-hero-brand"><span className="report-hero-logo">115</span><div><b>BỆNH VIỆN NGOẠI KHOA 115 NGHỆ AN</b><small>“Tất cả vì sức khỏe của bạn”</small><strong>KHOA KSNK</strong></div></div><div className="report-hero-title">{hero.title}</div><div className="report-hero-department">{hero.department}</div><div className="report-hero-subtitle">{hero.subtitle}</div><span className="report-hero-period">▣ TỪ {formatDate(payload.filters?.from)} → {formatDate(payload.filters?.to)}</span><em>{hero.slogan}</em></div><div className="report-focus-card"><div className="report-focus-icon">{hero.icon||'✦'}</div><h4>NỘI DUNG TRỌNG TÂM</h4>{focus.map((item,index)=><div className="report-focus-item" key={item}><span>{index+1}</span><b>{item}</b></div>)}<div className="report-focus-slogan">{hero.slogan}</div></div><div className="report-hero-footer">Làm đúng, ngay cả khi không ai nhìn thấy</div></div>}
   {hero?.key==='cssd'&&<CssdReportPanel filters={payload.filters||{}}/>}<div className="summary-cards"><div><b>{summary.taskTotal||0}</b><span>Giao việc</span></div><div><b>{summary.taskDone||0}</b><span>CV hoàn thành</span></div><div><b>{summary.overdue||0}</b><span>CV quá hạn</span></div><div><b>{summary.weeklyTotal||0}/{summary.monthlyTotal||0}</b><span>Kế hoạch tuần/tháng</span></div><div><b>{summary.checklistForms||0}</b><span>Phiếu bảng kiểm</span></div><div><b>{summary.violationCount||0}</b><span>Vi phạm</span></div><div><b>{summary.issueCount||0}</b><span>Tồn tại</span></div></div>
   <div style={{display:show('weekly')?undefined:'none'}} className="panel-card"><h3>1. KẾ HOẠCH TUẦN CỦA BỘ PHẬN</h3><ReportInlineTable rows={payload.weekly||[]} kind="PLAN" onSave={onInline}/></div>
