@@ -551,14 +551,47 @@ export async function GET(req:Request){const viewer=await actor();if(!viewer)ret
  const result=await buildModule(moduleName,parseFilters(url));return NextResponse.json({ok:true,module:moduleName,...result},{headers:{'Cache-Control':'private, no-store'}});}catch(error){console.error('[modules:get]',error);return NextResponse.json({ok:false,error:'Không tải được dữ liệu phân hệ',detail:error instanceof Error?error.message:'Lỗi Supabase'},{status:503});}}
 export async function POST(req:Request){const user=await actor();if(!user)return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});try{const body=(await req.json()) as AnyRecord;const moduleName=text(body.module);const op=text(body.op)||'save';
  if(!(user.admin||(user.legacy_operator&&user.work_view&&user.work_edit))){
-  if(moduleName!=='checklists'||op!=='save'||!user.team_lead||!user.work_view||!user.work_edit)return NextResponse.json({ok:false,error:'Thiếu quyền thao tác'},{status:403});
-  const data=body.data||body,department=text(user.team_department||user.department);
-  if(!department||!same(data.department,department))return NextResponse.json({ok:false,error:'Ngoài phạm vi bộ phận'},{status:403});
-  const forms=(await readSheet(S.checklistForms,true)).map(formMaster);
-  const original=data.row_no?await readRow(S.checklists,Number(data.row_no)):null;
-  const historical=original&&same(original.data['Bộ phận'],department)&&same(checklist(original).formCode,data.formCode);
-  if(!historical&&!forms.some(f=>same(f.code,data.formCode)&&(!f.department||same(f.department,department))))return NextResponse.json({ok:false,error:'Mẫu phiếu ngoài phạm vi'},{status:403});
-  return NextResponse.json({ok:true,...await saveChecklistParity({...data,department,supervisor:user.name})});
+  const team=Boolean(user.team_lead&&user.work_view&&user.work_edit);
+  const department=text(user.team_lead?(user.team_department||user.department):user.department);
+  if(!department)return NextResponse.json({ok:false,error:'Tài khoản chưa xác định bộ phận.'},{status:403});
+  if(moduleName==='alerts'&&['read','unread'].includes(op))
+   return NextResponse.json({ok:true,...await saveAlertReadState(body)});
+  const allow=team?['plans','issues','violations','violationError','checklists','checklistForm','checklistCriterion']:
+   ['plans','issues','checklists'];
+  if(!allow.includes(moduleName)||!['save','complete','reset','plan_status','carry','delete'].includes(op))
+   return NextResponse.json({ok:false,error:'Thao tác ngoài quyền tài khoản.'},{status:403});
+  if(!team&&['delete','carry'].includes(op))
+   return NextResponse.json({ok:false,error:'Nhân viên không có quyền xóa hoặc luân chuyển hồ sơ.'},{status:403});
+  const sheet=sheetFor(moduleName,body),existing=sheet&&Number(body.row_no)>0?await readRow(sheet,Number(body.row_no)):null;
+  if(!sheet||Number(body.row_no)>0&&!existing)return NextResponse.json({ok:false,error:'Không tìm thấy hồ sơ hợp lệ.'},{status:404});
+  const data=body.data&&typeof body.data==='object'&&!Array.isArray(body.data)?body.data:body;
+  const oldDepartment=text(existing?.data?.['Bộ phận']||existing?.data?.['Thuộc bộ phận']);
+  const newDepartment=text(data.department||data['Bộ phận']||data['Thuộc bộ phận']);
+  if(oldDepartment&&!same(oldDepartment,department)||newDepartment&&!same(newDepartment,department))
+   return NextResponse.json({ok:false,error:'Hồ sơ ngoài phạm vi bộ phận.'},{status:403});
+  if(!existing&&!newDepartment)return NextResponse.json({ok:false,error:'Phải chọn bộ phận để tạo hồ sơ.'},{status:400});
+  if(!team){
+   const staff=getStaff(await readSheet(S.staff,true));
+   const identity=staff.find(x=>text(user.staff_code)&&same(x.id,user.staff_code))||
+     staff.find(x=>same(x.name,user.name)&&same(x.department,department));
+   if(!identity)return NextResponse.json({ok:false,error:'Chưa liên kết tài khoản với hồ sơ nhân viên.'},{status:403});
+   const owner=text(existing?.data?.['Người phụ trách']||existing?.data?.['Người thực hiện']||
+     data.owner||data.person||data['Người phụ trách']);
+   if(!same(owner,identity.name))
+    return NextResponse.json({ok:false,error:'Chỉ được cập nhật hồ sơ chính mình.'},{status:403});
+   const proposed=text(data.owner||data.person||data['Người phụ trách']);
+   if(proposed&&!same(proposed,identity.name))
+    return NextResponse.json({ok:false,error:'Không được chuyển hồ sơ cho nhân viên khác.'},{status:403});
+  }
+  if(moduleName==='checklists'&&op==='save'){
+   const forms=(await readSheet(S.checklistForms,true)).map(formMaster);
+   const code=text(data.formCode),old=existing&&checklist(existing);
+   if(old&&!same(old.formCode,code)||!old&&!forms.some(f=>same(f.code,code)&&(!f.department||same(f.department,department))))
+    return NextResponse.json({ok:false,error:'Mẫu phiếu ngoài phạm vi.'},{status:403});
+   return NextResponse.json({ok:true,...await saveChecklistParity({...data,department,supervisor:user.name})});
+  }
+  if(['checklistForm','checklistCriterion'].includes(moduleName)&&op==='delete')
+   return NextResponse.json({ok:false,error:'Chỉ quản trị được xóa mẫu phiếu.'},{status:403});
  }
  if(moduleName==='alerts'&&['read','unread'].includes(op))return NextResponse.json({ok:true,...await saveAlertReadState(body)});
  if(moduleName==='kpi'&&op==='delete_report'){
