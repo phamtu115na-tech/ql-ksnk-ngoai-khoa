@@ -481,22 +481,74 @@ async function saveTaskApproval(body:AnyRecord){
 async function inlineUpdate(body:AnyRecord){const kind=text(body.kind).toUpperCase();if(kind==='OPINION'){const rows=await readSheet(S.opinions);const found=Number(body.row_no)?rows.find(x=>x.row_no===Number(body.row_no)):rows.find(x=>same(pick(x.data,['Từ ngày']),body.fromDate)&&same(pick(x.data,['Đến ngày']),body.toDate)&&same(pick(x.data,['Bộ phận']),body.department)&&same(pick(x.data,['Mã phiếu']),body.formCode));const data=canonical('reports',{...body,data:found?.data||{}});const rowNo=await saveRow(S.opinions,found?.row_no,data);return {row_no:rowNo,kind};}const sheet=kind==='TASK'?S.tasks:kind==='PLAN'?(text(body.planType).toUpperCase()==='THÁNG'?S.monthly:S.weekly):kind==='VIOLATION'?S.violations:kind==='ISSUE'?S.issues:'';if(!sheet)throw new Error('Loại dữ liệu cập nhật không hỗ trợ.');const rows=await readSheet(sheet);const found=Number(body.row_no)?rows.find(x=>x.row_no===Number(body.row_no)):findById(rows,text(body.id));if(!found)throw new Error('Không tìm thấy bản ghi cần cập nhật.');const data={...found.data};if(kind==='TASK'){requireManagerEvaluation(found.data['Trạng thái NV'],body.status,body.evalStatus??found.data['Đánh giá quản lý']??found.data['Đánh giá quản lý hiện tại']);if(body.status!==undefined)data['Trạng thái NV']=body.status;if(body.evalStatus!==undefined)data['Đánh giá quản lý']=body.evalStatus;if(body.note!==undefined)data['Ghi chú quản lý']=body.note;if(body.managerOpinion!==undefined)data['Ý kiến quản lý']=body.managerOpinion;}else if(kind==='PLAN'){if(body.status!==undefined)data['Trạng thái']=body.status;if(body.note!==undefined)data['Ghi chú']=body.note;if(body.description!==undefined)data['Nội dung / Mô tả']=body.description;}else if(kind==='ISSUE'){const fields:Record<string,string>={date:'Ngày ghi nhận',department:'Bộ phận',issue:'Tồn tại / Sự cố / Kiến nghị',cause:'Nguyên nhân',action:'Phương án khắc phục',owner:'Người phụ trách',deadline:'Hạn xử lý',status:'Trạng thái',recommendation:'Kiến nghị',note:'Ghi chú'};for(const [key,column] of Object.entries(fields))if(body[key]!==undefined)data[column]=body[key];}else{if(body.status!==undefined)data['Trạng thái']=body.status;if(body.note!==undefined)data['Ghi chú']=body.note;}await saveRow(sheet,found.row_no,data);return {row_no:found.row_no,kind};}
 
 export async function GET(req:Request){const viewer=await actor();if(!viewer)return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});try{const url=new URL(req.url);const moduleName=text(url.searchParams.get('module'))||'tasks';
- if(!(viewer.admin||viewer.legacy_operator&&viewer.work_view)){
-  const department=text(viewer.team_department||viewer.department);
-  if(moduleName!=='checklists'||!viewer.team_lead||!viewer.work_view||!department||url.searchParams.has('workThread'))return NextResponse.json({ok:false,error:'Ngoài phạm vi tài khoản'},{status:403});
-  const staff=getStaff(await readSheet(S.staff,true)).filter(p=>same(p.department,department)).map(({id,name,department,position})=>({id,name,department,position}));
-  const result=await buildChecklistParity({...parseFilters(url),department},staff,[department]);
-  const forms=result.forms.filter(form=>!form.department||same(form.department,department));
-  const codes=new Set(forms.map(form=>norm(form.code)));
-  return NextResponse.json({ok:true,...result,forms,criteria:result.criteria.filter(c=>codes.has(norm(c.formCode))&&(!c.department||same(c.department,department))),percentConfig:result.percentConfig.filter(c=>codes.has(norm(c.formCode))),scoring:result.scoring.filter(c=>codes.has(norm(c.formCode))),options:{formCodes:forms.map(f=>f.code)},teamChecklist:true,canScore:viewer.work_edit},{headers:{'Cache-Control':'private,no-store'}});
- }
  if(url.searchParams.has('workThread')){
  const id=url.searchParams.get('workThread');const access=await db().rpc('nk_check_work',{who:viewer.id,work_id:id});if(access.error||!access.data)return NextResponse.json({ok:false},{status:403});const {data:t,error}=await db().from('cx_threads').select('source_row,kind').eq('id',id).eq('units','{surgery}').maybeSingle();if(error)throw error;
  if(!t||!['task','reminder'].includes(t.kind))return NextResponse.json({ok:false},{status:404});
  const source=await db().from('nk_legacy_rows').select('id,row_no,legacy_id,data').eq('id',t.source_row).eq('sheet_name',t.kind==='task'?S.tasks:S.reminders).maybeSingle();if(source.error)throw source.error;
  if(!source.data)return NextResponse.json({ok:false},{status:404});
  return NextResponse.json({ok:true,kind:t.kind,row:t.kind==='task'?task(source.data):reminder(source.data)});
- }const result=await buildModule(moduleName,parseFilters(url));return NextResponse.json({ok:true,module:moduleName,...result},{headers:{'Cache-Control':'private, no-store'}});}catch(error){console.error('[modules:get]',error);return NextResponse.json({ok:false,error:'Không tải được dữ liệu phân hệ',detail:error instanceof Error?error.message:'Lỗi Supabase'},{status:503});}}
+ }
+ const fullAccess=viewer.admin||(viewer.legacy_operator&&viewer.work_view);
+ if(!fullAccess){
+  const allowed=['tasks','reminders','violations','plans','checklists','reports','staff','alerts','kpi'];
+  if(!allowed.includes(moduleName))return NextResponse.json({ok:false,error:'Phân hệ ngoài phạm vi tài khoản.'},{status:403});
+  const department=text(viewer.team_lead?(viewer.team_department||viewer.department):viewer.department);
+  if(!department)return NextResponse.json({ok:false,error:'Tài khoản chưa có bộ phận được xác thực.'},{status:403});
+  const allStaff=getStaff(await readSheet(S.staff,true));
+  const identity=allStaff.find(x=>text(viewer.staff_code)&&same(x.id,viewer.staff_code))||allStaff.find(x=>same(x.name,viewer.name)&&same(x.department,department));
+  if(!identity&&!viewer.team_lead)return NextResponse.json({ok:false,error:'Tài khoản chưa liên kết hồ sơ nhân viên.'},{status:403});
+  const ownName=identity?.name||viewer.name;
+  const teamScope=Boolean(viewer.team_lead&&viewer.work_view);
+  const member=(name:unknown)=>allStaff.some(x=>same(x.name,name)&&same(x.department,department));
+  const f=parseFilters(url);
+  if(teamScope&&f.person&&!member(f.person))return NextResponse.json({ok:false,error:'Nhân viên ngoài phạm vi tổ phụ trách.'},{status:403});
+  f.department=department;
+  if(!teamScope){f.person=ownName;f.manager='';f.assignees=[];}
+  const result=await buildModule(moduleName,f);
+  const staff=(result.staff||[]).filter((x:AnyRecord)=>same(x.department,department)&&(teamScope||same(x.name,ownName)));
+  const safe:AnyRecord={...result,staff,departments:[department],scope:teamScope?'department':'self',fixedDepartment:department,
+    fixedPerson:teamScope?'':ownName,canExport:false,
+    permissions:{scope:teamScope?'department':'self',canManage:teamScope,canEdit:teamScope,
+      canRecordViolation:teamScope,canManageErrorCatalog:teamScope,canManageStaff:teamScope,
+      canManageTemplates:teamScope,canManageKpiRules:false}};
+  if(moduleName==='tasks'){
+    safe.workload=(result.workload||[]).filter((x:AnyRecord)=>teamScope?member(x.name):same(x.name,ownName));
+    safe.approvalItems=(result.approvalItems||[]).filter((x:AnyRecord)=>teamScope?same(x.department,department):same(x.assignee,ownName));
+  }
+  if(moduleName==='violations'){
+    safe.errorCatalog=(result.errorCatalog||[]).filter((x:AnyRecord)=>same(x.department,department));
+    safe.errors=(result.errors||[]).filter((x:AnyRecord)=>same(x.data?.['Bộ phận']||x.department,department));
+    safe.monthlySummary=[];
+  }
+  if(moduleName==='staff'){
+    safe.leavePlan=(result.leavePlan||[]).filter((x:AnyRecord)=>same(x.department,department));
+    safe.contractAlerts=(result.contractAlerts||[]).filter((x:AnyRecord)=>teamScope||same(x.name,ownName));
+  }
+  if(moduleName==='kpi'){
+    safe.stored=(result.stored||[]).filter((x:AnyRecord)=>same(x.department,department)&&(teamScope||same(x.person,ownName)));
+    safe.feedback=(result.feedback||[]).filter((x:AnyRecord)=>same(x.data?.['Bộ phận']||x.department,department)&&(teamScope||same(x.data?.['Nhân viên']||x.person,ownName)));
+  }
+  if(moduleName==='checklists'){
+    safe.forms=(result.forms||[]).filter((x:AnyRecord)=>!x.department||same(x.department,department));
+    const codes=new Set(safe.forms.map((x:AnyRecord)=>norm(x.code)));
+    safe.criteria=(result.criteria||[]).filter((x:AnyRecord)=>codes.has(norm(x.formCode))&&(!x.department||same(x.department,department)));
+    safe.percentConfig=(result.percentConfig||[]).filter((x:AnyRecord)=>codes.has(norm(x.formCode)));
+    safe.scoring=safe.percentConfig;
+  }
+  if(moduleName==='reports'){
+    safe.snapshots=[];
+    safe.matrixCriteria=(result.matrixCriteria||[]).filter((x:AnyRecord)=>!x.department||same(x.department,department));
+    safe.nextWeekPlan=(result.nextWeekPlan||[]).filter((x:AnyRecord)=>
+      same(x.department,department)&&(teamScope||same(x.owner||x.assignee||x.person,ownName)));
+  }
+  if(moduleName==='alerts'){
+    safe.rows=(result.rows||[]).filter((x:AnyRecord)=>teamScope?same(x.department,department):
+      same(x.person,ownName)||text(x.personId)&&same(x.personId,viewer.staff_code));
+    safe.total=safe.rows.length;
+  }
+  return NextResponse.json({ok:true,module:moduleName,...safe},{headers:{'Cache-Control':'private,no-store'}});
+ }
+ const result=await buildModule(moduleName,parseFilters(url));return NextResponse.json({ok:true,module:moduleName,...result},{headers:{'Cache-Control':'private, no-store'}});}catch(error){console.error('[modules:get]',error);return NextResponse.json({ok:false,error:'Không tải được dữ liệu phân hệ',detail:error instanceof Error?error.message:'Lỗi Supabase'},{status:503});}}
 export async function POST(req:Request){const user=await actor();if(!user)return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});try{const body=(await req.json()) as AnyRecord;const moduleName=text(body.module);const op=text(body.op)||'save';
  if(!(user.admin||(user.legacy_operator&&user.work_view&&user.work_edit))){
   if(moduleName!=='checklists'||op!=='save'||!user.team_lead||!user.work_view||!user.work_edit)return NextResponse.json({ok:false,error:'Thiếu quyền thao tác'},{status:403});
