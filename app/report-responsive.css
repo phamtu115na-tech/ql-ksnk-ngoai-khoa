@@ -690,3 +690,20 @@ th,td{padding:10px 11px;line-height:1.4}
 .ksnk-bell header{justify-content:space-between;align-items:center}
 .ksnk-notice{flex-direction:column;border-top:1px solid #ddd;padding:.5rem;color:inherit;overflow-wrap:anywhere}
 @media(max-width:700px){.ksnk-bell section{position:fixed;top:4rem;right:4vw}}
+
+.report-screen,.report-screen>.panel-card{min-width:0}
+.screen-export{display:flex;align-items:end;flex-wrap:wrap;gap:12px 20px}
+.screen-export>div{flex:1 1 240px}
+.screen-export strong,.screen-export small{display:block}
+.screen-export small{margin-top:4px;color:#475569}
+.screen-export label{display:grid;gap:4px;min-width:0}
+.screen-export select{max-width:100%;min-height:44px}
+.screen-export button{min-height:44px}
+.screen-export [role=alert]{flex-basis:100%}
+@media(max-width:700px){
+ .screen-export{display:grid;grid-template-columns:minmax(0,1fr)}
+ .screen-export button,.screen-export select{width:100%}
+ .report-section-options{display:grid;grid-template-columns:minmax(0,1fr)}
+ .report-section-group{min-width:0}
+ .report-screen .table-wrap{overflow-x:auto;max-width:100%}
+}
