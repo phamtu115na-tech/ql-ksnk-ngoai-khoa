@@ -120,3 +120,23 @@
  .work-detail-fields .task-approval-evaluation-grid,
  .work-detail-fields .task-approval-record-evidence{grid-template-columns:minmax(0,1fr)}
 }
+
+/* Nút Đóng chung cho cửa sổ Giao việc, Nhắc việc và Xin phê duyệt.
+   Nằm ở góc PHẢI trên ngoài hai cột, không chen vào tiêu đề biểu mẫu. */
+.work-detail-layout{position:relative}
+.work-detail-layout .work-dialog-close{
+ position:absolute;top:8px;right:8px;z-index:30;
+ display:flex;align-items:center;justify-content:center;gap:6px;
+ min-width:86px;min-height:44px;padding:7px 12px;
+ border:1px solid #c6d4e3;border-radius:9px;
+ background:#fff;color:#16365e;box-shadow:0 2px 8px rgba(9,35,69,.16);
+ font-size:18px;font-weight:750;line-height:1;cursor:pointer;
+}
+.work-detail-layout .work-dialog-close span{font-size:13px}
+.work-detail-layout .work-dialog-close:hover{background:#eaf2fe;border-color:#2761b7}
+.work-detail-layout .work-dialog-close:focus-visible{outline:3px solid #2761b7;outline-offset:2px}
+.work-detail-layout .work-detail-chat>h3{padding-right:106px}
+@media(max-width:750px){
+ .work-detail-layout .work-dialog-close{top:6px;right:6px;min-height:44px;min-width:76px}
+ .work-detail-layout .work-dialog-close span{font-size:12px}
+}
