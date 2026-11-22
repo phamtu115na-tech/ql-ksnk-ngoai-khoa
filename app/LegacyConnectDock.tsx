@@ -5,6 +5,8 @@ type Item={id:string;kind:string;title:string;status:string;sender:string;due:st
 type Approval={unread_total?:number;id:number;thread:string;kind:string;body:string;read_at:string|null;created_at:string;cx_threads:{title:string;kind:string};cx_people:{name:string}}
 type Alerts={task:number;reminder:number;items:Item[]}
 const labels:Record<string,string>={task:'Giao việc',reminder:'Nhắc việc',chat:'Tin nhắn riêng'}
+const RING_CHOICE_KEY='ksnk.notification.ring.enabled.v1'
+const RING_SEEN_KEY='ksnk.notification.ring.seen.v1'
 const link=(kind:string,id='')=>'/ngoai-khoa?work='+kind+(id?'&thread='+encodeURIComponent(id):'')
 async function load(body:object){
  const r=await fetch('/api/connect',{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
@@ -15,8 +17,51 @@ export default function Dock(){
  const [host,setHost]=useState<Element|null>(null),[open,setOpen]=useState(false),[offset,setOffset]=useState(0)
  const [events,setEvents]=useState<Approval[]>([])
  const [badges,setBadges]=useState<Record<string,number>>({}),[alerts,setAlerts]=useState<Alerts|null>(null),[error,setError]=useState(''),[sound,setSound]=useState(false)
- const ctx=useRef<AudioContext|null>(null),seen=useRef(''),bell=useRef<HTMLButtonElement>(null)
- useEffect(()=>{const sync=()=>setHost(document.querySelector('.app-header')||document.querySelector('.nk-account-nav'));sync();const o=new MutationObserver(sync);o.observe(document.body,{childList:true,subtree:true});return()=>{o.disconnect();void ctx.current?.close()}},[])
+ const ctx=useRef<AudioContext|null>(null),bell=useRef<HTMLButtonElement>(null)
+ const soundRef=useRef(false),firstFetch=useRef(false),seenKeys=useRef<string[]>([]),playing=useRef<OscillatorNode[]>([])
+ const stopRinging=()=>{const current=playing.current.splice(0);for(const node of current){try{node.stop()}catch{/* đã dừng */}}}
+ // Hai nhịp chuông/đợt, 10 đợt, tổng ~5 giây. Giữ âm lượng vừa phải.
+ const ringForFiveSeconds=()=>{
+  if(!soundRef.current||document.hidden)return
+  let audio=ctx.current
+  try{if(!audio){audio=new AudioContext();ctx.current=audio}}catch{return}
+  const schedule=()=>{
+   if(!audio||!soundRef.current||audio.state!=='running')return
+   stopRinging()
+   const start=audio.currentTime+.03
+   for(let cycle=0;cycle<10;cycle++)for(let pulse=0;pulse<2;pulse++){
+    const time=start+cycle*.5+pulse*.22
+    for(const [frequency,peak] of [[860,.029],[1160,.018]] as const){
+     const oscillator=audio.createOscillator(),gain=audio.createGain()
+     oscillator.type='sine';oscillator.frequency.value=frequency
+     gain.gain.setValueAtTime(.0001,time)
+     gain.gain.exponentialRampToValueAtTime(peak,time+.018)
+     gain.gain.exponentialRampToValueAtTime(.0001,time+.17)
+     oscillator.connect(gain);gain.connect(audio.destination)
+     oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();playing.current=playing.current.filter(item=>item!==oscillator)}
+     oscillator.start(time);oscillator.stop(time+.175);playing.current.push(oscillator)
+    }
+   }
+  }
+  if(audio.state==='running')schedule()
+  else void audio.resume().then(schedule).catch(()=>{/* Trình duyệt chưa cho phép âm thanh tự động */})
+ }
+ const toggleRinging=async()=>{
+  const enabled=!soundRef.current
+  soundRef.current=enabled;setSound(enabled)
+  try{localStorage.setItem(RING_CHOICE_KEY,enabled?'1':'0')}catch{}
+  if(!enabled){stopRinging();return}
+  try{if(!ctx.current)ctx.current=new AudioContext();await ctx.current.resume()}catch{/* Trình duyệt cần người dùng cho phép phát âm */}
+ }
+ useEffect(()=>{
+  try{
+   const saved=localStorage.getItem(RING_CHOICE_KEY)==='1'
+   soundRef.current=saved;setSound(saved)
+   const prior=JSON.parse(localStorage.getItem(RING_SEEN_KEY)||'[]')
+   if(Array.isArray(prior))seenKeys.current=prior.filter((item):item is string=>typeof item==='string').slice(-100)
+  }catch{}
+ },[])
+ useEffect(()=>{const sync=()=>setHost(document.querySelector('.app-header')||document.querySelector('.nk-account-nav'));sync();const o=new MutationObserver(sync);o.observe(document.body,{childList:true,subtree:true});return()=>{o.disconnect();stopRinging();void ctx.current?.close()}},[])
  useEffect(()=>{
   let active=true,busy=false
   async function refresh(){
@@ -24,8 +69,23 @@ export default function Dock(){
    busy=true
    try{const [counts,list,decisions]=await Promise.all([load({action:'counts'}),open?load({action:'workAlerts',kind:'all',offset}):null,load({action:'approvalEvents'})]);if(!active)return
     setBadges(Object.fromEntries(counts.badges.map((r:{kind:string;unread:number})=>[r.kind,Number(r.unread)])));if(list)setAlerts(list);setEvents(decisions);setError('')
-    const key=counts.latest?counts.latest.id+'/'+counts.latest.seq:''
-    if(key&&seen.current&&key!==seen.current&&ctx.current){const tone=ctx.current.createOscillator(),gain=ctx.current.createGain();gain.gain.value=.06;tone.connect(gain);gain.connect(ctx.current.destination);tone.start();tone.stop(ctx.current.currentTime+.2)}seen.current=key
+    const key=counts.latest?String(counts.latest.id)+'/'+String(counts.latest.seq):''
+    const first= !firstFetch.current
+    firstFetch.current=true
+    if(key){
+     // Đã phát hoặc đã nhận thông báo này: không đổ chuông lần nữa sau poll, refresh hoặc mở tab mới.
+     let prior=seenKeys.current
+     try{
+      const saved=JSON.parse(localStorage.getItem(RING_SEEN_KEY)||'[]')
+      if(Array.isArray(saved))prior=saved.filter((item):item is string=>typeof item==='string').slice(-100)
+     }catch{}
+     const already=prior.includes(key)
+     if(!already){
+      seenKeys.current=[...prior,key].slice(-100)
+      try{localStorage.setItem(RING_SEEN_KEY,JSON.stringify(seenKeys.current))}catch{}
+      if(!first&&soundRef.current)ringForFiveSeconds()
+     }else seenKeys.current=prior
+    }
    }catch(e){if(active)setError(String(e))}finally{busy=false}
   }
   void refresh();const timer=setInterval(refresh,12000);window.addEventListener('focus',refresh);return()=>{active=false;clearInterval(timer);window.removeEventListener('focus',refresh)}
@@ -35,7 +95,16 @@ export default function Dock(){
  if(!host)return null
  return createPortal(<><div className="ksnk-bell"><button type="button" ref={bell} aria-label={'Thông báo, '+unread+' tin chưa đọc'} aria-expanded={open} onClick={()=>setOpen(!open)}>Thông báo{unread>0?' ('+unread+')':''}</button>
  {open&&<section aria-label="Trung tâm thông báo" onKeyDown={e=>{if(e.key==='Escape'){setOpen(false);bell.current?.focus()}}}><header><b>Trung tâm thông báo</b><button onClick={()=>setOpen(false)}>Đóng</button></header><p><a href={link('chat')}>Tin nhắn riêng ({badges.chat||0})</a></p>
- <button aria-pressed={sound} onClick={async()=>{if(ctx.current){await ctx.current.close();ctx.current=null;setSound(false)}else{ctx.current=new AudioContext();await ctx.current.resume();setSound(true)}}}>{sound?'Tắt âm báo':'Bật âm báo'}</button>
+ <p className="ksnk-ring-hint">Âm chuông: {sound?'Đang bật':'Đang tắt'} · khoảng 5 giây cho thông báo mới.</p>
  {events.map(e=><article key={e.id}><a className="ksnk-notice" href={link(e.cx_threads.kind,e.thread)} onClick={()=>{void ack(e.id,false)}}><strong>{e.cx_threads.title}</strong><small>{e.kind} · {e.cx_people?.name} · {new Date(e.created_at).toLocaleString('vi-VN')}</small><span>{e.body}</span></a><button onClick={()=>ack(e.id,true)}>Đã xử lý</button></article>)}
- {error?<p role="alert">{error}</p>:!alerts?<p>Đang tải…</p>:<><p>{alerts.task+alerts.reminder} tác vụ đến hạn hoặc có tin mới</p>{alerts.items.map(i=><a className="ksnk-notice" key={i.id} href={link(i.kind,i.id)}><strong>{i.title}</strong><small>{labels[i.kind]} · {i.sender} · {i.status} {i.due}</small>{i.unread>0&&<span>{i.unread} tin chưa đọc · {i.preview}</span>}</a>)}{offset>0&&<button onClick={()=>setOffset(offset-40)}>Trang trước</button>}{offset+40<alerts.task+alerts.reminder&&<button onClick={()=>setOffset(offset+40)}>Trang sau</button>}</>}</section>}</div><button type="button" className="ksnk-signout" onClick={async()=>{try{const r=await fetch('/api/auth',{method:'DELETE'});if(!r.ok)throw Error('Không đăng xuất được.');location.replace('/')}catch(e){setOpen(true);setError(String(e))}}}>Đăng xuất</button><a className="ksnk-chat-launch" href={link('chat')}>✉ Trao đổi {badges.chat>0&&<b>{badges.chat}</b>}</a></>,host)
+ {error?<p role="alert">{error}</p>:!alerts?<p>Đang tải…</p>:<><p>{alerts.task+alerts.reminder} tác vụ đến hạn hoặc có tin mới</p>{alerts.items.map(i=><a className="ksnk-notice" key={i.id} href={link(i.kind,i.id)}><strong>{i.title}</strong><small>{labels[i.kind]} · {i.sender} · {i.status} {i.due}</small>{i.unread>0&&<span>{i.unread} tin chưa đọc · {i.preview}</span>}</a>)}{offset>0&&<button onClick={()=>setOffset(offset-40)}>Trang trước</button>}{offset+40<alerts.task+alerts.reminder&&<button onClick={()=>setOffset(offset+40)}>Trang sau</button>}</>}</section>}</div><button type="button" className={'ksnk-sound-switch '+(sound?'is-on':'is-off')} aria-pressed={sound} aria-label={sound?'Tắt chuông thông báo':'Bật chuông thông báo'} title={sound?'Chuông đang bật · bấm để tắt':'Chuông đang tắt · bấm để bật'} onClick={()=>void toggleRinging()}><span aria-hidden="true">{sound?'🔔':'🔕'}</span><span>{sound?'Bật':'Tắt'}</span></button><button type="button" className="ksnk-signout" onClick={async()=>{try{const r=await fetch('/api/auth',{method:'DELETE'});if(!r.ok)throw Error('Không đăng xuất được.');location.replace('/')}catch(e){setOpen(true);setError(String(e))}}}>Đăng xuất</button><a className="ksnk-chat-launch" href={link('chat')}>✉ Trao đổi {badges.chat>0&&<b>{badges.chat}</b>}</a><style>{`
+ .ksnk-sound-switch{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:33px;min-width:66px;padding:4px 9px;margin:0;border:1px solid #cbd5e1;border-radius:8px;background:#f1f5f9;color:#334155;font:700 12px system-ui;cursor:pointer;white-space:nowrap}
+ .ksnk-sound-switch.is-on{background:#fff7dd;color:#8a5208;border-color:#edc36c}
+ .ksnk-sound-switch:hover{filter:brightness(.97)}
+ .ksnk-sound-switch:focus-visible{outline:3px solid #2563eb;outline-offset:2px}
+ .ksnk-sound-switch>span:first-child{font-size:17px;line-height:1}
+ .ksnk-ring-hint{font-size:12px;color:#536477}
+ .app-header>.ksnk-sound-switch{order:5;flex:0 0 auto}
+ @media(max-width:600px){.ksnk-sound-switch{height:30px;min-width:54px;padding:3px 6px;font-size:11px}}
+`}</style></>,host)
 }
