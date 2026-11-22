@@ -15,13 +15,17 @@ create function cx_key(text) returns text language sql immutable as $$select low
 create function cx_source_unit(jsonb) returns text language sql immutable as $$select coalesce($1->>'unitId','surgery')$$;
 create function cx_append(uuid,uuid,text,jsonb,uuid) returns void language sql as $$insert into cx_messages values($1,$2,$5)$$;
 `)
-for(const migration of ['20261122_quyen_nguoi_lap','20261121_phieu_giam_sat'])await pg.exec(fs.readFileSync('supabase/'+migration+'.sql','utf8'))
+for(const migration of ['20261122_quyen_nguoi_lap','20261122_mo_day_du_tac_vu_ca_nhan','20261121_phieu_giam_sat'])await pg.exec(fs.readFileSync('supabase/'+migration+'.sql','utf8'))
 await pg.query("insert into cx_people(id,department,team_lead,legacy_operator) values($1,'A',false,false),($2,'A',true,false),($3,'B',false,true),($4,'B',true,false)",[owner,lead,chief,other])
 await pg.query("update cx_people set work_view=false,work_edit=false where id=$1",[owner])
 await pg.query("insert into cx_threads(id,kind,units,owner_id,performers,observers) values($1,'task',array['surgery'],$2,array[$2]::uuid[],'{}')",[thread,owner])
 const allowed=async who=>(await pg.query('select nk_work_scope(a,t) ok from cx_people a,cx_threads t where a.id=$1 and t.id=$2',[who,thread])).rows[0].ok
 const edit=async who=>(await pg.query("select nk_save_detail($1,$2,0,$3,'Đã sửa','Nội dung',null,'',null) ok",[thread,who,crypto.randomUUID()])).rows[0].ok
 for(const who of [owner,lead,chief]){assert.equal(await allowed(who),true);assert.equal(await edit(who),true)}
+// Nhân viên bị tắt quyền quản lý chung vẫn mở được và sửa toàn bộ chi tiết việc có tên mình.
+assert.equal((await pg.query('select title from cx_threads where id=$1',[thread])).rows[0].title,'Đã sửa')
+// Người khác bộ phận không được phép xem hoặc sửa.
+
 assert.equal(await allowed(other),false);assert.equal(await edit(other),false)
 await pg.query("insert into ksnk_legacy_rows(row_no,sheet_name,data) values(1,'DM_NHANVIEN',$1),(2,'DM_NHANVIEN',$2)",[{'Mã NV':'NV1','Bộ phận':'A'},{'Mã NV':'NV2','Bộ phận':'B'}])
 const save=async(who,department,staff,row=0,expected=null)=>pg.query('select nk_save_checklist($1,$2,$3,$4,$5,$6) result',[who,crypto.randomUUID(),JSON.stringify({'Mã NV':staff,'Bộ phận':department}),JSON.stringify([{'Kết quả':'Đạt',...(row?{row_no:1}:{})}]),row,expected?JSON.stringify(expected):null])
