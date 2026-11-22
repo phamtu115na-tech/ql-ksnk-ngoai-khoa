@@ -59,7 +59,7 @@
 
 /* Inline unread notification – same kanban card hierarchy as the supplied mockup */
 .deadline-column-cards>div{position:relative;min-width:0}
-.deadline-column-cards>div>.deadline-card{padding-top:43px;min-height:168px}
+.deadline-column-cards>div:has(>.nk-row-message-compact)>.deadline-card{padding-top:43px;min-height:168px}
 .deadline-column-cards>div>.nk-row-message-compact{
  position:absolute;z-index:2;top:8px;left:9px;right:9px;width:calc(100% - 18px);
  max-width:calc(100% - 18px);min-height:29px;display:block;
@@ -84,6 +84,6 @@
 .nk-new-messages{border-left:4px solid #e33c58}
 .nk-new-messages button{border-color:#f6cad3;background:#fff7f9}
 @media(max-width:700px){
- .deadline-column-cards>div>.deadline-card{padding-top:44px}
+ .deadline-column-cards>div:has(>.nk-row-message-compact)>.deadline-card{padding-top:44px}
  .nk-row-message-compact .nk-message-indicator{font-size:11px}
 }
