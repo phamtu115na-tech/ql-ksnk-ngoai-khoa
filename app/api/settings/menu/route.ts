@@ -1,11 +1,11 @@
 import {actor,db} from '../../../../lib/auth'
-import {defaultMenu,validMenu} from '../../../../lib/menu'
+import {normalizeMenu,validMenu} from '../../../../lib/menu'
 const sheet='CAI_DAT_MENU_NGOAI_KHOA'
 export async function GET(){
  if(!await actor())return Response.json({error:'Chưa đăng nhập'},{status:401})
  const {data,error}=await db().from('nk_legacy_rows').select('data').eq('sheet_name',sheet).eq('row_no',1).maybeSingle()
  if(error)return Response.json({error:'Không đọc được danh mục hiển thị.'},{status:503})
- return Response.json({items:data?.data?.items??defaultMenu,version:data?.data?.version??null},{headers:{'Cache-Control':'private,no-store'}})
+ return Response.json({items:normalizeMenu(data?.data?.items),version:data?.data?.version??null},{headers:{'Cache-Control':'private,no-store'}})
 }
 export async function POST(req:Request){
  const user=await actor()
