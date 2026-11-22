@@ -156,7 +156,7 @@ async function dispatch(req:Request){
  must(uuid(b.id));const t=checked(await client.from('cx_threads').select('*').eq('id',b.id).maybeSingle()) as Thread;
  const access=t&&await rpc('nk_check_work',{who:a.id,work_id:t.id});
  must(access,'Tác vụ ngoài phạm vi tài khoản.',403);
- const writable=t.kind==='chat'||a.admin||a.work_edit||member(t,a);
+ const writable=t.kind==='chat'||a.admin||a.work_edit||member(t,a); // Người có tên trong tác vụ luôn được dùng biểu mẫu của mình.
  if(t.source_row&&['status','detailSave','edit'].includes(b.action)){
   const source=checked(await client.from('nk_legacy_rows').select('data').eq('id',t.source_row).maybeSingle());
   must(source?.data?.['Trạng thái phê duyệt']!=='ĐÃ PHÊ DUYỆT','Hãy mở lại tác vụ trước khi sửa.',409);
@@ -206,7 +206,7 @@ async function dispatch(req:Request){
   ['Ảnh minh chứng đã lưu',source['Ảnh minh chứng']||source['Hình ảnh']],
   ['Tài liệu minh chứng đã lưu',source['Tài liệu minh chứng']||source['Tài liệu đính kèm']]
  ]:[];
- return {item:t,members,personal,originalFields:originalFields.filter(([,value])=>value!=null&&value!==''),approvalStatus:source['Trạng thái phê duyệt']||(t.kind==='task'?'CHƯA XIN Ý KIẾN':'KHÔNG YÊU CẦU'),approvalHistory:source['Lịch sử phê duyệt']||'[]',reviewer:source['Tài khoản duyệt']||'',canReview:a.admin||(manages&&(source['Tài khoản duyệt']===a.id||(!source['Tài khoản duyệt']&&a.staff_code&&source['Mã người quản lý']===a.staff_code))),opinion:source['Ý kiến quản lý']||'',department:dept,priority:source['Mức độ ưu tiên']||'',writable,manage:manages,received:(receipts||[]).filter(x=>x.sender===x.request_id).map(x=>x.sender),rows:rows.reverse()};
+ return {item:t,members,personal,originalFields,approvalStatus:source['Trạng thái phê duyệt']||(t.kind==='task'?'CHƯA XIN Ý KIẾN':'KHÔNG YÊU CẦU'),approvalHistory:source['Lịch sử phê duyệt']||'[]',reviewer:source['Tài khoản duyệt']||'',canReview:a.admin||(manages&&(source['Tài khoản duyệt']===a.id||(!source['Tài khoản duyệt']&&a.staff_code&&source['Mã người quản lý']===a.staff_code))),opinion:source['Ý kiến quản lý']||'',department:dept,priority:source['Mức độ ưu tiên']||'',writable,manage:manages,received:(receipts||[]).filter(x=>x.sender===x.request_id).map(x=>x.sender),rows:rows.reverse()};
  }
  if(b.action==='edit'){
  const title=str(b.title,180);must(title&&uuid(b.requestId)&&Number.isInteger(b.expected)&&/^\d{4}-\d{2}-\d{2}$/.test(b.due));
