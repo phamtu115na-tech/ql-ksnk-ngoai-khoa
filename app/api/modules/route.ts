@@ -487,7 +487,8 @@ export async function GET(req:Request){const viewer=await actor();if(!viewer)ret
  if(!t||!['task','reminder'].includes(t.kind))return NextResponse.json({ok:false},{status:404});
  const source=await db().from('nk_legacy_rows').select('id,row_no,legacy_id,data').eq('id',t.source_row).eq('sheet_name',t.kind==='task'?S.tasks:S.reminders).maybeSingle();if(source.error)throw source.error;
  if(!source.data)return NextResponse.json({ok:false},{status:404});
- return NextResponse.json({ok:true,kind:t.kind,row:t.kind==='task'?task(source.data):reminder(source.data)});
+ const rights=await getWorkEditRights(viewer,t.kind==='task'?'tasks':'reminders',source.data.row_no);
+ return NextResponse.json({ok:true,kind:t.kind,row:t.kind==='task'?task(source.data):reminder(source.data),canEdit:Boolean(rights?.canSave)});
  }
  const fullAccess=viewer.admin||(viewer.legacy_operator&&viewer.work_view);
  if(!fullAccess){

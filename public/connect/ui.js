@@ -167,6 +167,7 @@ async function markSeen(){
  const s=$('#stream'),split=$('.split');if(!state.thread||!s||(window.frameElement&&!window.frameElement.getClientRects().length)||document.hidden||!$('#modal').open||s.scrollHeight-s.scrollTop-s.clientHeight>45)return;
  if(matchMedia('(max-width:800px)').matches&&split.dataset.view==='detail')return;
  if(state.seen>=state.seq)return;const n=state.seq,id=state.thread;await api('read',{id,seq:n});if(state.thread===id)state.seen=Math.max(state.seen,n);
+ if(embeddedWork&&window.parent!==window)window.parent.postMessage({type:'ksnk-work-read',thread:id},location.origin);
 }
 async function openThread(id){
  const epoch=state.dialog;

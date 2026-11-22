@@ -15,15 +15,11 @@ export function WorkProvider({children,team=false,legacy=false}:{legacy?:boolean
   fetch('/api/connect',{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'me'})})
   .then(r=>r.ok?r.json():null).then(data=>{setCanAssign(Boolean(data?.me?.team_lead&&data.me.work_role_reviewed&&data.me.work_edit&&data.me.work_view));if(data?.people)setNames(Object.fromEntries(data.people.map((p:{id:string;name:string;admin:boolean;username:string;staff_code?:string})=>[p.id,p.admin&&!p.staff_code?p.username:p.name])));}).catch(()=>{});
   return ()=>controller.abort();},[]);
- const [thread,setThread]=useState(''),[revision,reload]=useState(0);
- const dialog=useRef<HTMLDialogElement>(null),frame=useRef<HTMLIFrameElement>(null);
- const [selection,select]=useState('');
- useEffect(()=>{const q=new URLSearchParams(location.search);const id=q.get('thread')||'';
-  if(id)setThread(id); // Mọi đường mở đều dùng một khung chi tiết + trò chuyện.
- },[]);
+ const [revision,reload]=useState(0),[selection,select]=useState('');
  function openWork(id:string){
   if(!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(id))return;
-  select('');setThread(id); // Không phụ thuộc bộ lọc, tab hay danh sách được tải.
+  select('');
+  window.dispatchEvent(new CustomEvent('ksnk-show-legacy-work',{detail:id}));
  }
  useEffect(()=>{
   let active=true,busy=false;
@@ -41,19 +37,17 @@ export function WorkProvider({children,team=false,legacy=false}:{legacy?:boolean
       result.push(...page);if(page.length<80)break;
      }
     }
-    if(active){setRows(result);setError('');setReady(true);}
-   }catch(e){if(active)setError(e instanceof Error?e.message:'Lỗi kết nối');}finally{busy=false;}
+    if(active){setRows(result);setError('');setReady(true)}
+   }catch(e){if(active)setError(e instanceof Error?e.message:'Lỗi kết nối')}finally{busy=false}
   }
-  void refresh();const timer=setInterval(refresh,16000);window.addEventListener('focus',refresh);
-  return ()=>{active=false;clearInterval(timer);window.removeEventListener('focus',refresh);};
+  void refresh();const timer=setInterval(refresh,16000);
+  const trigger=()=>{void refresh()};
+  const onRead=(event:MessageEvent)=>{if(event.origin===location.origin&&event.data?.type==='ksnk-work-read')reload(x=>x+1)};
+  window.addEventListener('focus',trigger);window.addEventListener('ksnk-work-closed',trigger);window.addEventListener('message',onRead);
+  return ()=>{active=false;clearInterval(timer);window.removeEventListener('focus',trigger);window.removeEventListener('ksnk-work-closed',trigger);window.removeEventListener('message',onRead)};
  },[revision]);
- useEffect(()=>{const onOpen=(event:Event)=>{const id=(event as CustomEvent<string>).detail;if(typeof id==='string'&&/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(id))openWork(id)};window.addEventListener('ksnk-open-work-thread',onOpen);return()=>window.removeEventListener('ksnk-open-work-thread',onOpen)},[]);
- function close(){setThread('');reload(n=>n+1);const u=new URL(location.href);u.searchParams.delete('thread');history.replaceState(null,'',u);}
- useEffect(()=>{if(!thread)return;dialog.current?.showModal();
-  function message(e:MessageEvent){if(e.origin===location.origin&&e.source===frame.current?.contentWindow&&e.data==='ksnk-close-thread')close();}
-  window.addEventListener('message',message);return()=>window.removeEventListener('message',message);
- },[thread]);
- return <Feed.Provider value={{selection,select,team,canAssign,names,rows,open:openWork,error,ready}}>{children}{thread&&<dialog ref={dialog} className="nk-thread-dialog" aria-label="Chi tiết và trò chuyện" onCancel={close}><button onClick={close}>Đóng trao đổi ×</button><iframe ref={frame} title="Chi tiết và trò chuyện" src={'/connect/index.html?detail=1&inline=1&thread='+encodeURIComponent(thread)}/></dialog>}</Feed.Provider>;
+ useEffect(()=>{const onOpen=(event:Event)=>{const id=(event as CustomEvent<string>).detail;if(typeof id==='string')openWork(id)};window.addEventListener('ksnk-open-work-thread',onOpen);return()=>window.removeEventListener('ksnk-open-work-thread',onOpen)},[]);
+ return <Feed.Provider value={{selection,select,team,canAssign,names,rows,open:openWork,error,ready}}>{children}</Feed.Provider>;
 }
 export function WorkArea({kind,children}:{kind?:Kind;children:React.ReactNode}){
  const {selection,select,rows,ready,canAssign}=useWorkFeed();
