@@ -504,7 +504,7 @@ export async function GET(req:Request){const viewer=await actor();if(!viewer)ret
   if(teamScope&&f.person&&!member(f.person))return NextResponse.json({ok:false,error:'Nhân viên ngoài phạm vi tổ phụ trách.'},{status:403});
   f.department=department;
   if(!teamScope){f.person=ownName;f.manager='';f.assignees=[];}
-  const result=await buildModule(moduleName,f);
+  const result:AnyRecord=await buildModule(moduleName,f);
   const staff=(result.staff||[]).filter((x:AnyRecord)=>same(x.department,department)&&(teamScope||same(x.name,ownName)));
   const safe:AnyRecord={...result,staff,departments:[department],scope:teamScope?'department':'self',fixedDepartment:department,
     fixedPerson:teamScope?'':ownName,canExport:false,
