@@ -1,5 +1,5 @@
 'use client';
-import {createContext,useContext,useEffect,useRef,useState} from 'react';
+import {createContext,useContext,useEffect,useState} from 'react';
 
 type Kind='task'|'reminder';
 type Item={id:string;source_row:number;kind:Kind;title:string;note?:string;status:string;due:string;latest_message:string;mentioned:boolean;message_time:string;message_sender:string;owner_id:string;performers:string[];observers:string[]};
@@ -50,18 +50,15 @@ export function WorkProvider({children,team=false,legacy=false}:{legacy?:boolean
  return <Feed.Provider value={{selection,select,team,canAssign,names,rows,open:openWork,error,ready}}>{children}</Feed.Provider>;
 }
 export function WorkArea({kind,children}:{kind?:Kind;children:React.ReactNode}){
- const {selection,select,rows,ready,canAssign}=useWorkFeed();
- const [creating,setCreating]=useState(false);
- const job=rows.find(row=>row.item.id===selection&&row.item.kind===kind)?.item;
- const panel=useRef<HTMLDialogElement>(null);
- useEffect(()=>{if((job||creating)&&panel.current&&!panel.current.open)panel.current.showModal()},[job?.id,creating]);
+ const {selection,select,open,rows,ready}=useWorkFeed();
+ useEffect(()=>{
+  if(!kind||!selection)return;
+  const found=rows.some(row=>row.item.id===selection&&row.item.kind===kind);
+  if(found){open(selection);select('')}
+ },[kind,selection,rows,open,select]);
  if(!kind)return <>{children}</>;
  return <div className="work-task-area" data-work-area={kind}>
   <div className="work-task-list">{children}</div>
-  {(job||creating)&&<dialog ref={panel} className="work-conversation" aria-label={labels[kind]+' và trao đổi'} onCancel={()=>{select('');setCreating(false)}}>
-   <header><h3>{job?.title||labels[kind]}</h3><button type="button" onClick={()=>{select('');setCreating(false)}}>✕ Đóng</button></header>
-   <iframe key={job?.id||kind} title={labels[kind]+' · Chi tiết và trò chuyện'} src={'/connect/index.html?inline=1&'+(job?'thread='+encodeURIComponent(job.id):'compose='+kind)}/>
-  </dialog>}
   {selection&&ready&&!rows.some(row=>row.item.id===selection)&&<p role="status">Tác vụ không còn trong phạm vi tài khoản.</p>}
  </div>;
 }
