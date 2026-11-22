@@ -3,6 +3,7 @@ const $=s=>document.querySelector(s);
 const units={surgery:'Bệnh viện Ngoại khoa 115 Nghệ An'};
 const embeddedWork=(new URLSearchParams(location.search).has('row')||new URLSearchParams(location.search).has('inline'))&&window.parent!==window;
 if(embeddedWork)document.documentElement.classList.add('work-embed');
+if(new URLSearchParams(location.search).has('chatOnly'))document.documentElement.classList.add('nk-chat-only');
 const names={all:'Tổng quan',task:'Việc được giao',reminder:'Nhắc việc',chat:'Trao đổi',admin:'Quản trị nhân viên'};
 const statuses=['Mới','Đã nhận','Đang thực hiện','Hoàn thành'];
 const state={me:null,people:[],tab:'all',scope:'all',offset:0,rows:[],badges:{},screen:0,dialog:0,thread:null,seq:0,loading:false};
