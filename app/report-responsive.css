@@ -737,3 +737,16 @@ th,td{padding:10px 11px;line-height:1.4}
 .report-matrix-select-item b{color:#123b8f;font-size:12px;overflow-wrap:anywhere}
 .report-matrix-select-item small{font-size:12px;font-weight:550;color:#4b607c;overflow-wrap:anywhere;line-height:1.4}
 @media(max-width:650px){.report-matrix-select-list{grid-template-columns:1fr;max-height:220px}.report-matrix-select-actions span{width:100%;margin:3px 0 0}}
+
+/* Báo cáo tổng hợp: ảnh minh chứng xem ngay trong bảng (không thay đổi quyền truy cập). */
+.report-screen .report-evidence-gallery{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px;align-items:start;max-height:268px;min-width:120px;overflow-y:auto;overflow-x:hidden}
+.report-screen .report-evidence-gallery.report-evidence-direct{display:inline-grid!important}
+.report-screen .report-evidence-gallery .evidence-item{display:flex;align-items:stretch;justify-content:flex-start;flex-direction:column;min-width:0;max-width:185px;margin:0}
+.report-screen .report-image-preview{display:flex;flex-direction:column;gap:4px;min-width:0;width:100%;padding:5px;border:1px solid #cbdaf0;border-radius:8px;background:#f8fbff;color:#1a4d93;text-decoration:none;transition:background .15s,border-color .15s}
+.report-screen .report-image-preview:hover{background:#e8f2ff;border-color:#2563eb}
+.report-screen .report-image-preview:focus-visible{outline:3px solid #2563eb;outline-offset:2px}
+.report-screen .report-image-preview img{display:block;width:100%;height:90px;max-width:100%;object-fit:cover;border-radius:5px;background:#edf2fa;border:0}
+.report-screen .report-image-preview small{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;font-weight:650;line-height:1.5}
+.report-screen .report-image-failed{display:grid;place-items:center;min-height:90px;padding:5px;color:#9b3d3d;background:#fff2f2;text-align:center;font-size:11px}
+.report-screen .report-error-detail-table td:has(.report-evidence-gallery),.report-screen td:has(.report-evidence-gallery){min-width:170px;vertical-align:top}
+@media(max-width:700px){.report-screen .report-image-preview img{height:80px}.report-screen .report-evidence-gallery{grid-template-columns:repeat(auto-fit,minmax(90px,1fr));max-height:230px}}
