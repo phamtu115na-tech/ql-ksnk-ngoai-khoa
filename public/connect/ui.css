@@ -60,3 +60,23 @@
  .nk-inline-task #modal .split[data-view=chat] .discussion{display:flex}
  .nk-inline-task #modal .phoneTabs{display:flex}
 }
+
+/* Cột trao đổi bên phải của form KSNK cũ: tuyệt đối không lặp lại phiếu. */
+html.nk-chat-only body>header,
+html.nk-chat-only #app,
+html.nk-chat-only #dock,
+html.nk-chat-only #modal .modalbar,
+html.nk-chat-only #modal .phoneTabs,
+html.nk-chat-only #modal .original-pane,
+html.nk-chat-only #modal .details.pane,
+html.nk-chat-only #modal .inline-info{display:none!important}
+html.nk-chat-only body{margin:0;background:white;overflow:hidden}
+html.nk-chat-only #modal{position:static;inset:auto;display:block;width:100%;max-width:none;height:100dvh;max-height:none;margin:0;padding:0;border:0;border-radius:0;overflow:hidden}
+html.nk-chat-only #modal #dialogBody{height:100%;min-height:0;display:flex;flex-direction:column;padding:0}
+html.nk-chat-only #modal .split,
+html.nk-chat-only #modal .split[data-view=detail],
+html.nk-chat-only #modal .split[data-view=chat]{display:block!important;flex:1;height:100%;min-height:0;overflow:hidden}
+html.nk-chat-only #modal .discussion.pane,
+html.nk-chat-only #modal .split[data-view=detail] .discussion.pane{display:flex!important;width:100%;height:100%;min-height:0;padding:10px;flex-direction:column;overflow:hidden;background:white}
+html.nk-chat-only #modal .discussion .stream{flex:1;min-height:90px;height:auto;overflow:auto}
+html.nk-chat-only #modal .discussion #send{flex:none;max-height:44dvh;overflow:auto}
