@@ -75,7 +75,14 @@ export function WorkMessage({source,kind,compact=false}:{source:unknown;kind:Kin
  const {rows,open}=useContext(Feed),row=rows.find(x=>x.item.kind===kind&&String(x.item.source_row)===String(source));
  if(!row)return null;
  const value=<><b className={row.unread?(row.item.mentioned?'nk-mention':'nk-unread'):''}>{Number(row.unread)>0?(row.item.mentioned?'@ Có tin nhắc đến bạn':'Có tin nhắn mới')+' ('+row.unread+')':'Trao đổi'}</b>{row.item.latest_message?' · '+row.item.latest_message:''}</>;
- return compact?<span className="nk-row-message">{value}</span>:<button type="button" className="nk-row-message" onClick={e=>{e.stopPropagation();open(row.item.id)}}>{value}</button>;
+ if(compact){
+  if(Number(row.unread)<=0)return null;
+  const label=row.item.mentioned?'@ Có tin nhắn mới':'Có tin nhắn mới';
+  return <button type="button" className={'nk-row-message-compact'+(row.item.mentioned?' is-mentioned':'')}
+    title={row.item.latest_message||label} aria-label={label+' ('+row.unread+' tin chưa đọc) — '+row.item.title}
+    onClick={e=>{e.stopPropagation();open(row.item.id)}}><span aria-hidden="true">▤</span> {label} <b>({row.unread})</b></button>;
+ }
+ return <button type="button" className="nk-row-message" onClick={e=>{e.stopPropagation();open(row.item.id)}}>{value}</button>;
 }
 export function HomeWorkInbox(){
  const {rows,open,names,ready,error}=useWorkFeed();

@@ -140,3 +140,23 @@
  .work-detail-layout .work-dialog-close{top:6px;right:6px;min-height:44px;min-width:76px}
  .work-detail-layout .work-dialog-close span{font-size:12px}
 }
+
+
+/* Bảng thời hạn: tin nhắn chưa đọc nằm gọn trong đầu thẻ, giống ảnh tham chiếu. */
+.deadline-column-cards>div{position:relative;min-width:0}
+.deadline-column-cards>div:has(>.nk-row-message-compact)>.deadline-card{padding-top:43px;min-height:163px}
+.deadline-column-cards>div>.nk-row-message-compact{
+ position:absolute;top:9px;left:10px;right:10px;z-index:2;
+ width:calc(100% - 20px);max-width:calc(100% - 20px);
+ display:flex;align-items:center;gap:4px;min-height:26px;
+ margin:0;padding:4px 7px;background:#fff0f3;border:1px solid #f4aebc;
+ border-radius:6px;color:#b01d44;font:800 11px/1.25 inherit;
+ text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+ box-shadow:none;cursor:pointer;
+}
+.nk-row-message-compact span{flex:0 0 auto}
+.nk-row-message-compact b{flex:0 0 auto}
+.nk-row-message-compact.is-mentioned{background:#ffe8ec;border-color:#ec8598}
+.nk-row-message-compact:hover{background:#ffe0e8;border-color:#cd3e61}
+.nk-row-message-compact:focus-visible{outline:3px solid #facc15;outline-offset:2px}
+@media(max-width:700px){.deadline-column-cards>div:has(>.nk-row-message-compact)>.deadline-card{padding-top:44px}}
