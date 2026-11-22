@@ -21,31 +21,14 @@ export default function HeaderQuickActions(){
  if(!host)return null;
 
  const goHome=()=>{
-  const back=document.querySelector<HTMLButtonElement>('.module-toolbar .back-btn');
-  if(back){back.click();window.scrollTo({top:0,behavior:'smooth'});return;}
-  window.scrollTo({top:0,behavior:'smooth'});
+  const home=document.querySelector<HTMLButtonElement>('[data-module="home"]');
+  if(home){home.click();window.scrollTo({top:0,behavior:'smooth'});return;}
+  window.location.assign('/ngoai-khoa');
  };
-
  const openReminders=()=>{
-  const taskButton=document.querySelector<HTMLButtonElement>('[data-module="tasks"]')||Array.from(document.querySelectorAll<HTMLButtonElement>('.side-menu nav button')).find(button=>{
-   const label=normalized(button.textContent);
-   return label.includes('giao viec')&&label.includes('nhac viec');
-  });
-  if(taskButton)taskButton.click();
-  let attempts=0;
-  const openTab=()=>{
-   const reminderTab=Array.from(document.querySelectorAll<HTMLButtonElement>('.task-view-tabs button')).find(button=>{
-    const label=normalized(button.textContent);
-    return label.includes('nhac viec')&&label.includes('ghi chu');
-   });
-   if(reminderTab){reminderTab.click();window.scrollTo({top:0,behavior:'smooth'});return true;}
-   return false;
-  };
-  if(openTab())return;
-  const timer=window.setInterval(()=>{
-   attempts+=1;
-   if(openTab()||attempts>=25)window.clearInterval(timer);
-  },120);
+  const button=document.querySelector<HTMLButtonElement>('[data-module="reminders"]');
+  if(button){button.click();window.scrollTo({top:0,behavior:'smooth'});return;}
+  window.location.assign('/ngoai-khoa?work=reminder');
  };
 
  return createPortal(<>
