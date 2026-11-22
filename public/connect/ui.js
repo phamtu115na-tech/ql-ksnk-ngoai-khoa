@@ -38,7 +38,7 @@ async function start(){
  location.replace('/ngoai-khoa'+(args.size?'?'+args:''));return;
  }
  if(new URLSearchParams(location.search).has('inline'))document.documentElement.classList.add('nk-inline-task');
- if(new URLSearchParams(location.search).has('detail'))document.documentElement.classList.add('nk-detail-only');
+ if(new URLSearchParams(location.search).has('detail')){document.documentElement.classList.add('nk-detail-only');document.documentElement.classList.add('nk-inline-task');}
  if(!embeddedWork)document.documentElement.classList.add('nk-board-frame');
  state.tab=(target==='admin'&&r.me.admin)||['task','reminder','chat','account'].includes(target)?(target==='account'?'all':target):'reminder';lastUnread=0;
  if(window.parent===window&&!embeddedWork&&!document.querySelector('nk-work-alerts')){
@@ -170,16 +170,16 @@ async function markSeen(){
 async function openThread(id){
  const epoch=state.dialog;
  const r=await api('thread',{id});if(state.dialog!==epoch)return;
- if(r.viewOnly){const x=r.item;modal(x.title,'<p>Người thực hiện · '+esc(x.performers.map(person).join(', '))+'</p><p>Hạn · '+esc(x.due||'—')+'</p><p>Trạng thái · '+esc(x.status)+'</p><p>'+esc(x.note)+'</p>');return;}
- state.members=r.members;const t=r.item,isChat=t.kind==='chat',canUpdate=r.writable&&(r.manage||t.owner_id===state.me.id||t.performers.includes(state.me.id));
- const shared=r.manage||t.owner_id===state.me.id;
+
+ state.members=r.members;const t=r.item,isChat=t.kind==='chat',canUpdate=r.writable&&(r.manage||[t.owner_id,...t.performers,...t.observers].includes(state.me.id));
+ const shared=canUpdate;
  const summaryFacts='<div class="details pane"><h3>'+names[t.kind]+'</h3><p>Đơn vị · '+esc(t.units.map(x=>units[x]).join(' / '))+'</p><p>Người tạo · '+esc(t.owner_id?person(t.owner_id):'Chưa ghi trong sổ')+'</p><p>Người thực hiện · '+esc(t.performers.map(person).join(', '))+'</p><p>Người liên quan · '+esc(t.observers.map(person).join(', ')||'—')+'</p><p style="white-space:pre-wrap">'+esc(t.note)+'</p><p>Ngày '+(t.kind==='reminder'?'nhắc':'đến hạn')+' · '+esc(t.due||'—')+'</p>'+(!isChat?'<p>Bộ phận · '+esc(r.department||'—')+'</p><p>Ghi chú cá nhân · '+esc(r.personal||'—')+'</p><p>Ý kiến quản lý · '+esc(r.opinion||'—')+'</p>':'')+(r.writable&&!isChat?'<button id="editTask">Cập nhật tác vụ</button>':'')+(canUpdate&&!isChat?'<label>Trạng thái<select id="progress">'+options(Object.fromEntries(statuses.map(x=>[x,x])),t.status)+'</select></label><button id="saveStatus">Lưu trạng thái</button>':'')+'</div>';
  const inline=new URLSearchParams(location.search).has('inline');
- const legacyView=inline&&!isChat;
+ const legacyView=!isChat; // Một cấu trúc chi tiết cho mọi người được phép mở, không có màn hình chỉ xem.
  const reminder=t.kind==='reminder';
  const locked=r.approvalStatus==='ĐÃ PHÊ DUYỆT';
  const editable=r.writable&&!locked;
- function field(label,value){return '<label>'+label+'<input readonly value="'+esc(value||'—')+'"></label>';}
+ function field(label,value){return '<div class="work-static-field"><small>'+label+'</small><div>'+esc(value||'—')+'</div></div>';}
  const detailForm='<div class="details pane work-original">'+
   '<section class="original-unit"><strong>'+(reminder?'Đơn vị được nhắc việc':'Đơn vị được giao việc')+'</strong><p>'+esc(t.units.map(x=>units[x]).join(' / '))+'</p></section>'+
   field(reminder?'Người nhắc việc':'Người giao việc',t.owner_id?person(t.owner_id):'Chưa ghi nhận')+
@@ -197,7 +197,7 @@ async function openThread(id){
  modal(rowTitle(t),'<div class="phoneTabs"><button data-view="detail">Chi tiết</button><button data-view="chat">Trò chuyện</button></div><div class="split" data-view="chat">'+(legacyView?'<section class="inline-info original-pane">'+facts+'</section>':facts)+'<div class="discussion pane"><h3>'+esc(isChat?'Trao đổi riêng':t.kind==='task'?'Trò chuyện giao việc':'Trò chuyện nhắc việc')+'</h3><small>'+esc(r.members.map(x=>x.name).join(', '))+'</small><div id="stream" class="stream"><button id="older" '+(r.rows.length<50?'hidden':'')+'>Xem tin cũ hơn</button><div id="messages">'+messages(r.rows)+'</div></div><form id="send"><label>Tin nhắn<textarea name="body" maxlength="6000" placeholder="Nhập nội dung, gõ @ để nhắc tên thành viên…"></textarea></label><div id="mentions"></div>'+fileField+' <button class="primary">Gửi ➤</button></form></div></div>');
  if(legacyView){
   const form=$('#edit');
-  for(const name of ['title','due','note'])form.elements[name].readOnly=!editable||!shared;
+  for(const name of ['title','due','note'])form.elements[name].readOnly=!editable;
   form.elements.personal.readOnly=!editable;
   if(form.elements.opinion)form.elements.opinion.readOnly=!editable;
   if(editable){const rid=crypto.randomUUID();submit(async fd=>{await api('detailSave',{...Object.fromEntries(fd),id,expected:t.seq,requestId:rid});await openThread(id)});}
