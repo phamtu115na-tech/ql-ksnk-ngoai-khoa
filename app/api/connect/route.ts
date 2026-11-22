@@ -43,6 +43,14 @@ async function dispatch(req:Request){
  must(item&&await rpc('nk_check_work',{who:a.id,work_id:item.id}),'Chỉ người tham gia việc này được mở trò chuyện.',403);
  return {id:item.id};
  }
+ if(b.action==='sourceThreadById'){
+  must(['task','reminder'].includes(b.kind)&&Number.isSafeInteger(b.sourceId)&&b.sourceId>0);
+  const source=checked(await client.from('nk_legacy_rows').select('id,sheet_name').eq('id',b.sourceId).eq('sheet_name',b.kind==='task'?'GIAO VIỆC':'NHAC_VIEC_GHI_CHU').maybeSingle());
+  must(source,'Không tìm thấy dữ liệu tác vụ cũ.',404);
+  const item=checked(await client.from('cx_threads').select('id').eq('source_row',source.id).eq('kind',b.kind).maybeSingle());
+  must(item&&await rpc('nk_check_work',{who:a.id,work_id:item.id}),'Tác vụ không thuộc phạm vi được phân công.',403);
+  return {id:item.id};
+ }
  if(b.action==='history'){
  must(a.admin||(a.work_view&&!a.team_lead),'Mở danh sách phiếu trong phạm vi tài khoản.',403);
  must(['task','reminder'].includes(b.kind));
