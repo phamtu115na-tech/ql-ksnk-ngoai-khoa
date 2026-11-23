@@ -9,7 +9,7 @@ export const FEATURE_ACTIONS={
  violations:['view','create','edit','delete'],
  plans:['view','create','edit','delete'],
  issues:['view','create','edit','delete'],
- reports:['view','export'],
+ reports:['view','edit','export'],
  staff:['view','create','edit','delete'],
  kpi:['view','create','edit','delete'],
  alerts:['view','edit']
