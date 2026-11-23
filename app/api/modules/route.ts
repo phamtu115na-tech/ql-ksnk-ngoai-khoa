@@ -613,7 +613,7 @@ export async function GET(req:Request){const viewer=await actor();if(!viewer)ret
    grantedFilters.person=viewer.name;
   }
  }
- const result=await buildModule(moduleName,grantedFilters);
+ const result:AnyRecord=await buildModule(moduleName,grantedFilters);
  if(moduleName==='checklists'){
   result.canCreateChecklist=(await featureScope(viewer,'checklists','create'))!=='none';
   result.canEditChecklist=(await featureScope(viewer,'checklists','edit'))!=='none';
