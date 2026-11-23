@@ -578,7 +578,7 @@ export async function GET(req:Request){const viewer=await actor();if(!viewer)ret
     const add=await featureScope(viewer,'checklists','create'),edit=await featureScope(viewer,'checklists','edit'),del=await featureScope(viewer,'checklists','delete');
     safe.canScore=add!=='none'||edit!=='none';
     safe.canCreateChecklist=add!=='none';safe.canEditChecklist=edit!=='none';safe.canDeleteChecklist=del!=='none';
-    safe.teamChecklist=viewer.team_lead&&!viewer.legacy_operator;
+    safe.teamChecklist=viewer.team_lead&&!viewer.legacy_operator&&(await featureScope(viewer,'checklistTemplates','edit'))==='none';
     safe.rows=(result.rows||[]).filter((row:AnyRecord)=>teamScope||same(row.person,ownName));
     safe.total=safe.rows.length;
     const visibleIds=new Set(safe.rows.map((row:AnyRecord)=>String(row.id)));
@@ -713,11 +713,11 @@ export async function POST(req:Request){const user=await actor();if(!user)return
   if(!department)return NextResponse.json({ok:false,error:'Tài khoản chưa xác định bộ phận.'},{status:403});
   if(moduleName==='alerts'&&['read','unread'].includes(op))
    return NextResponse.json({ok:true,...await saveAlertReadState(body)});
-  const allow=team?['plans','issues','violations','violationError','checklists','checklistForm','checklistCriterion']:
-   ['plans','issues','checklists'];
+  const allow=team?['plans','issues','violations','violationError','checklists','checklistForm','checklistCriterion','checklistConfig','staff','kpi']:
+   ['plans','issues','checklists','violations','violationError','checklistForm','checklistCriterion','checklistConfig','staff','kpi'];
   if(!allow.includes(moduleName)||!['save','complete','reset','plan_status','carry','delete'].includes(op))
    return NextResponse.json({ok:false,error:'Thao tác ngoài quyền tài khoản.'},{status:403});
-  if(!team&&['delete','carry'].includes(op))
+  if(!team&&['delete','carry'].includes(op)&&!(editFeature&&(await featureScope(user,editFeature,op==='delete'?'delete':'edit'))!=='none'))
    return NextResponse.json({ok:false,error:'Nhân viên không có quyền xóa hoặc luân chuyển hồ sơ.'},{status:403});
   const sheet=sheetFor(moduleName,body),existing=sheet&&Number(body.row_no)>0?await readRow(sheet,Number(body.row_no)):null;
   if(!sheet||Number(body.row_no)>0&&!existing)return NextResponse.json({ok:false,error:'Không tìm thấy hồ sơ hợp lệ.'},{status:404});
