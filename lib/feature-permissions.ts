@@ -68,6 +68,16 @@ export function effectiveMatrix(person:Person,overrides:GrantMatrix={},legacy?:{
    }
    row[action]=person.admin?'hospital':overrides?.[feature]?.[action]??fallback
   }
+  const ceiling:Scope=person.admin?'hospital':person.legacy_operator&&person.work_view?'hospital':
+   person.team_lead&&person.work_role_reviewed&&person.work_view?'team':'self'
+  for(const action of actions){
+   const current=row[action]||'none'
+   if(scopeRank(current)>scopeRank(ceiling))row[action]=ceiling
+  }
+  const read=row.view||'none'
+  for(const action of actions){
+   if(action!=='view'&&scopeRank(row[action]||'none')>scopeRank(read))row[action]=read
+  }
   result[feature]=row
  }
  return result
