@@ -40,7 +40,7 @@ export default function ReportPermissions(){
    <label>Tìm nhanh nhân viên
     <input type="search" autoComplete="off" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Nhập họ tên, tên đăng nhập hoặc bộ phận..." aria-controls="nk-report-person-select"/>
    </label>
-   <small role="status">{search.trim()?`Tìm thấy \${matches.length} / \${people.length} nhân viên`:`Có \${people.length} nhân viên`}</small>
+   <small role="status">{search.trim()?`Tìm thấy ${matches.length} / ${people.length} nhân viên`:`Có ${people.length} nhân viên`}</small>
    <label>Tài khoản
     <select id="nk-report-person-select" value={id} onChange={e=>select(e.target.value)}>
      <option value="">Chọn nhân viên</option>
