@@ -1,4 +1,5 @@
 import {actor,db} from '../../../../lib/auth'
+import {featureScope,inFeatureScope} from '../../../../lib/feature-permissions'
 import {GET as reports} from '../../modules/route'
 import {aggregate,colors,defaults,levels,severity} from '../../../../lib/matrix'
 import {sectionTitles,type Section,type SectionKey} from '../../../../lib/briefing-sections'
@@ -25,9 +26,23 @@ function sections(data:Row,keys:SectionKey[],scale:typeof defaults){
 }
 export async function POST(req:Request){
  const user=await actor()
- if(!user?.admin||req.headers.get('origin')!==new URL(req.url).origin)return Response.json({error:'Thiếu quyền xuất báo cáo tổng hợp'},{status:403})
+ if(!user||req.headers.get('origin')!==new URL(req.url).origin)return Response.json({error:'Thiếu quyền xuất báo cáo tổng hợp'},{status:403})
+ const exportScope=await featureScope(user,'reports','export')
+ if(exportScope==='none')return Response.json({error:'Chưa được cấp quyền xuất Excel/PowerPoint.'},{status:403})
  const {format,keys,departments,filters}=await req.json()
  if(!['pptx','xlsx'].includes(format)||!Array.isArray(keys)||!keys.length||keys.length>8||new Set(keys).size!==keys.length||!keys.every(k=>Object.hasOwn(sectionTitles,k))||!Array.isArray(departments)||departments.length>24||!departments.every(d=>typeof d==='string'&&d.trim().length>0&&d.length<=160))return Response.json({error:'Lựa chọn xuất không hợp lệ'},{status:400})
+ if(exportScope!=='hospital'){
+  const department=user.team_department||user.department
+  if(!department||!inFeatureScope(user,exportScope,department,user.staff_code,user.name))
+   return Response.json({error:'Không có phạm vi xuất báo cáo hợp lệ.'},{status:403})
+  if(departments.some((d:string)=>d.toLocaleLowerCase('vi')!==department.toLocaleLowerCase('vi')))
+   return Response.json({error:'Bộ phận ngoài phạm vi.'},{status:403})
+  departments.splice(0,departments.length,department)
+  if(exportScope==='self'){
+   if(filters?.person&&filters.person!==user.name)return Response.json({error:'Nhân viên ngoài phạm vi xuất.'},{status:403})
+   filters.person=user.name
+  }
+ }
  const url=new URL(req.url);url.searchParams.set('module','reports')
  for(const k of ['from','to','person'])if(typeof filters?.[k]==='string')url.searchParams.set(k,filters[k])
  const settings=await db().from('nk_legacy_rows').select('data').eq('sheet_name','CAI_DAT_MA_TRAN').eq('row_no',1).maybeSingle()
