@@ -216,7 +216,7 @@ export default function Home({matrixAccess=false,creatorName,openWork=false,init
   setModal(current=>current?{...current,module:'taskApproval',fromTaskEdit:true}:current);
  }
  function backToTask(){
-  if(!modal||modal.module!=='taskApproval'||modal.fromTaskEdit!==true)return;
+  if(!modal||modal.module!=='taskApproval')return;
   setModalError('');
   setForm(previous=>({...previous,__module:'tasks',approvalAction:undefined,managerAccountId:''}));
   setModal(current=>current?{...current,module:'tasks',fromTaskEdit:false}:current);
