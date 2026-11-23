@@ -499,16 +499,16 @@ export async function GET(req:Request){const viewer=await actor();if(!viewer)ret
    .eq('id',viewer.id).maybeSingle();
   if(personError)throw personError;
   managerAccount=Boolean(person?.active&&(person.admin||person.legacy_operator||person.team_lead)&&person.work_view);
-  const state=norm(pick(source.data,['Trạng thái phê duyệt','Trạng thái xin ý kiến']));
+  const state=norm(pick(source.data.data,['Trạng thái phê duyệt','Trạng thái xin ý kiến']));
   const pending=['cho phe duyet','cho quan ly phan hoi','cho quan ly phe duyet'].includes(state);
   if(pending&&person?.active){
    const {data:threadInfo,error:threadError}=await db().from('cx_threads').select('owner_id,performers').eq('id',id).maybeSingle();
    if(threadError)throw threadError;
    const excluded=threadInfo?.owner_id===viewer.id||
      Boolean(Array.isArray(threadInfo?.performers)&&threadInfo.performers.includes(viewer.id)&&
-       text(source.data?.['Người xin duyệt ID'])===viewer.id);
-   const assigned=text(source.data?.['Tài khoản duyệt']);
-   const namedCode=text(source.data?.['Mã người quản lý']);
+       text(source.data.data?.['Người xin duyệt ID'])===viewer.id);
+   const assigned=text(source.data.data?.['Tài khoản duyệt']);
+   const namedCode=text(source.data.data?.['Mã người quản lý']);
    const matchingAssignee=assigned?assigned===viewer.id:Boolean(namedCode&&person.staff_code&&same(namedCode,person.staff_code));
    canReview=Boolean(!excluded&&(person.admin||
      (person.can_approve_work&&person.work_edit&&
