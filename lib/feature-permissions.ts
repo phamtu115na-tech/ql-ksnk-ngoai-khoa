@@ -49,7 +49,7 @@ export function defaultFeatureScope(person:Person,feature:Feature,action:Action)
  if(feature==='checklists'&&['create','edit','delete'].includes(action))
   return workCanEdit?(chief?'hospital':lead?'team':'none'):'none'
  if(feature==='checklistTemplates'&&['create','edit','delete'].includes(action))
-  return workCanEdit&&chief?'hospital':'none'
+  return workCanEdit?(chief?'hospital':lead?'team':'none'):'none'
  if(feature==='staff'&&['create','edit','delete'].includes(action))return workCanEdit&&chief?'hospital':'none'
  if(['plans','issues'].includes(feature)&&['create','edit'].includes(action)&&!chief&&!lead)return 'self'
  if(feature==='tasks'&&action==='approve')return 'none' // Reviewer approval also needs a named assignee.
