@@ -1,3 +1,4 @@
+import {staffPosition,staffEmploymentStatus,roleAllowedByPosition} from '../../../lib/staff-roles';
 import {actor,db,personFields,Person} from '../../../lib/auth';
 import {randomUUID} from 'crypto';
 import {hash} from 'bcryptjs';
@@ -72,17 +73,39 @@ async function dispatch(req:Request){
  const rows=checked(await client.from('cx_work_people').select('source_id,unit,role,token,match_code').eq('unit',unit).is('staff_code',null).order('source_id').order('role').order('token').range(start,start+499))||[];
  pending.push(...rows);if(rows.length<500)break;
  }
- return {staff,pending};
+ const hrRecords=checked(await client.from('ksnk_legacy_rows').select('id,data').eq('sheet_name','DM_NHANVIEN'))||[];
+ const hrById=new Map(hrRecords.map((record:{id:number;data:Record<string,unknown>})=>[record.id,record.data]));
+ return {staff:staff.map(employee=>{
+  const hr=hrById.get(Number(employee.source_id))||{};
+  return {...employee,position:staffPosition(hr['Chức vụ'])||String(hr['Chức vụ']||''),employmentStatus:staffEmploymentStatus(hr['Trạng thái'])||String(hr['Trạng thái']||'')};
+ }),pending};
  }
  if(b.action==='account'){
  must(a.admin,'Chỉ quản trị viên được cấp tài khoản.',403);
  const name=str(b.name,120),username=str(b.username,50).toLowerCase();must(name&&/^[a-z0-9._-]{3,50}$/.test(username)&&b.unit===unit);
- const patch:Record<string,unknown>={name,username,unit:b.unit,legacy_operator:b.legacy===true,active:b.active===true,version:randomUUID()};
+ let linked:null|{position:string;status:string;department:string;name:string}=null;
+ if(b.staffCode){
+  const code=str(b.staffCode,150);
+  const list=checked(await client.from('cx_staff_catalog').select('source_id,name,department,copies').eq('unit',unit).eq('code',code).limit(2));
+  must(list&&list.length===1&&Number(list[0].copies)===1,'Mã nhân viên chưa có hồ sơ duy nhất trong Nhân sự & Hợp đồng.',409);
+  const record=checked(await client.from('ksnk_legacy_rows').select('data').eq('sheet_name','DM_NHANVIEN').eq('id',list[0].source_id).maybeSingle());
+  must(record,'Không tìm thấy hồ sơ nhân sự liên kết.',409);
+  linked={position:staffPosition(record.data?.['Chức vụ']),status:staffEmploymentStatus(record.data?.['Trạng thái']),department:list[0].department,name:list[0].name};
+  must(linked.status,'Trạng thái nhân sự chưa được chuẩn hóa.',409);
+  must(linked.status!=='Đã nghỉ việc'||b.active!==true,'Nhân sự đã nghỉ việc không được kích hoạt tài khoản.',409);
+  if(b.role!==undefined){
+   must(linked.position,'Hãy chuẩn hóa Chức vụ tại Nhân sự & Hợp đồng.',409);
+   must(roleAllowedByPosition(b.role,linked.position),'Phân quyền không khớp Chức vụ trong Nhân sự & Hợp đồng.',409);
+  }
+ }
+ const patch:Record<string,unknown>={name:linked?.name||name,username,unit:b.unit,legacy_operator:b.legacy===true,active:b.active===true,version:randomUUID()};
+ if(linked)patch.department=linked.department;
  if(b.role!==undefined){
  must(['chief','team','staff'].includes(b.role)&&typeof b.view==='boolean'&&typeof b.edit==='boolean'&&(!b.edit||b.view));
  patch.work_role_reviewed=true;patch.legacy_operator=b.role==='chief';patch.team_lead=b.role==='team';patch.work_view=b.view;patch.work_edit=b.edit;
+ if(b.role!=='team')patch.team_department=null;
  if(b.role==='team'){
- const dep=str(b.department||'',150);must(dep,'Hãy chọn bộ phận của tổ trưởng.');
+ const dep=str(linked?.department||b.department||'',150);must(dep,'Hãy chọn bộ phận của tổ trưởng.');
  must((await people(true)).some(p=>p.department===dep),'Bộ phận chưa có trong danh mục nhân sự.');patch.team_department=dep;
  }
  }
