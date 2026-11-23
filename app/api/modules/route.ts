@@ -6,7 +6,6 @@ import {requireManagerEvaluation} from '../../../lib/task-evaluation';
 import {NextResponse} from 'next/server';
 import {actor,canOperateLegacy} from '../../../lib/auth';
 import {buildLeavePlanning} from '../../../lib/leave-policy';
-import {reportAccess} from '../../../lib/report-access';
 import {featureScope,inFeatureScope} from '../../../lib/feature-permissions';
 import {supabaseAdmin} from '../../../lib/supabase';
 
