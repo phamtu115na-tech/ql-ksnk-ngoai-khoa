@@ -268,7 +268,7 @@ async function buildReportsParity(f:Filters,staff:AnyRecord[],departments:string
 async function buildModule(moduleName:string,f:Filters){
  const [staffRows,departmentRows]=await Promise.all([readSheet(S.staff),readSheet(S.departments)]);const staff=getStaff(staffRows);const managers=managerDirectory(staff);const departments=departmentOptions(departmentRows,staff);const map=staffMap(staff);
  if(moduleName==='checklists')return buildChecklistParity(f,staff,departments);
- if(moduleName==='reports'){const user=await actor();const access=user?await reportAccess(user):null;return {...await buildReportsParity(f,staff,departments,map),canExport:access?.can_export===true};}
+ if(moduleName==='reports'){const user=await actor();const allowed=user?await featureScope(user,'reports','export'):'none';return {...await buildReportsParity(f,staff,departments,map),canExport:allowed!=='none'};}
  if(moduleName==='staff'){
   const rows=staff.filter(x=>(!f.department||same(x.department,f.department))&&(!f.person||norm(x.name).includes(norm(f.person))));
   const leavePlanning=buildLeavePlanning(rows,departments);
@@ -590,6 +590,7 @@ export async function GET(req:Request){const viewer=await actor();if(!viewer)ret
     safe.scoring=safe.percentConfig;
   }
   if(moduleName==='reports'){
+    safe.canExport=(await featureScope(viewer,'reports','export'))!=='none';
     safe.snapshots=[];
     safe.matrixCriteria=(result.matrixCriteria||[]).filter((x:AnyRecord)=>!x.department||same(x.department,department));
     safe.nextWeekPlan=(result.nextWeekPlan||[]).filter((x:AnyRecord)=>
@@ -614,6 +615,12 @@ export async function GET(req:Request){const viewer=await actor();if(!viewer)ret
   }
  }
  const result=await buildModule(moduleName,grantedFilters);
+ if(moduleName==='checklists'){
+  result.canCreateChecklist=(await featureScope(viewer,'checklists','create'))!=='none';
+  result.canEditChecklist=(await featureScope(viewer,'checklists','edit'))!=='none';
+  result.canDeleteChecklist=(await featureScope(viewer,'checklists','delete'))!=='none';
+  result.canScore=result.canCreateChecklist||result.canEditChecklist;
+ }
  return NextResponse.json({ok:true,module:moduleName,...result},{headers:{'Cache-Control':'private, no-store'}});}catch(error){console.error('[modules:get]',error);return NextResponse.json({ok:false,error:'Không tải được dữ liệu phân hệ',detail:error instanceof Error?error.message:'Lỗi Supabase'},{status:503});}}
 
 /** Quyền sửa phiếu đang tồn tại theo danh tính người giao / người thực hiện / tổ trưởng.
