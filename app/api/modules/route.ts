@@ -674,6 +674,33 @@ export async function POST(req:Request){const user=await actor();if(!user)return
    return NextResponse.json({ok:false,error:'Không được chuyển phiếu sang bộ phận khác.'},{status:403});
  }
 
+ // Other operational modules use the same per-feature matrix. Do not trust a department in the request.
+ const featureMap:Record<string,'violations'|'plans'|'issues'|'staff'|'kpi'|'checklistTemplates'>={
+  violations:'violations',violationError:'violations',plans:'plans',issues:'issues',
+  staff:'staff',kpi:'kpi',checklistForm:'checklistTemplates',
+  checklistCriterion:'checklistTemplates',checklistConfig:'checklistTemplates'
+ };
+ const editFeature=featureMap[moduleName];
+ if(editFeature){
+  const update=Number(body.row_no)>0;
+  const action=op==='delete'||op==='delete_report'?'delete':update||['complete','reset','plan_status','carry','save_report','save_rules'].includes(op)?'edit':'create';
+  const granted=await featureScope(user,editFeature,action);
+  if(granted==='none')return NextResponse.json({ok:false,error:'Chưa được cấp quyền '+action+' trong phân hệ.'},{status:403});
+  const sheet=sheetFor(moduleName,body);
+  const existing=update&&sheet?await readRow(sheet,Number(body.row_no)):null;
+  if(update&&sheet&&!existing)return NextResponse.json({ok:false,error:'Không tìm thấy hồ sơ.'},{status:404});
+  const input=(body.data&&typeof body.data==='object'?body.data:body) as AnyRecord;
+  const original=existing?.data as AnyRecord|undefined;
+  const oldDept=original&&text(original['Bộ phận']||original['Thuộc bộ phận']||original.department);
+  const requestedDept=text(input.department||input['Bộ phận']||input['Thuộc bộ phận']);
+  const dept=oldDept||requestedDept;
+  const staffId=original?text(original['Mã NV']):text(input.staffId||input['Mã NV']);
+  const person=original?text(original['Họ tên']||original['Họ và tên']||original['Người phụ trách']||original['Người thực hiện']):text(input.person||input.staffName||input.owner||input['Người phụ trách']||input['Họ tên']);
+  if(!inFeatureScope(user,granted,dept,staffId,person))
+   return NextResponse.json({ok:false,error:'Hồ sơ nằm ngoài phạm vi cấp quyền.'},{status:403});
+  if(original&&requestedDept&&oldDept&&!same(requestedDept,oldDept))
+   return NextResponse.json({ok:false,error:'Không được chuyển hồ sơ sang bộ phận khác.'},{status:403});
+ }
  const workUpdate=(moduleName==='tasks'||moduleName==='reminders')&&['save','daily'].includes(op)&&Number(body.row_no)>0;
  const workRights=workUpdate?await getWorkEditRights(user,moduleName as 'tasks'|'reminders',Number(body.row_no)):null;
  if(workUpdate&&!workRights?.canSave)
