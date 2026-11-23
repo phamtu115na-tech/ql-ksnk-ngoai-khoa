@@ -706,6 +706,27 @@ export async function POST(req:Request){const user=await actor();if(!user)return
   if(original&&requestedDept&&oldDept&&!same(requestedDept,oldDept))
    return NextResponse.json({ok:false,error:'Không được chuyển hồ sơ sang bộ phận khác.'},{status:403});
  }
+ if(moduleName==='reports'){
+  if(op==='delete'&&!user.admin)return NextResponse.json({ok:false,error:'Chỉ quản trị viên được xóa báo cáo.'},{status:403});
+  const kind=text(body.kind).toUpperCase();
+  const itemFeature=kind==='TASK'?'tasks':kind==='PLAN'?'plans':kind==='VIOLATION'?'violations':kind==='ISSUE'?'issues':'reports';
+  const scope=await featureScope(user,itemFeature as 'tasks'|'plans'|'violations'|'issues'|'reports','edit');
+  if(scope==='none')return NextResponse.json({ok:false,error:'Chưa được cấp quyền sửa nội dung báo cáo.'},{status:403});
+  const sheet=kind==='TASK'?S.tasks:kind==='PLAN'?(text(body.planType).toUpperCase()==='THÁNG'?S.monthly:S.weekly):
+   kind==='VIOLATION'?S.violations:kind==='ISSUE'?S.issues:S.opinions;
+  const rows=await readSheet(sheet,true);
+  const existing=Number(body.row_no)>0?rows.find(x=>x.row_no===Number(body.row_no)):
+   text(body.id)?rows.find(x=>same(x.legacy_id,body.id)||same(x.data?.['ID'],body.id)):null;
+  if(op==='inline'&&kind!=='OPINION'&&!existing)
+   return NextResponse.json({ok:false,error:'Không tìm thấy hồ sơ cần sửa.'},{status:404});
+  const old=existing?.data||{};
+  const dept=pick(old,['Bộ phận','Thuộc bộ phận'])||text(body.department);
+  const person=pick(old,['Họ tên','Người thực hiện','Người phụ trách','Nhân viên'])||text(body.person||body.owner);
+  if(!inFeatureScope(user,scope,dept,pick(old,['Mã NV']),person))
+   return NextResponse.json({ok:false,error:'Không được sửa báo cáo ngoài phạm vi.'},{status:403});
+  if(existing&&body.department&&!same(body.department,dept))
+   return NextResponse.json({ok:false,error:'Không được chuyển bản ghi sang bộ phận khác.'},{status:403});
+ }
  const workUpdate=(moduleName==='tasks'||moduleName==='reminders')&&['save','daily'].includes(op)&&Number(body.row_no)>0;
  const workRights=workUpdate?await getWorkEditRights(user,moduleName as 'tasks'|'reminders',Number(body.row_no)):null;
  if(workUpdate&&!workRights?.canSave)
@@ -718,8 +739,8 @@ export async function POST(req:Request){const user=await actor();if(!user)return
   if(!department)return NextResponse.json({ok:false,error:'Tài khoản chưa xác định bộ phận.'},{status:403});
   if(moduleName==='alerts'&&['read','unread'].includes(op))
    return NextResponse.json({ok:true,...await saveAlertReadState(body)});
-  const allow=team?['plans','issues','violations','violationError','checklists','checklistForm','checklistCriterion','checklistConfig','staff','kpi']:
-   ['plans','issues','checklists','violations','violationError','checklistForm','checklistCriterion','checklistConfig','staff','kpi'];
+  const allow=team?['plans','issues','violations','violationError','checklists','checklistForm','checklistCriterion','checklistConfig','staff','kpi','reports']:
+   ['plans','issues','checklists','violations','violationError','checklistForm','checklistCriterion','checklistConfig','staff','kpi','reports'];
   if(!allow.includes(moduleName)||!['save','complete','reset','plan_status','carry','delete'].includes(op))
    return NextResponse.json({ok:false,error:'Thao tác ngoài quyền tài khoản.'},{status:403});
   if(!team&&['delete','carry'].includes(op)&&!(editFeature&&(await featureScope(user,editFeature,op==='delete'?'delete':'edit'))!=='none'))
