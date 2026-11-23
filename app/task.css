@@ -187,3 +187,17 @@
 .nk-work-readonly-notice{padding:10px 12px;margin:6px 0 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:7px;font-size:13px;color:#23466d}
 .nk-work-open-error{position:fixed;left:50%;transform:translateX(-50%);top:62px;max-width:min(92vw,750px);z-index:150;display:flex;align-items:center;gap:12px;padding:11px 14px;background:#fff1f2;border:1px solid #fda4af;border-radius:9px;color:#9f1239;box-shadow:0 6px 18px #17274a25}
 .nk-work-open-error button{background:transparent;border:0;font-size:16px;cursor:pointer;color:inherit}
+
+/* Xin phê duyệt ngay tại Sửa / Bổ sung giao việc, giữ biểu mẫu và trò chuyện song song. */
+.task-approval-request{position:relative;display:flex;align-items:center;margin-right:auto;min-width:0;flex-wrap:wrap;gap:6px}
+.form-actions .task-request-approval-btn{color:#92400e;background:#fff5d8;border:1px solid #f1c36c;border-radius:7px;font-weight:900;white-space:nowrap}
+.task-approval-chip{display:inline-block;padding:7px 10px;font-size:12px;font-weight:750;color:#7c4a13;background:#fff6e5;border:1px solid #f2d49e;border-radius:7px}
+.task-approval-success{font-size:12px;color:#166534;font-weight:700}
+.task-approval-request-panel{position:absolute;left:0;bottom:calc(100% + 10px);width:min(440px,calc(100vw - 56px));max-height:65dvh;overflow-y:auto;z-index:9;padding:14px;background:#fff;border:1px solid #bdd0e6;box-shadow:0 10px 32px #18325135;border-radius:10px;display:grid;gap:9px}
+.task-approval-request-panel>b{font-size:14px;color:#17416f}
+.task-approval-request-panel>small{color:#536477;font-size:12px;line-height:1.45}
+.task-approval-request-panel label{display:grid;gap:5px;font-weight:750;font-size:13px;color:#193b61}
+.task-approval-request-panel select,.task-approval-request-panel textarea{width:100%;min-width:0;padding:9px;border:1px solid #b8c7dc;border-radius:7px;font:inherit;font-size:13px;background:#fff;color:#18324e}
+.task-approval-request-actions{display:flex;justify-content:flex-end;gap:8px}
+.task-approval-error{color:#b91c1c;background:#fff1f2;border-radius:7px;padding:8px;margin:0;font-size:12px}
+@media(max-width:760px){.form-actions{flex-wrap:wrap}.task-approval-request{width:100%;margin-bottom:4px}.task-approval-request-panel{left:0;bottom:calc(100% + 7px)}}
