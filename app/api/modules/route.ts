@@ -693,7 +693,13 @@ export async function POST(req:Request){const user=await actor();if(!user)return
   const original=existing?.data as AnyRecord|undefined;
   const oldDept=original&&text(original['Bộ phận']||original['Thuộc bộ phận']||original.department);
   const requestedDept=text(input.department||input['Bộ phận']||input['Thuộc bộ phận']);
-  const dept=oldDept||requestedDept;
+  let dept=oldDept||requestedDept;
+  if(moduleName==='checklistConfig'){
+   const formCode=text(input.formCode||input['Mã phiếu']||original?.['Mã phiếu']);
+   const master=(await readSheet(S.checklistForms,true)).map(formMaster).find(x=>same(x.code,formCode));
+   if(!master)return NextResponse.json({ok:false,error:'Không tìm thấy mẫu phiếu cần cấu hình.'},{status:404});
+   dept=text(master.department);
+  }
   const staffId=original?text(original['Mã NV']):text(input.staffId||input['Mã NV']);
   const person=original?text(original['Họ tên']||original['Họ và tên']||original['Người phụ trách']||original['Người thực hiện']):text(input.person||input.staffName||input.owner||input['Người phụ trách']||input['Họ tên']);
   if(!inFeatureScope(user,granted,dept,staffId,person))
