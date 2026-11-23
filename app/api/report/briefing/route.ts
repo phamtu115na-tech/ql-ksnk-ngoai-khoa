@@ -30,6 +30,7 @@ export async function POST(req:Request){
  const exportScope=await featureScope(user,'reports','export')
  if(exportScope==='none')return Response.json({error:'Chưa được cấp quyền xuất Excel/PowerPoint.'},{status:403})
  const {format,keys,departments,filters}=await req.json()
+ if(!Array.isArray(departments)||!filters||typeof filters!=='object'||Array.isArray(filters))return Response.json({error:'Bộ lọc báo cáo không hợp lệ'},{status:400})
  if(!['pptx','xlsx'].includes(format)||!Array.isArray(keys)||!keys.length||keys.length>8||new Set(keys).size!==keys.length||!keys.every(k=>Object.hasOwn(sectionTitles,k))||!Array.isArray(departments)||departments.length>24||!departments.every(d=>typeof d==='string'&&d.trim().length>0&&d.length<=160))return Response.json({error:'Lựa chọn xuất không hợp lệ'},{status:400})
  if(exportScope!=='hospital'){
   const department=user.team_department||user.department
