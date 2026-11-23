@@ -7,7 +7,7 @@ export async function GET(req:Request){
  if(!admin?.admin)return Response.json({error:'Chỉ quản trị viên được mở bảng phân quyền.'},{status:403})
  const client=db()
  const [people,grants,old]=await Promise.all([
-  client.from('cx_people').select('id,name,username,department,staff_code,team_department,legacy_operator,team_lead,work_role_reviewed,work_view,work_edit,active,unit,admin,version').eq('unit','surgery').eq('active',true).eq('admin',false).order('name'),
+  client.from('cx_people').select('id,name,username,department,staff_code,team_department,legacy_operator,team_lead,work_role_reviewed,work_view,work_edit,active,unit,admin,pending_login,version').eq('unit','surgery').eq('active',true).eq('admin',false).order('name'),
   client.from('nk_feature_permissions').select('person,grants,version'),
   client.from('nk_report_permissions').select('person,scope,can_export')
  ])
