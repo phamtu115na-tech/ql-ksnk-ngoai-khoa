@@ -7,6 +7,7 @@ import {NextResponse} from 'next/server';
 import {actor,canOperateLegacy} from '../../../lib/auth';
 import {buildLeavePlanning} from '../../../lib/leave-policy';
 import {reportAccess} from '../../../lib/report-access';
+import {featureScope,inFeatureScope} from '../../../lib/feature-permissions';
 import {supabaseAdmin} from '../../../lib/supabase';
 
 export const runtime='nodejs';
@@ -517,6 +518,9 @@ export async function GET(req:Request){const viewer=await actor();if(!viewer)ret
  }
  return NextResponse.json({ok:true,kind:t.kind,row:t.kind==='task'?task(source.data):reminder(source.data),canEdit:Boolean(rights?.canSave),canReview,managerAccount});
  }
+ const viewFeature=({checklists:'checklists',reports:'reports',violations:'violations',plans:'plans',staff:'staff',tasks:'tasks',reminders:'reminders',alerts:'alerts',kpi:'kpi'} as Record<string,'checklists'|'reports'|'violations'|'plans'|'staff'|'tasks'|'reminders'|'alerts'|'kpi'>)[moduleName];
+ const viewScope=viewFeature?await featureScope(viewer,viewFeature,'view'):null;
+ if(viewFeature&&viewScope==='none')return NextResponse.json({ok:false,error:'Chưa được cấp quyền xem phân hệ.'},{status:403});
  const fullAccess=viewer.admin||(viewer.legacy_operator&&viewer.work_view);
  if(!fullAccess){
   const allowed=['tasks','reminders','violations','plans','checklists','reports','staff','alerts','kpi'];
@@ -527,7 +531,7 @@ export async function GET(req:Request){const viewer=await actor();if(!viewer)ret
   const identity=allStaff.find(x=>text(viewer.staff_code)&&same(x.id,viewer.staff_code))||allStaff.find(x=>same(x.name,viewer.name)&&same(x.department,department));
   if(!identity&&!viewer.team_lead)return NextResponse.json({ok:false,error:'Tài khoản chưa liên kết hồ sơ nhân viên.'},{status:403});
   const ownName=identity?.name||viewer.name;
-  const teamScope=Boolean(viewer.team_lead&&viewer.work_view);
+  const teamScope=Boolean(viewer.team_lead&&viewer.work_view&&viewScope!=='self');
   const member=(name:unknown)=>allStaff.some(x=>same(x.name,name)&&same(x.department,department));
   const f=parseFilters(url);
   if(teamScope&&f.person&&!member(f.person))return NextResponse.json({ok:false,error:'Nhân viên ngoài phạm vi tổ phụ trách.'},{status:403});
@@ -571,6 +575,14 @@ export async function GET(req:Request){const viewer=await actor();if(!viewer)ret
     safe.feedback=(result.feedback||[]).filter((x:AnyRecord)=>same(x.data?.['Bộ phận']||x.department,department)&&(teamScope||same(x.data?.['Nhân viên']||x.person,ownName)));
   }
   if(moduleName==='checklists'){
+    const add=await featureScope(viewer,'checklists','create'),edit=await featureScope(viewer,'checklists','edit'),del=await featureScope(viewer,'checklists','delete');
+    safe.canScore=add!=='none'||edit!=='none';
+    safe.canCreateChecklist=add!=='none';safe.canEditChecklist=edit!=='none';safe.canDeleteChecklist=del!=='none';
+    safe.teamChecklist=viewer.team_lead&&!viewer.legacy_operator;
+    safe.rows=(result.rows||[]).filter((row:AnyRecord)=>teamScope||same(row.person,ownName));
+    safe.total=safe.rows.length;
+    const visibleIds=new Set(safe.rows.map((row:AnyRecord)=>String(row.id)));
+    safe.details=(result.details||[]).filter((row:AnyRecord)=>visibleIds.has(String(row.formId)));
     safe.forms=(result.forms||[]).filter((x:AnyRecord)=>!x.department||same(x.department,department));
     const codes=new Set(safe.forms.map((x:AnyRecord)=>norm(x.code)));
     safe.criteria=(result.criteria||[]).filter((x:AnyRecord)=>codes.has(norm(x.formCode))&&(!x.department||same(x.department,department)));
@@ -590,7 +602,19 @@ export async function GET(req:Request){const viewer=await actor();if(!viewer)ret
   }
   return NextResponse.json({ok:true,module:moduleName,...safe},{headers:{'Cache-Control':'private,no-store'}});
  }
- const result=await buildModule(moduleName,parseFilters(url));return NextResponse.json({ok:true,module:moduleName,...result},{headers:{'Cache-Control':'private, no-store'}});}catch(error){console.error('[modules:get]',error);return NextResponse.json({ok:false,error:'Không tải được dữ liệu phân hệ',detail:error instanceof Error?error.message:'Lỗi Supabase'},{status:503});}}
+ const grantedFilters=parseFilters(url);
+ if(viewFeature&&viewScope!=='hospital'&&viewScope!==null){
+  const ownDepartment=text(viewer.team_department||viewer.department);
+  if(!ownDepartment)return NextResponse.json({ok:false,error:'Chưa liên kết bộ phận.'},{status:403});
+  if(grantedFilters.department&&!same(grantedFilters.department,ownDepartment))return NextResponse.json({ok:false,error:'Bộ phận ngoài phạm vi.'},{status:403});
+  grantedFilters.department=ownDepartment;
+  if(viewScope==='self'){
+   if(grantedFilters.person&&!same(grantedFilters.person,viewer.name))return NextResponse.json({ok:false,error:'Nhân viên ngoài phạm vi.'},{status:403});
+   grantedFilters.person=viewer.name;
+  }
+ }
+ const result=await buildModule(moduleName,grantedFilters);
+ return NextResponse.json({ok:true,module:moduleName,...result},{headers:{'Cache-Control':'private, no-store'}});}catch(error){console.error('[modules:get]',error);return NextResponse.json({ok:false,error:'Không tải được dữ liệu phân hệ',detail:error instanceof Error?error.message:'Lỗi Supabase'},{status:503});}}
 
 /** Quyền sửa phiếu đang tồn tại theo danh tính người giao / người thực hiện / tổ trưởng.
  * Không dùng tên do client gửi lên để xác nhận quyền. */
@@ -625,6 +649,24 @@ async function getWorkEditRights(user:NonNullable<Awaited<ReturnType<typeof acto
 }
 
 export async function POST(req:Request){const user=await actor();if(!user)return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});try{const body=(await req.json()) as AnyRecord;const moduleName=text(body.module);const op=text(body.op)||'save';
+ if(moduleName==='checklists'){
+  const rowNo=Number(body.row_no)||0;
+  const action=op==='delete'?'delete':rowNo>0?'edit':'create';
+  const granted=await featureScope(user,'checklists',action);
+  if(granted==='none')return NextResponse.json({ok:false,error:'Chưa được cấp quyền '+action+' phiếu giám sát.'},{status:403});
+  const previous=rowNo>0?await readRow(S.checklists,rowNo):null;
+  if(rowNo>0&&!previous)return NextResponse.json({ok:false,error:'Không tìm thấy phiếu giám sát.'},{status:404});
+  const input=(body.data&&typeof body.data==='object'?body.data:body) as AnyRecord;
+  const old=previous?.data;
+  const department=old?pick(old,['Bộ phận']):text(input.department||input['Bộ phận']);
+  const name=old?pick(old,['Họ tên','Họ và tên']):text(input.staffName||input.person);
+  const staffId=old?pick(old,['Mã NV']):text(input.staffId);
+  if(!inFeatureScope(user,granted,department,staffId,name))
+   return NextResponse.json({ok:false,error:'Phiếu giám sát ngoài phạm vi cấp quyền.'},{status:403});
+  if(old&&op!=='delete'&&text(input.department||input['Bộ phận'])&&!same(department,input.department||input['Bộ phận']))
+   return NextResponse.json({ok:false,error:'Không được chuyển phiếu sang bộ phận khác.'},{status:403});
+ }
+
  const workUpdate=(moduleName==='tasks'||moduleName==='reminders')&&['save','daily'].includes(op)&&Number(body.row_no)>0;
  const workRights=workUpdate?await getWorkEditRights(user,moduleName as 'tasks'|'reminders',Number(body.row_no)):null;
  if(workUpdate&&!workRights?.canSave)
