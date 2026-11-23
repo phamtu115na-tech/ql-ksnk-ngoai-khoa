@@ -760,7 +760,14 @@ export async function POST(req:Request){const user=await actor();if(!user)return
   const entries=Array.isArray(body.entries)?body.entries as AnyRecord[]:[];
   if(!entries.length)throw new Error('Không có kỳ KPI cần xóa.');
   const client=db();
-  for(const entry of entries){const sheet=[S.kpi,S.kpiLegacy].includes(text(entry.sheet) as typeof S.kpi|typeof S.kpiLegacy)?text(entry.sheet):S.kpi;const rowNo=Number(entry.row_no);if(!Number.isFinite(rowNo)||rowNo<=0)continue;const {error}=await client.from('nk_legacy_rows').delete().eq('sheet_name',sheet).eq('row_no',rowNo);if(error)throw error;}
+  for(const entry of entries){const sheet=[S.kpi,S.kpiLegacy].includes(text(entry.sheet) as typeof S.kpi|typeof S.kpiLegacy)?text(entry.sheet):S.kpi;const rowNo=Number(entry.row_no);if(!Number.isSafeInteger(rowNo)||rowNo<=0)continue;
+   const selected=await readRow(sheet,rowNo);
+   if(!selected)return NextResponse.json({ok:false,error:'Không tìm thấy kỳ KPI.'},{status:404});
+   const scope=await featureScope(user,'kpi','delete');
+   const item=selected.data||{};
+   if(!inFeatureScope(user,scope,pick(item,['Bộ phận']),pick(item,['Mã NV']),pick(item,['Họ tên','Họ và tên'])))
+    return NextResponse.json({ok:false,error:'Không được xóa kỳ KPI ngoài phạm vi.'},{status:403});
+   const {error}=await client.from('nk_legacy_rows').delete().eq('sheet_name',sheet).eq('row_no',rowNo);if(error)throw error;}
   return NextResponse.json({ok:true,deletedCount:entries.length});
  }
  if(moduleName==='reminders'&&op==='daily'){const row=await readRow(S.reminders,Number(body.row_no));if(!row)throw new Error('Không tìm thấy nhắc việc.');const data:AnyRecord={...row.data,'NHẮC HÀNG NGÀY':Boolean(body.daily)};if(Boolean(body.daily)&&done(data['TRẠNG THÁI']))data['TRẠNG THÁI']='CHƯA THỰC HIỆN';await saveRow(S.reminders,row.row_no,data);return NextResponse.json({ok:true,row_no:row.row_no,daily:Boolean(body.daily)});}
