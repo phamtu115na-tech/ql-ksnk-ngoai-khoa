@@ -491,7 +491,31 @@ export async function GET(req:Request){const viewer=await actor();if(!viewer)ret
  const source=await db().from('nk_legacy_rows').select('id,row_no,legacy_id,data').eq('id',t.source_row).eq('sheet_name',t.kind==='task'?S.tasks:S.reminders).maybeSingle();if(source.error)throw source.error;
  if(!source.data)return NextResponse.json({ok:false},{status:404});
  const rights=await getWorkEditRights(viewer,t.kind==='task'?'tasks':'reminders',source.data.row_no);
- return NextResponse.json({ok:true,kind:t.kind,row:t.kind==='task'?task(source.data):reminder(source.data),canEdit:Boolean(rights?.canSave)});
+ // Quyền quản lý phê duyệt phải được đối chiếu tại server, không dựa vào nhãn Chức vụ trên giao diện.
+ let canReview=false,managerAccount=false;
+ if(t.kind==='task'){
+  const {data:person,error:personError}=await db().from('cx_people')
+   .select('active,admin,legacy_operator,team_lead,work_role_reviewed,work_view,work_edit,can_approve_work,staff_code')
+   .eq('id',viewer.id).maybeSingle();
+  if(personError)throw personError;
+  managerAccount=Boolean(person?.active&&(person.admin||person.legacy_operator||person.team_lead)&&person.work_view);
+  const state=norm(pick(source.data,['Trạng thái phê duyệt','Trạng thái xin ý kiến']));
+  const pending=['cho phe duyet','cho quan ly phan hoi','cho quan ly phe duyet'].includes(state);
+  if(pending&&person?.active){
+   const {data:threadInfo,error:threadError}=await db().from('cx_threads').select('owner_id,performers').eq('id',id).maybeSingle();
+   if(threadError)throw threadError;
+   const excluded=threadInfo?.owner_id===viewer.id||
+     Boolean(Array.isArray(threadInfo?.performers)&&threadInfo.performers.includes(viewer.id)&&
+       text(source.data?.['Người xin duyệt ID'])===viewer.id);
+   const assigned=text(source.data?.['Tài khoản duyệt']);
+   const namedCode=text(source.data?.['Mã người quản lý']);
+   const matchingAssignee=assigned?assigned===viewer.id:Boolean(namedCode&&person.staff_code&&same(namedCode,person.staff_code));
+   canReview=Boolean(!excluded&&(person.admin||
+     (person.can_approve_work&&person.work_edit&&
+       (person.legacy_operator||(person.work_role_reviewed&&person.team_lead))&&matchingAssignee)));
+  }
+ }
+ return NextResponse.json({ok:true,kind:t.kind,row:t.kind==='task'?task(source.data):reminder(source.data),canEdit:Boolean(rights?.canSave),canReview,managerAccount});
  }
  const fullAccess=viewer.admin||(viewer.legacy_operator&&viewer.work_view);
  if(!fullAccess){
