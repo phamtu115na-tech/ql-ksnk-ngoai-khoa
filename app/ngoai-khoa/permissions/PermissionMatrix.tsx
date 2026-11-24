@@ -4,7 +4,7 @@ import {useEffect,useMemo,useState} from 'react'
 type Scope='none'|'self'|'team'|'hospital'
 type Action='view'|'create'|'edit'|'delete'|'approve'|'history'|'export'
 type Grants=Record<string,Partial<Record<Action,Scope>>>
-type Person={id:string;name:string;username:string;department:string;staff_code:string|null;team_department:string|null;team_lead:boolean;legacy_operator:boolean;work_view:boolean;work_edit:boolean;version:string|null;overrides:Grants;effective:Grants}
+type Person={id:string;name:string;username:string;department:string;staff_code:string|null;team_department:string|null;team_lead:boolean;legacy_operator:boolean;work_view:boolean;work_edit:boolean;can_approve_work?:boolean;version:string|null;overrides:Grants;effective:Grants}
 type Payload={people:Person[];features:Record<string,Action[]>;featureLabels:Record<string,string>;actionLabels:Record<Action,string>;history:Array<{changed_at:string;changed_by:string}>}
 const captions:Record<Scope,string>={none:'— Không',self:'Cá nhân',team:'Toàn tổ',hospital:'Toàn khoa'}
 const rank:Record<Scope,number>={none:0,self:1,team:2,hospital:3}
@@ -58,43 +58,81 @@ export default function PermissionMatrix(){
   finally{setSaving(false)}
  }
  const allActions:Action[]=['view','create','edit','delete','approve','history','export']
- const scopedOptions=(feature:string,action:Action)=>Object.keys(captions).filter(x=>rank[x as Scope]<=rank[ceiling]&&!(feature==='tasks'&&action==='approve'&&x!=='none')) as Scope[]
+ const groups=[
+  {name:'Công việc và nhắc việc',features:['tasks','reminders','plans','issues']},
+  {name:'Nghiệp vụ kiểm soát nhiễm khuẩn',features:['checklists','checklistTemplates','violations','alerts']},
+  {name:'Nhân sự, báo cáo và đánh giá',features:['reports','staff','kpi']}
+ ]
+ const scopedOptions=(feature:string,action:Action)=>Object.keys(captions).filter(x=>
+  rank[x as Scope]<=rank[ceiling] &&
+  !(feature==='tasks'&&action==='approve'&&x!=='none'&&!(selected?.can_approve_work&&selected?.work_edit))
+ ) as Scope[]
+ const canEdit=(feature:string,action:Action)=>selected&&scopedOptions(feature,action).length>0
+ const chosen=(feature:string,action:Action)=>
+   overrides[feature]?.[action]??selected?.effective?.[feature]?.[action]??'none'
+ const activeCount=data?Object.entries(data.features).reduce((sum,[f,actions])=>sum+actions.filter(a=>chosen(f,a)!=='none').length,0):0
  return <section className="pmatrix">
-  <h2>MA TRẬN CẤP QUYỀN LINH ĐỘNG</h2>
-  <p>Cấp riêng từng quyền theo từng phân hệ. Tổ trưởng chỉ trong tổ phụ trách; trưởng khoa và điều dưỡng trưởng có thể được cấp toàn khoa. Các quyền không được cấp vẫn tuân theo quyền nghiệp vụ hiện hành.</p>
+  <div className="pmatrix-heading"><div><h2>MA TRẬN CẤP QUYỀN LINH ĐỘNG</h2>
+   <p>Chọn quyền cho từng chức năng và phạm vi. <b>Không cho phép</b> thu hồi quyền, <b>Cho phép</b> chọn phạm vi Cá nhân, Toàn tổ hoặc Toàn khoa.</p>
+  </div><span className="pmatrix-counter">{activeCount} quyền có hiệu lực</span></div>
   <div className="pmatrix-filters">
-   <label>Tìm tên, mã NV, tên đăng nhập hoặc bộ phận<input type="search" autoComplete="off" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Ví dụ: tổ trưởng VSMT..."/></label>
-   <label>Chọn tài khoản<select value={person} onChange={e=>choose(e.target.value)}><option value="">Chọn nhân viên</option>{filtered.map(p=><option key={p.id} value={p.id}>{p.name} · {p.username} · {p.department}</option>)}{selected&&!filtered.some(p=>p.id===selected.id)&&<option value={selected.id}>{selected.name} (đang chọn)</option>}</select></label>
+   <label>Tìm theo họ tên, mã nhân viên, tài khoản, bộ phận<input type="search" autoComplete="off" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Nhập từ khóa tìm nhân viên…"/></label>
+   <label>Chọn nhân viên<select value={person} onChange={e=>choose(e.target.value)}><option value="">— Chọn nhân viên để cấp quyền —</option>{filtered.map(p=><option key={p.id} value={p.id}>{p.name} · {p.username} · {p.department}</option>)}{selected&&!filtered.some(p=>p.id===selected.id)&&<option value={selected.id}>{selected.name} (đang chọn)</option>}</select></label>
   </div>
-  {selected&&<><p className="pmatrix-profile"><b>{selected.name}</b> · {selected.department} · Phạm vi tối đa: <b>{captions[ceiling]}</b> {selected.team_lead&&<span>· Tổ: {selected.team_department||selected.department}</span>}</p>
-   <div className="pmatrix-scroller"><table><thead><tr><th>Phân hệ / chức năng</th>{allActions.map(a=><th key={a}>{data?.actionLabels[a]||a}</th>)}</tr></thead>
-    <tbody>{Object.entries(data?.features||{}).map(([feature,actions])=><tr key={feature}><th scope="row">{data?.featureLabels[feature]||feature}</th>{allActions.map(action=>{
-     if(!actions.includes(action))return <td key={action} className="pmatrix-na">—</td>
-     const inherited=selected.effective[feature]?.[action]||'none'
-     const current=overrides[feature]?.[action]??inherited
-     return <td key={action}><select aria-label={(data?.featureLabels[feature]||feature)+' · '+(data?.actionLabels[action]||action)} value={current} onChange={e=>change(feature,action,e.target.value as Scope)}>{scopedOptions(feature,action).map(scope=><option key={scope} value={scope}>{captions[scope]}</option>)}</select></td>
-    })}</tr>)}</tbody></table></div>
-   <div className="pmatrix-actions"><button type="button" disabled={saving} onClick={()=>setOverrides({})}>Khôi phục quyền mặc định</button><button type="button" disabled={saving} onClick={save}>{saving?'Đang lưu…':'LƯU MA TRẬN QUYỀN'}</button></div>
-   <details><summary>Lịch sử cấp quyền ({history.length} lần gần nhất)</summary>{history.length?<ul>{history.map((h,i)=><li key={i}>{new Date(h.changed_at).toLocaleString('vi-VN')} · Người thay đổi: {data?.people.find(p=>p.id===h.changed_by)?.name||'Quản trị viên'}</li>)}</ul>:<p>Chưa ghi nhận thay đổi.</p>}</details>
+  {selected&&<>
+   <div className="pmatrix-profile"><span><b>{selected.name}</b> · {selected.department} {selected.team_lead&&'· Tổ '+(selected.team_department||selected.department)}</span><span>Phạm vi tối đa: <b>{captions[ceiling]}</b></span></div>
+   <p className="pmatrix-legend">Mỗi ô chọn <b>Không cho phép</b> hoặc <b>Cho phép trong phạm vi</b>. Các ô xám là chức năng không áp dụng. Xem là quyền nền tảng của các quyền thao tác khác.</p>
+   {groups.map(group=><details key={group.name} className="pmatrix-group" open>
+    <summary>{group.name}<span>{group.features.length} phân hệ</span></summary>
+    <div className="pmatrix-scroller"><table><thead><tr><th>Phân hệ / chức năng</th>{allActions.map(a=><th key={a}>{data?.actionLabels[a]||a}</th>)}</tr></thead>
+     <tbody>{group.features.map(feature=><tr key={feature}><th scope="row">{data?.featureLabels[feature]||feature}</th>{allActions.map(action=>{
+      const supported=data?.features[feature]?.includes(action)
+      if(!supported)return <td key={action} className="pmatrix-na"><span title="Chức năng không áp dụng cho phân hệ này">Không áp dụng</span></td>
+      const current=chosen(feature,action)
+      const options=scopedOptions(feature,action)
+      return <td key={action} className={current==='none'?'pmatrix-denied':'pmatrix-granted'}>
+       <label className="pmatrix-cell-label">{current==='none'?'Không cho phép':'Cho phép'}</label>
+       <select aria-label={(data?.featureLabels[feature]||feature)+' · '+(data?.actionLabels[action]||action)} disabled={!canEdit(feature,action)} value={options.includes(current)?current:'none'} onChange={e=>change(feature,action,e.target.value as Scope)}>
+        {options.map(scope=><option key={scope} value={scope}>{scope==='none'?'Không cho phép':'Cho phép · '+captions[scope]}</option>)}
+       </select>
+      </td>
+     })}</tr>)}</tbody>
+    </table></div>
+   </details>)}
+   <div className="pmatrix-actions"><button type="button" className="pmatrix-reset" disabled={saving} onClick={()=>setOverrides({})}>Khôi phục mặc định theo chức danh</button><button type="button" className="pmatrix-save" disabled={saving} onClick={save}>{saving?'Đang lưu…':'LƯU MA TRẬN QUYỀN'}</button></div>
+   <details className="pmatrix-history"><summary>Lịch sử cấp quyền ({history.length} lần gần nhất)</summary>{history.length?<ul>{history.map((h,i)=><li key={i}>{new Date(h.changed_at).toLocaleString('vi-VN')} · Người thay đổi: {data?.people.find(p=>p.id===h.changed_by)?.name||'Quản trị viên'}</li>)}</ul>:<p>Chưa ghi nhận thay đổi.</p>}</details>
   </>}
-  <p role="status">{message}</p>
+  <p role="status" className="pmatrix-status">{message}</p>
   <style jsx>{`
-   .pmatrix{padding:16px;color:#18324e;font-family:Arial,sans-serif;max-width:100%}
-   .pmatrix h2{font-size:20px;margin:0 0 12px}.pmatrix p{line-height:1.5}
+   .pmatrix{padding:clamp(12px,2vw,22px);color:#19334d;font-family:Arial,sans-serif;max-width:100%;background:#f7fafc;min-height:100%}
+   .pmatrix h2{font-size:20px;margin:0 0 7px;color:#16395d}.pmatrix p{line-height:1.5;color:#465b72;margin:6px 0 12px}
+   .pmatrix-heading{display:flex;align-items:flex-start;gap:16px;justify-content:space-between}
+   .pmatrix-counter{background:#e9f1fa;color:#16446c;padding:7px 10px;border-radius:8px;white-space:nowrap;font-size:12px;font-weight:700}
    .pmatrix-filters{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
-   .pmatrix-filters label{display:grid;gap:5px;font-weight:600}
-   input,select{background:white;color:#18324e;border:1px solid #b8c8d8;border-radius:6px;padding:9px;width:100%;box-sizing:border-box;font-size:13px}
-   .pmatrix-profile{background:#eef4fb;padding:11px;border-radius:6px}
-   .pmatrix-scroller{overflow:auto;max-width:100%}.pmatrix table{width:100%;border-collapse:collapse;min-width:900px}
-   .pmatrix th,.pmatrix td{border:1px solid #d9e1ea;padding:8px;vertical-align:middle}
-   .pmatrix th{background:#e9f0f8;text-align:left;font-size:12px}
-   .pmatrix td select{min-width:94px;padding:7px;font-size:12px}
-   .pmatrix-na{color:#8490a0;text-align:center}
-   .pmatrix-actions{display:flex;gap:10px;justify-content:flex-end;margin:16px 0}
-   button{border:1px solid #b8c8d8;border-radius:6px;padding:10px 15px;cursor:pointer;background:#fff;color:#15355d;font-weight:700}
-   button:last-child{background:#17416f;color:#fff}
-   button:disabled{opacity:.6;cursor:not-allowed}
-   @media(max-width:700px){.pmatrix-filters{grid-template-columns:1fr}.pmatrix{padding:9px}}
+   .pmatrix-filters label{display:grid;gap:6px;font-weight:600;font-size:13px}
+   input,select{background:white;color:#18324e;border:1px solid #adc3da;border-radius:7px;padding:9px;width:100%;box-sizing:border-box;font-size:13px}
+   .pmatrix-profile{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;background:#e8f3ff;padding:12px;border:1px solid #cadef3;border-radius:8px;margin-bottom:12px;font-size:13px}
+   .pmatrix-legend{font-size:12px}
+   .pmatrix-group{background:white;border:1px solid #d9e4ee;border-radius:10px;overflow:hidden;margin:13px 0}
+   .pmatrix-group>summary{display:flex;justify-content:space-between;gap:12px;cursor:pointer;padding:12px 15px;background:#eaf2fa;color:#16395d;font-weight:800;font-size:14px}
+   .pmatrix-group>summary span{font-size:12px;font-weight:400}
+   .pmatrix-scroller{overflow-x:auto;max-width:100%}
+   .pmatrix table{width:100%;border-collapse:collapse;min-width:1040px;table-layout:fixed}
+   .pmatrix th,.pmatrix td{border:1px solid #e0e7ee;padding:9px;vertical-align:middle}
+   .pmatrix thead th{background:#244e78!important;color:#fff!important;font-size:12px;text-align:left;white-space:normal}
+   .pmatrix th:first-child{width:200px}
+   .pmatrix tbody th{background:#eef4f9!important;color:#183952!important;text-align:left;font-size:13px;font-weight:700}
+   .pmatrix tbody td{background:white}
+   .pmatrix tbody td select{min-width:95px;padding:7px 6px;font-size:12px}
+   .pmatrix-cell-label{display:block;font-size:10px;color:#42627c;margin-bottom:4px;font-weight:700}
+   .pmatrix-denied{background:#fffaf7!important}.pmatrix-granted{background:#f5fafc!important}
+   .pmatrix-na{text-align:center!important;font-size:11px;color:#66798a!important;background:#f5f7f9!important;font-style:italic}
+   .pmatrix-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin:17px 0}
+   button{border:1px solid #afc4d9;border-radius:8px;padding:10px 15px;cursor:pointer;background:#fff;color:#15355d;font-weight:700}
+   .pmatrix-save{background:#174e86;color:white;border-color:#174e86}
+   button:disabled{opacity:.6;cursor:not-allowed}.pmatrix-history{background:white;padding:12px;border:1px solid #dae4ed;border-radius:9px}
+   .pmatrix-status{font-weight:700;font-size:13px}
+   @media(max-width:720px){.pmatrix-filters{grid-template-columns:1fr}.pmatrix-heading{display:block}.pmatrix-counter{display:inline-block}.pmatrix{padding:9px}}
   `}</style>
  </section>
 }
