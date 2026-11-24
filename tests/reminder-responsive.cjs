@@ -19,4 +19,7 @@ assert.match(adaptive,/\.reminder-table thead\{display:none\}/,'Card layout must
 assert.match(adaptive,/\.reminder-table td::before\{content:attr\(data-label\)/,'Card labels must remain visible');
 assert.match(adaptive,/\.reminder-workspace-fullscreen \.reminder-table\{min-width:0!important\}/,'Fullscreen must avoid fixed-width overflow');
 assert.doesNotMatch(source,/Chọn giao diện thiết bị|deviceMode|setDeviceMode/,'Layout should not require a device selector');
+assert.match(adaptive,/\.reminder-workspace\{container-type:inline-size\}/,'Use actual workspace width, not just viewport');
+assert.match(adaptive,/@container \(max-width:980px\)/,'Narrow desktop pane should adapt automatically');
+assert.match(adaptive,/@container \(max-width:700px\)/,'Narrow tablet workspace should show one column');
 console.log('Responsive reminder layout contracts passed');
