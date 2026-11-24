@@ -170,14 +170,14 @@ async function dispatch(req:Request){
  const kind=b.kind;must(kinds.includes(kind)&&uuid(b.id));
  if(kind!=='chat'){
   const granted=await featureScope(a,kind==='task'?'tasks':'reminders','create');
-  must(granted==='hospital'||granted==='team'&&a.team_lead&&a.work_role_reviewed,
+  must(granted==='hospital'||granted==='team',
    'Chưa được cấp quyền tạo tác vụ hoặc vượt phạm vi phân công.',403);
  }
  const p=ids(b.performers),o=ids(b.observers||[]);must(p.length,'Chọn người thực hiện hoặc người nhận.');
  if(kind==='chat')must(p.length===1&&p[0]!==a.id&&!o.length);
  const selected=(await people()).filter(x=>(x.active||(kind!=='chat'&&x.pending_login))&&(p.includes(x.id)||o.includes(x.id)));
  must(new Set([...p,...o]).size===selected.length,'Người nhận không thuộc phạm vi tài khoản.',403);
- if(kind!=='chat'&&a.team_lead&&!a.admin&&!a.legacy_operator){const department=(a.team_department||a.department||'').trim().toLocaleLowerCase('vi');must(department&&selected.every(p=>p.department?.trim().toLocaleLowerCase('vi')===department),'Chỉ được giao việc cho nhân viên trong bộ phận phụ trách.',403);}
+ if(kind!=='chat'&&(await featureScope(a,kind==='task'?'tasks':'reminders','create'))==='team'){const department=(a.team_department||a.department||'').trim().toLocaleLowerCase('vi');must(department&&selected.every(p=>p.department?.trim().toLocaleLowerCase('vi')===department),'Chỉ được giao việc cho nhân viên trong bộ phận phụ trách.',403);}
  const u=[...new Set([a.unit,...selected.map(x=>x.unit)])],label=kind==='chat'?'Trao đổi riêng':str(b.title,180);
  must(label);const d=b.due||null;must(!d||/^\d{4}-\d{2}-\d{2}$/.test(d));
  const id=await rpc('cx_create',{t:b.id,k:kind,label,who:a.id,p,o,u,d,details:str(b.note||'',6000),pk:kind==='chat'?[a.id,p[0]].sort().join(':'):null,attachments:await attachments()});return {id};
@@ -186,7 +186,7 @@ async function dispatch(req:Request){
  const access=t&&await rpc('nk_check_work',{who:a.id,work_id:t.id});
  must(access,'Tác vụ ngoài phạm vi tài khoản.',403);
  const editScope=t.kind==='chat'?'none':await featureScope(a,t.kind==='task'?'tasks':'reminders','edit');
- const writable=t.kind==='chat'||editScope!=='none'&&(a.admin||a.work_edit||member(t,a));
+ const writable=t.kind==='chat'||editScope!=='none'&&(a.admin||a.work_edit||member(t,a)||editScope==='team'||editScope==='hospital');
  // Edits from a participant still pass the existing SQL work-thread authorization.
 
  if(t.source_row&&['status','detailSave','edit'].includes(b.action)){
@@ -260,7 +260,7 @@ async function dispatch(req:Request){
  }
  if(b.action==='send'||b.action==='status'){
  must(uuid(b.requestId)&&b.requestId!==a.id);const status=b.action==='status'?b.status:null;
- if(status!==null)must(t.kind!=='chat'&&statuses.includes(status)&&(t.owner_id===a.id||t.performers.includes(a.id)||a.admin||a.legacy_operator||a.team_lead),'Bạn không có quyền cập nhật trạng thái.',403);
+ if(status!==null)must(t.kind!=='chat'&&statuses.includes(status)&&editScope!=='none'&&(t.owner_id===a.id||t.performers.includes(a.id)||editScope==='team'||editScope==='hospital'),'Bạn không có quyền cập nhật trạng thái.',403);
  const body=status?'Cập nhật trạng thái: '+status:str(b.body||'',6000),list=await attachments();must(body||list.length,'Nhập nội dung hoặc chọn tệp.');
  await rpc('cx_append',{t:t.id,who:a.id,txt:body,attachments:list,rid:b.requestId,new_status:status});return {ok:true};
  }
