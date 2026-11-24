@@ -302,3 +302,29 @@
  .reminder-table td.reminder-content-cell::before{display:none}
  .reminder-table .reminder-more-actions{right:auto;left:0}
 }
+
+/* Reminder focus view: no browser permission required, dialogs stay accessible. */
+.reminder-fullscreen-toggle{display:inline-flex;justify-content:center;align-items:center;gap:5px;white-space:nowrap;min-height:38px;font-size:11px;letter-spacing:.01em}
+.reminder-fullscreen-toggle[aria-pressed="true"]{background:#173f69;color:#fff;border-color:#173f69}
+.reminder-workspace.reminder-workspace-fullscreen{
+ position:fixed!important;inset:0!important;z-index:110!important;
+ width:100vw!important;max-width:none!important;height:100dvh!important;
+ margin:0!important;border-radius:0!important;overflow-y:auto!important;
+ overscroll-behavior:contain;background:#fff!important;
+ display:flex;flex-direction:column
+}
+.reminder-workspace-fullscreen .reminder-workspace-head{
+ position:sticky;top:0;z-index:20;border-radius:0;
+ box-shadow:0 2px 12px rgba(20,55,88,.09)
+}
+.reminder-workspace-fullscreen .reminder-summary{padding-top:14px}
+.reminder-workspace-fullscreen .reminder-table-scroll{flex:1;min-height:0;overflow:auto}
+.reminder-workspace-fullscreen .reminder-table thead th{position:sticky;top:0;z-index:3}
+.reminder-workspace-fullscreen .reminder-table{min-width:1000px}
+.reminder-workspace-fullscreen .reminder-workspace-filters{flex:none}
+@media(max-width:650px){
+ .reminder-workspace-fullscreen .reminder-workspace-actions{gap:6px}
+ .reminder-workspace-fullscreen .reminder-fullscreen-toggle{flex:1}
+ .reminder-workspace-fullscreen .reminder-table-scroll{overflow:auto}
+ .reminder-workspace-fullscreen .reminder-table{min-width:0}
+}
