@@ -21,7 +21,7 @@ const mocks={
    if(table==='nk_legacy_rows')return {select(){return this},in:async()=>({data:records,error:null})}
    if(table==='ksnk_evidence')return {
     list:uploads,select(){return this},
-    eq(key,value){this.list=this.list.filter(item=>String(item[key])===String(value));return this},
+    eq(key,value){const earlier=this.list;this.list=this.list.filter(item=>String(item[key])===String(value));if(!this.list.length)console.log('EMPTY evidence mock filter',key,JSON.stringify(value),earlier.map(item=>({module:item.module,legacy_id:item.legacy_id})));return this},
     order:async()=>({data:this.list,error:null}),
     limit:async()=>({data:this.list,error:null})
    }
