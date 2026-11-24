@@ -20,7 +20,7 @@ export type Scope='none'|'self'|'team'|'hospital'
 export type GrantMatrix=Partial<Record<Feature,Partial<Record<Action,Scope>>>>
 export const scopeValues:readonly Scope[]=['none','self','team','hospital']
 export const scopeRank=(scope:Scope)=>scopeValues.indexOf(scope)
-export const normalized=(value:unknown)=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').trim().toLowerCase()
+export const normalized=(value:unknown)=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[đĐ]/g,'d').trim().toLowerCase()
 
 export const featureLabels:Record<Feature,string>={
  tasks:'Giao việc',reminders:'Nhắc việc',checklists:'Phiếu giám sát đã chấm',
@@ -69,12 +69,10 @@ export function effectiveMatrix(person:Person,overrides:GrantMatrix={},legacy?:{
    }
    row[action]=person.admin?'hospital':overrides?.[feature]?.[action]??fallback
   }
-  const ceiling:Scope=person.admin?'hospital':person.legacy_operator&&person.work_view?'hospital':
-   person.team_lead&&person.work_role_reviewed&&person.work_view?'team':'self'
-  for(const action of actions){
-   const current=row[action]||'none'
-   if(scopeRank(current)>scopeRank(ceiling))row[action]=ceiling
-  }
+  // An administrator may explicitly delegate team/hospital access to a staff member.
+  // Role ceilings apply to inherited defaults, not to grants written by the audited RPC.
+  // Approval is never a generic delegation: reviewer eligibility remains mandatory.
+  if(feature==='tasks'&&!person.admin&&!person.can_approve_work)row.approve='none'
   const read=row.view||'none'
   for(const action of actions){
    if(action!=='view'&&scopeRank(row[action]||'none')>scopeRank(read))row[action]=read
