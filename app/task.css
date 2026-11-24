@@ -208,3 +208,12 @@
 
 /* Cùng một cửa sổ, quản lý đủ quyền chuyển sang chế độ duyệt của tác vụ. */
 .task-approval-review-note{background:#effaf3;border:1px solid #a8d8b5;border-radius:8px;color:#1c6035;padding:10px 12px;font-size:13px;line-height:1.45;margin:5px 0 12px}
+
+/* Contextual work warnings: buttons act on the viewer's own assignment only. */
+.work-warning-reasons{display:block;color:#a03b0d;font-size:12px;font-weight:760;line-height:1.4}
+.work-warning-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:7px;padding:0 7px 9px}
+.work-warning-actions button{padding:8px 12px;border:1px solid #9bc3b7;border-radius:8px;background:#f1faf7;color:#16604e;font-size:13px;font-weight:750;cursor:pointer}
+.work-warning-actions button:hover{background:#e1f4eb}
+.work-warning-actions button:disabled{opacity:.5;cursor:wait}
+.work-warning-error{background:#fff3ee;border:1px solid #f2c0b3;border-radius:8px;color:#a1361f;padding:10px 12px;font-weight:650}
+@media(max-width:700px){.work-warning-actions button{width:100%}}
