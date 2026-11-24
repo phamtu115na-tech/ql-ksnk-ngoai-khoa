@@ -74,7 +74,7 @@ else
  )
 end
 from (select 1) dummy left join public.ksnk_legacy_rows r on r.id=t.source_row
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.nk_save_detail(work_id uuid, who uuid, expected integer, rid uuid, label text, details text, deadline date, personal text, opinion text)
  RETURNS boolean
@@ -106,7 +106,7 @@ begin
  do update set note=excluded.note;
  perform public.cx_append(work_id,who,'Đã cập nhật tác vụ','[]'::jsonb,rid);
  return true;
-end $function$
+end $function$;
 
 CREATE OR REPLACE FUNCTION public.nk_create_work(sheet text, fields jsonb, who uuid)
  RETURNS integer
@@ -127,7 +127,7 @@ begin
  update cx_threads set source_creator_id=who where source_row=src;
  if not found then raise exception 'Không liên kết được người tạo với cuộc trao đổi';end if;
  return n;
-end $function$
+end $function$;
 
 CREATE OR REPLACE FUNCTION public.cx_history(who uuid, k text, scope text, skip_rows integer)
  RETURNS TABLE(title text, ref text, day text, status text, details text, roles text)
