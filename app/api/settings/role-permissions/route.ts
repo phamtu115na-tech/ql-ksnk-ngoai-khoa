@@ -1,12 +1,12 @@
 import {actor,db} from '../../../../lib/auth'
-import {ROLES,validateMatrix,type Role,type GrantMatrix} from '../../../../lib/feature-permissions'
+import {ROLES,validateMatrix,baselineForRole,type Role,type GrantMatrix} from '../../../../lib/feature-permissions'
 export const dynamic='force-dynamic'
 export async function GET(){
  const admin=await actor()
  if(!admin?.admin)return Response.json({error:'Chỉ quản trị viên được xem quy tắc cấp quyền.'},{status:403})
  const {data,error}=await db().from('nk_role_permission_defaults').select('role,grants,version,changed_at')
  if(error)return Response.json({error:'Chưa cài đặt bảng quy tắc cấp quyền.'},{status:503})
- return Response.json({roles:ROLES.map(role=>({role,...data?.find(x=>x.role===role),grants:data?.find(x=>x.role===role)?.grants||{},version:data?.find(x=>x.role===role)?.version||null}))},{headers:{'Cache-Control':'no-store'}})
+ return Response.json({roles:ROLES.map(role=>({role,...data?.find(x=>x.role===role),grants:data?.find(x=>x.role===role)?.grants||{},version:data?.find(x=>x.role===role)?.version||null,baseline:baselineForRole(role)}))},{headers:{'Cache-Control':'no-store'}})
 }
 export async function POST(req:Request){
  const admin=await actor()
