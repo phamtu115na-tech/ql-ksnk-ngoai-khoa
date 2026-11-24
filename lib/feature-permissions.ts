@@ -2,16 +2,16 @@ import {db,type Person} from './auth'
 
 /** Grant values are stored on the server; no browser-supplied role or scope is trusted. */
 export const FEATURE_ACTIONS={
- tasks:['view','create','edit','delete','approve'],
- reminders:['view','create','edit','delete'],
+ tasks:['view','create','edit','delete','approve','history'],
+ reminders:['view','create','edit','delete','history'],
  checklists:['view','create','edit','delete','history'],
  checklistTemplates:['view','create','edit','delete'],
  violations:['view','create','edit','delete'],
  plans:['view','create','edit','delete'],
  issues:['view','create','edit','delete'],
- reports:['view','edit','export'],
+ reports:['view','edit','history','export'],
  staff:['view','create','edit','delete'],
- kpi:['view','create','edit','delete'],
+ kpi:['view','create','edit','delete','history'],
  alerts:['view','edit']
 } as const
 export type Feature=keyof typeof FEATURE_ACTIONS
@@ -52,7 +52,8 @@ export function defaultFeatureScope(person:Person,feature:Feature,action:Action)
   return workCanEdit?(chief?'hospital':lead?'team':'none'):'none'
  if(feature==='staff'&&['create','edit','delete'].includes(action))return workCanEdit&&chief?'hospital':'none'
  if(['plans','issues'].includes(feature)&&['create','edit'].includes(action)&&!chief&&!lead)return 'self'
- if(feature==='tasks'&&action==='approve')return 'none' // Reviewer approval also needs a named assignee.
+ if(feature==='tasks'&&action==='approve')
+  return workCanEdit&&Boolean(person.can_approve_work)&&(chief||lead)?base:'none' // Actual approval also needs the named reviewer.
  if(['create','edit','delete'].includes(action))return workCanEdit?(chief?'hospital':lead?'team':'none'):'none'
  return 'none'
 }
