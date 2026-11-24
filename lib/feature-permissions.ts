@@ -18,6 +18,13 @@ export type Feature=keyof typeof FEATURE_ACTIONS
 export type Action='view'|'create'|'edit'|'delete'|'approve'|'history'|'export'
 export type Scope='none'|'self'|'team'|'hospital'
 export type GrantMatrix=Partial<Record<Feature,Partial<Record<Action,Scope>>>>
+export type Role='staff'|'team'|'chief'
+export const ROLES:readonly Role[]=['staff','team','chief']
+export const roleNames:Record<Role,string>={staff:'Nhân viên',team:'Tổ trưởng',chief:'Trưởng khoa / Điều dưỡng trưởng'}
+export function roleOf(person:Person):Role{
+ return person.legacy_operator&&person.work_view?'chief':person.team_lead&&person.work_role_reviewed&&person.work_view?'team':'staff'
+}
+
 export const scopeValues:readonly Scope[]=['none','self','team','hospital']
 export const scopeRank=(scope:Scope)=>scopeValues.indexOf(scope)
 export const normalized=(value:unknown)=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[đĐ]/g,'d').trim().toLowerCase()
@@ -57,7 +64,7 @@ export function defaultFeatureScope(person:Person,feature:Feature,action:Action)
  if(['create','edit','delete'].includes(action))return workCanEdit?(chief?'hospital':lead?'team':'none'):'none'
  return 'none'
 }
-export function effectiveMatrix(person:Person,overrides:GrantMatrix={},legacy?:{scope?:Scope;can_export?:boolean}|null){
+export function effectiveMatrix(person:Person,overrides:GrantMatrix={},legacy?:{scope?:Scope;can_export?:boolean}|null,roleDefaults:GrantMatrix={}){
  const result:GrantMatrix={}
  for(const [feature,actions] of Object.entries(FEATURE_ACTIONS) as [Feature,readonly Action[]][]){
   const row:Partial<Record<Action,Scope>>={}
@@ -67,12 +74,12 @@ export function effectiveMatrix(person:Person,overrides:GrantMatrix={},legacy?:{
     if(action==='view'&&legacy.scope&&legacy.scope!=='none')fallback=legacy.scope
     if(action==='export'&&legacy.can_export&&legacy.scope&&legacy.scope!=='none')fallback=legacy.scope
    }
-   row[action]=person.admin?'hospital':overrides?.[feature]?.[action]??fallback
+   row[action]=person.admin?'hospital':overrides?.[feature]?.[action]??roleDefaults?.[feature]?.[action]??fallback
   }
   // An administrator may explicitly delegate team/hospital access to a staff member.
   // Role ceilings apply to inherited defaults, not to grants written by the audited RPC.
   // Approval is never a generic delegation: reviewer eligibility remains mandatory.
-  if(feature==='tasks'&&!person.admin&&!person.can_approve_work)row.approve='none'
+  if(feature==='tasks'&&!person.admin&&!(person.can_approve_work&&person.work_edit&&(person.legacy_operator||person.team_lead&&person.work_role_reviewed)))row.approve='none'
   const read=row.view||'none'
   for(const action of actions){
    if(action!=='view'&&scopeRank(row[action]||'none')>scopeRank(read))row[action]=read
@@ -109,9 +116,13 @@ export async function featureMatrix(person:Person){
  const result=await db().from('nk_feature_permissions').select('grants').eq('person',person.id).maybeSingle()
  if(result.error&&!['42P01','PGRST205'].includes(result.error.code))throw result.error
  if(result.data?.grants&&typeof result.data.grants==='object')overrides=result.data.grants as GrantMatrix
- const old=await db().from('nk_report_permissions').select('scope,can_export').eq('person',person.id).maybeSingle()
+ const [old,rolePolicy]=await Promise.all([
+  db().from('nk_report_permissions').select('scope,can_export').eq('person',person.id).maybeSingle(),
+  db().from('nk_role_permission_defaults').select('grants').eq('role',roleOf(person)).maybeSingle()
+ ])
  if(old.error&&!['42P01','PGRST205'].includes(old.error.code))throw old.error
- return effectiveMatrix(person,overrides,old.data as {scope:Scope;can_export:boolean}|null)
+ if(rolePolicy.error&&!['42P01','PGRST205'].includes(rolePolicy.error.code))throw rolePolicy.error
+ return effectiveMatrix(person,overrides,old.data as {scope:Scope;can_export:boolean}|null,(rolePolicy.data?.grants||{}) as GrantMatrix)
 }
 export async function featureScope(person:Person,feature:Feature,action:Action):Promise<Scope>{
  return (await featureMatrix(person))[feature]?.[action]??'none'
