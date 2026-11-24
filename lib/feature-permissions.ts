@@ -53,6 +53,7 @@ export function defaultFeatureScope(person:Person,feature:Feature,action:Action)
   return base
  }
  if(feature==='reports'&&action==='export')return chief?'hospital':lead?'team':'none'
+ if(['tasks','reminders'].includes(feature)&&action==='edit'&&!chief&&!lead)return 'self'
  if(feature==='checklists'&&['create','edit','delete'].includes(action))
   return workCanEdit?(chief?'hospital':lead?'team':'none'):'none'
  if(feature==='checklistTemplates'&&['create','edit','delete'].includes(action))
