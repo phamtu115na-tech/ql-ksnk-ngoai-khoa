@@ -189,6 +189,7 @@ export default function ScreenReportExport({root,regions,scope,period,canExport}
    pptx.subject='Báo cáo theo các mục và bộ lọc đang hiển thị'
    pptx.title='BÁO CÁO CÔNG TÁC KSNK – '+formatPeriod(period)
    let pages=0,omitted=0,chartCount=0,photoCount=0
+   let remainingPhotos=mode==='summary'?20:40
    const photoWarnings:string[]=[]
    const next=()=>++pages
    const cover=pptx.addSlide();next();brand(cover,pptx)
@@ -220,8 +221,8 @@ export default function ScreenReportExport({root,regions,scope,period,canExport}
     const heading=item?.label||card.querySelector('h3')?.textContent||'Nội dung giám sát KSNK'
     chartCount+=addChartPages(pptx,card,heading,scope,period,next)
     if(includePhotos){
-     const photos=await addEvidencePages(pptx,card,heading,scope,period,
-      mode==='summary'?12:30,next)
+     const photos=await addEvidencePages(pptx,card,heading,scope,period,remainingPhotos,next)
+     remainingPhotos=Math.max(0,remainingPhotos-photos.count)
      photoCount+=photos.count
      omitted+=photos.skipped
      photoWarnings.push(...photos.errors)
