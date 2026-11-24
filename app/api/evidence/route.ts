@@ -99,7 +99,7 @@ async function scopedRecordEvidenceAllowed(user:Person,module:'plans'|'violation
  const matched=(data||[]).filter(row=>{
   const detail=row.data as Record<string,unknown>||{};
   return [row.legacy_id,detail['ID'],detail['Mã KH'],detail['Mã kế hoạch'],
-   detail['Mã vi phạm'],'ROW'+row.row_no].some(id=>id!=null&&String(id)===reference);
+   detail['Mã VP'],detail['Mã vi phạm'],'ROW'+row.row_no].some(id=>id!=null&&String(id)===reference);
  });
  if(matched.length!==1)return false; // Never guess a cross-team file owner.
  const detail=matched[0].data as Record<string,unknown>||{};
