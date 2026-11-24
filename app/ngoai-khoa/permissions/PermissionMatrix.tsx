@@ -4,7 +4,7 @@ import {useEffect,useMemo,useState} from 'react'
 type Scope='none'|'self'|'team'|'hospital'
 type Action='view'|'create'|'edit'|'delete'|'approve'|'history'|'export'
 type Grants=Record<string,Partial<Record<Action,Scope>>>
-type Person={id:string;name:string;username:string;department:string;staff_code:string|null;team_department:string|null;team_lead:boolean;legacy_operator:boolean;work_view:boolean;work_edit:boolean;can_approve_work?:boolean;version:string|null;overrides:Grants;effective:Grants}
+type Person={id:string;name:string;username:string;department:string;staff_code:string|null;team_department:string|null;team_lead:boolean;legacy_operator:boolean;work_view:boolean;work_edit:boolean;can_approve_work?:boolean;version:string|null;overrides:Grants;effective:Grants;defaults:Grants}
 type Payload={people:Person[];features:Record<string,Action[]>;featureLabels:Record<string,string>;actionLabels:Record<Action,string>;history:Array<{changed_at:string;changed_by:string}>}
 const captions:Record<Scope,string>={none:'— Không',self:'Cá nhân',team:'Toàn tổ',hospital:'Toàn khoa'}
 const rank:Record<Scope,number>={none:0,self:1,team:2,hospital:3}
@@ -13,7 +13,7 @@ const tidy=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace
 export default function PermissionMatrix(){
  const [data,setData]=useState<Payload|null>(null),[person,setPerson]=useState(''),[search,setSearch]=useState('')
  const [overrides,setOverrides]=useState<Grants>({}),[saving,setSaving]=useState(false),[message,setMessage]=useState('')
- const [history,setHistory]=useState<Payload['history']>([])
+ const [history,setHistory]=useState<Payload['history']>([]),[resetting,setResetting]=useState(false)
  const selected=data?.people.find(p=>p.id===person)
  const ceiling:Scope=selected?.legacy_operator&&selected.work_view?'hospital':selected?.team_lead&&selected.work_view?'team':'self'
  const filtered=useMemo(()=>data?.people.filter(p=>tidy([p.name,p.username,p.department,p.staff_code||''].join(' ')).includes(tidy(search)))||[],[data,search])
@@ -23,11 +23,11 @@ export default function PermissionMatrix(){
   if(!response.ok)throw Error(json.error||'Không tải được quyền.')
   setData(json);if(target)setHistory(json.history||[])
   const active=json.people.find((p:Person)=>p.id===(target||person))
-  if(active){setPerson(active.id);setOverrides(structuredClone(active.overrides||{}))}
+  if(active){setPerson(active.id);setOverrides(structuredClone(active.overrides||{}));setResetting(false)}
  }
  useEffect(()=>{refresh().catch(e=>setMessage(e.message))},[])
  function choose(id:string){
-  setPerson(id);const p=data?.people.find(x=>x.id===id);setOverrides(structuredClone(p?.overrides||{}))
+  setPerson(id);setResetting(false);const p=data?.people.find(x=>x.id===id);setOverrides(structuredClone(p?.overrides||{}))
   setMessage('');setHistory([])
   if(id)fetch('/api/settings/feature-permissions?person='+encodeURIComponent(id),{cache:'no-store'})
    .then(r=>r.ok?r.json():Promise.reject(Error('Không tải được lịch sử')))
@@ -37,7 +37,7 @@ export default function PermissionMatrix(){
   if(!selected)return
   const next=structuredClone(overrides)
   next[feature]={...(next[feature]||{}),[action]:scope}
-  const read=action==='view'?scope:next[feature].view||selected.effective[feature]?.view||'none'
+  const read=action==='view'?scope:next[feature].view||(resetting?selected.defaults:selected.effective)[feature]?.view||'none'
   if(action==='view')for(const [key,value] of Object.entries(next[feature])){
    if(key!=='view'&&rank[value as Scope]>rank[scope])next[feature][key as Action]=scope
   }
@@ -69,7 +69,7 @@ export default function PermissionMatrix(){
  ) as Scope[]
  const canEdit=(feature:string,action:Action)=>selected&&scopedOptions(feature,action).length>0
  const chosen=(feature:string,action:Action)=>
-   overrides[feature]?.[action]??selected?.effective?.[feature]?.[action]??'none'
+   overrides[feature]?.[action]??(resetting?selected?.defaults:selected?.effective)?.[feature]?.[action]??'none'
  const activeCount=data?Object.entries(data.features).reduce((sum,[f,actions])=>sum+actions.filter(a=>chosen(f,a)!=='none').length,0):0
  return <section className="pmatrix">
   <div className="pmatrix-heading"><div><h2>MA TRẬN CẤP QUYỀN LINH ĐỘNG</h2>
@@ -99,7 +99,7 @@ export default function PermissionMatrix(){
      })}</tr>)}</tbody>
     </table></div>
    </details>)}
-   <div className="pmatrix-actions"><button type="button" className="pmatrix-reset" disabled={saving} onClick={()=>setOverrides({})}>Khôi phục mặc định theo chức danh</button><button type="button" className="pmatrix-save" disabled={saving} onClick={save}>{saving?'Đang lưu…':'LƯU MA TRẬN QUYỀN'}</button></div>
+   <div className="pmatrix-actions"><button type="button" className="pmatrix-reset" disabled={saving} onClick={()=>{setOverrides({});setResetting(true)}}>Khôi phục mặc định theo chức danh</button><button type="button" className="pmatrix-save" disabled={saving} onClick={save}>{saving?'Đang lưu…':'LƯU MA TRẬN QUYỀN'}</button></div>
    <details className="pmatrix-history"><summary>Lịch sử cấp quyền ({history.length} lần gần nhất)</summary>{history.length?<ul>{history.map((h,i)=><li key={i}>{new Date(h.changed_at).toLocaleString('vi-VN')} · Người thay đổi: {data?.people.find(p=>p.id===h.changed_by)?.name||'Quản trị viên'}</li>)}</ul>:<p>Chưa ghi nhận thay đổi.</p>}</details>
   </>}
   <p role="status" className="pmatrix-status">{message}</p>
