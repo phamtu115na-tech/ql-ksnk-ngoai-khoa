@@ -65,6 +65,20 @@ export function defaultFeatureScope(person:Person,feature:Feature,action:Action)
  if(['create','edit','delete'].includes(action))return workCanEdit?(chief?'hospital':lead?'team':'none'):'none'
  return 'none'
 }
+/** One shared source of truth for role defaults, used by both API checks and UI previews. */
+export function baselineForRole(role:Role):GrantMatrix{
+ const model={
+  admin:false,legacy_operator:role==='chief',team_lead:role==='team',work_role_reviewed:true,
+  work_view:true,work_edit:role!=='staff',can_approve_work:false
+ } as Person
+ const out:GrantMatrix={}
+ for(const [feature,actions] of Object.entries(FEATURE_ACTIONS) as [Feature,readonly Action[]][]){
+  const grants:Partial<Record<Action,Scope>>={}
+  for(const action of actions)grants[action]=defaultFeatureScope(model,feature,action)
+  out[feature]=grants
+ }
+ return out
+}
 export function effectiveMatrix(person:Person,overrides:GrantMatrix={},legacy?:{scope?:Scope;can_export?:boolean}|null,roleDefaults:GrantMatrix={}){
  const result:GrantMatrix={}
  for(const [feature,actions] of Object.entries(FEATURE_ACTIONS) as [Feature,readonly Action[]][]){
