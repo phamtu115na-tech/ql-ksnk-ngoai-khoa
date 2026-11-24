@@ -22,7 +22,9 @@ export default function MatrixExplorer({marks,form,code,filters,canExport}:{mark
  <label>Dạng biểu đồ <select value={kind} onChange={e=>{setKind(e.target.value);select(null)}}>{Object.entries(charts).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>
  <label>Hiển thị <select value={limit} onChange={e=>setLimit(+e.target.value)}><option value={5}>Top 5</option><option value={10}>Top 10</option><option value={0}>Tất cả</option></select></label>
  <label>Cảnh báo theo <select value={mode} onChange={e=>setMode(e.target.value as typeof mode)}><option value="rate">Tỷ lệ không đạt</option><option value="count">Số lỗi</option></select></label></div>
- {rows.length>0&&!['table','heat'].includes(kind)&&<Chart rows={rows} kind={kind} percent={true}/>}
+ {rows.length>0&&!['table','heat'].includes(kind)&&<div data-export-chart="matrix" data-chart-caption={[dimensions[dimension],charts[kind],limit?'Top '+limit:'Tất cả',mode==='rate'?'Cảnh báo theo tỷ lệ không đạt':'Cảnh báo theo số lỗi'].join(' · ')}>
+  <Chart rows={rows} kind={kind} percent={true}/>
+ </div>}
  <div className="table-wrap"><table><thead><tr>{columns.map(c=><th key={c}>{c}</th>)}</tr></thead><tbody>{rows.map(r=><tr key={r.key}><td><button onClick={()=>select(selected===r.key?null:r.key)}>{r.label}</button></td><td>{r.key}</td><td>{r.forms}</td><td>{r.total}</td><td>{r.pass}</td><td>{r.fail}</td><td>{r.poor}</td><td>{r.errors}</td><td>{fmt(r.passRate)}</td><td>{fmt(r.errorRate)}</td><td style={{borderLeft:'8px solid '+(scale.colors[severity(r,mode,scale)]||'#aaa'),background:kind==='heat'?(scale.colors[severity(r,mode,scale)]||'#aaa')+'40':undefined}}>{tag(r)}</td></tr>)}</tbody></table></div>
  {!rows.length&&<p>Chưa có dữ liệu giám sát trong kỳ.</p>}
  {selected!==null&&<details open><summary>Lịch sử chấm</summary><ul>{marks.filter(m=>identify(m,dimension)[0]===selected).map(m=><li key={m.row_no}>{[m.date,m.formId,m.name,m.content,m.result||'Chưa đánh giá'].join(' · ')}</li>)}</ul></details>}
