@@ -1,6 +1,7 @@
 'use client'
 
 import {useState,type RefObject} from 'react'
+import {captureVisibleReportCharts,fitChartImage} from '../lib/report-chart-capture'
 
 type Region={id:string;label:string}
 type ExportMode='summary'|'detailed'
@@ -82,6 +83,33 @@ function getNotes(card:HTMLElement){
   .map(el=>shortened(cellText(el),175)).filter(x=>x.length>2)
  return [...new Set(notes)].slice(0,36)
 }
+function addChartPages(pptx:any,card:HTMLElement,heading:string,scope:string,period:string,inc:()=>number){
+ const snapshots=captureVisibleReportCharts(card,heading)
+ for(const snapshot of snapshots){
+  const slide=sectionSlide(pptx,heading,scope,period,inc())
+  write(slide,shortened(snapshot.title,100),.73,2.24,11.8,.40,17,BLUE,true)
+  let chartTop=2.82
+  if(snapshot.metrics.length){
+   const n=snapshot.metrics.length,gap=.13,width=(11.87-(n-1)*gap)/n
+   snapshot.metrics.forEach((metric,i)=>{
+    const x=.73+i*(width+gap)
+    slide.addShape(pptx.ShapeType.roundRect,{x,y:2.75,w:width,h:.75,
+     rectRadius:.06,line:{color:'D7E2F5'},fill:{color:LIGHT}})
+    write(slide,metric.label,x+.10,2.85,width-.20,.19,10,GREY,true)
+    write(slide,metric.value,x+.10,3.13,width-.20,.24,18,BLUE,true)
+   })
+   chartTop=3.65
+  }
+  const availableHeight=6.68-chartTop
+  const image=fitChartImage(snapshot.ratio,11.9,availableHeight)
+  // Preserve the actual chosen Chart.js type, ranking, labels and colour
+  // through a PNG snapshot; tables remain separately editable PPT elements.
+  slide.addImage({data:snapshot.png,x:.72+(11.9-image.w)/2,
+   y:chartTop+(availableHeight-image.h)/2,w:image.w,h:image.h})
+  write(slide,shortened(snapshot.caption,170),.75,6.77,11.8,.16,9,GREY)
+ }
+ return snapshots.length
+}
 function addTablePages(pptx:any,heading:string,scope:string,period:string,table:{columns:string[];rows:string[][]},limit:number,inc:()=>number){
  const headers=table.columns.length?table.columns:table.rows[0]?.map((_,i)=>'Cột '+(i+1))||[]
  const rows=table.rows.slice(0,limit)
@@ -124,7 +152,7 @@ export default function ScreenReportExport({root,regions,scope,period,canExport}
    pptx.author='Khoa Kiểm soát nhiễm khuẩn – Bệnh viện Ngoại khoa 115 Nghệ An'
    pptx.subject='Báo cáo theo các mục và bộ lọc đang hiển thị'
    pptx.title='BÁO CÁO CÔNG TÁC KSNK – '+formatPeriod(period)
-   let pages=0,omitted=0
+   let pages=0,omitted=0,chartCount=0
    const next=()=>++pages
    const cover=pptx.addSlide();next();brand(cover,pptx)
    write(cover,'BÁO CÁO CÔNG TÁC',1.45,2.55,10.45,.68,40,RED,true,'center')
@@ -153,6 +181,7 @@ export default function ScreenReportExport({root,regions,scope,period,canExport}
    for(const card of targets){
     const item=regions.find(r=>r.id===card.dataset.reportRegion)
     const heading=item?.label||card.querySelector('h3')?.textContent||'Nội dung giám sát KSNK'
+    chartCount+=addChartPages(pptx,card,heading,scope,period,next)
     const tables=getTables(card)
     if(tables.length){
      let budget=limit
@@ -184,12 +213,12 @@ export default function ScreenReportExport({root,regions,scope,period,canExport}
    }
    const fileName='Bao-cao-KSNK-'+fileSafe(period)+'-'+mode+'.pptx'
    await pptx.writeFile({fileName})
-   setNotice('Đã tạo '+pages+' slide. '+(omitted?'Rút gọn '+omitted+' dòng để bảo đảm dễ trình chiếu.':'Nội dung đã nằm trong giới hạn hiển thị.'))
+   setNotice('Đã tạo '+pages+' slide, gồm '+chartCount+' biểu đồ đang hiển thị. '+(omitted?'Rút gọn '+omitted+' dòng để bảo đảm dễ trình chiếu.':'Nội dung đã nằm trong giới hạn hiển thị.'))
   }catch(e){setError(e instanceof Error?'Xuất PowerPoint thất bại: '+e.message:'Không xuất được PowerPoint.')}
   finally{setBusy(false)}
  }
  return <section className="panel-card screen-export" aria-label="Xuất PowerPoint theo nội dung đang hiển thị">
-  <div><strong>XUẤT BÁO CÁO POWERPOINT · 16:9</strong><small>{scope} · {formatPeriod(period)} · Chỉ xuất các mục đã chọn, trong quyền được xem</small></div>
+  <div><strong>XUẤT BÁO CÁO POWERPOINT · 16:9</strong><small>Biểu đồ, chỉ số và bảng trong vùng đã chọn · {scope} · {formatPeriod(period)} · Chỉ xuất các mục đã chọn, trong quyền được xem</small></div>
   <div className="screen-export-controls">
    <label>Vùng xuất<select value={active} onChange={e=>setRegion(e.target.value)} disabled={busy}>
     <option value="">Tất cả mục đang hiển thị ({regions.length})</option>
