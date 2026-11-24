@@ -727,6 +727,8 @@ export async function POST(req:Request){const user=await actor();if(!user)return
    const master=(await readSheet(S.checklistForms,true)).map(formMaster).find(x=>same(x.code,formCode));
    if(!master)return NextResponse.json({ok:false,error:'Không tìm thấy mẫu phiếu cần cấu hình.'},{status:404});
    dept=text(master.department);
+   if(requestedDept&&!same(requestedDept,dept))return NextResponse.json({ok:false,error:'Bộ phận của tiêu chí khác mẫu phiếu gốc.'},{status:403});
+   if(original&&oldDept&&!same(oldDept,dept))return NextResponse.json({ok:false,error:'Không được chuyển tiêu chí/KPI sang mẫu phiếu thuộc bộ phận khác.'},{status:403});
   }
   if(moduleName==='checklistForm'&&original&&requestedDept&&!same(oldDept,requestedDept))
    return NextResponse.json({ok:false,error:'Không được chuyển mẫu phiếu sang bộ phận khác.'},{status:403});
@@ -758,6 +760,11 @@ export async function POST(req:Request){const user=await actor();if(!user)return
   if(existing&&body.department&&!same(body.department,dept))
    return NextResponse.json({ok:false,error:'Không được chuyển bản ghi sang bộ phận khác.'},{status:403});
  }
+ if(['tasks','reminders'].includes(moduleName)&&['save','daily','delete'].includes(op)){
+  const action=op==='delete'?'delete':Number(body.row_no)>0?'edit':'create';
+  const granted=await featureScope(user,moduleName as 'tasks'|'reminders',action);
+  if(granted==='none')return NextResponse.json({ok:false,error:'Quyền '+action+' đã bị thu hồi trong ma trận cấp quyền.'},{status:403});
+ }
  const workUpdate=(moduleName==='tasks'||moduleName==='reminders')&&['save','daily'].includes(op)&&Number(body.row_no)>0;
  const workRights=workUpdate?await getWorkEditRights(user,moduleName as 'tasks'|'reminders',Number(body.row_no)):null;
  if(workUpdate&&!workRights?.canSave)
@@ -765,7 +772,9 @@ export async function POST(req:Request){const user=await actor();if(!user)return
  if(workRights&&norm(pick(workRights.row.data,['Trạng thái phê duyệt','Trạng thái xin ý kiến']))==='da phe duyet')
   return NextResponse.json({ok:false,error:'Công việc đã phê duyệt; phải mở lại trước khi sửa.'},{status:409});
  if(!(user.admin||(user.legacy_operator&&user.work_view&&user.work_edit)||workRights?.canSave)){
-  const team=Boolean(user.team_lead&&user.work_view&&user.work_edit);
+  const actionScope=moduleName==='checklists'?await featureScope(user,'checklists',op==='delete'?'delete':Number(body.row_no)>0?'edit':'create'):
+   editFeature?await featureScope(user,editFeature,op==='delete'?'delete':Number(body.row_no)>0?'edit':'create'):'none';
+  const team=Boolean(user.team_lead&&user.work_view&&(user.work_edit||actionScope==='team'));
   const department=text(user.team_lead?(user.team_department||user.department):user.department);
   if(!department)return NextResponse.json({ok:false,error:'Tài khoản chưa xác định bộ phận.'},{status:403});
   if(moduleName==='alerts'&&['read','unread'].includes(op))
@@ -812,6 +821,15 @@ export async function POST(req:Request){const user=await actor();if(!user)return
       criteria.some(row=>same(pick(row.data,['Mã phiếu']),formCode)))
     return NextResponse.json({ok:false,error:'Mẫu phiếu đã có tiêu chí hoặc lịch sử chấm. Hãy tạm ngưng thay vì xóa để bảo toàn dữ liệu.'},{status:409});
   }
+ }
+ if(op==='delete'&&moduleName==='checklistForm'){
+  const existing=await readRow(S.checklistForms,Number(body.row_no));
+  if(!existing)return NextResponse.json({ok:false,error:'Không tìm thấy mẫu phiếu.'},{status:404});
+  const formCode=pick(existing.data,['Mã phiếu']);
+  const [used,criteria]=await Promise.all([readSheet(S.checklists,true),readSheet(S.checklistCriteria,true)]);
+  if(used.some(row=>same(pick(row.data,['Mã mẫu phiếu','Mã phiếu']),formCode))||
+     criteria.some(row=>same(pick(row.data,['Mã phiếu']),formCode)))
+   return NextResponse.json({ok:false,error:'Mẫu phiếu đang được sử dụng. Hãy tạm ngưng để bảo toàn lịch sử và tiêu chí.'},{status:409});
  }
  if(moduleName==='alerts'&&['read','unread'].includes(op))return NextResponse.json({ok:true,...await saveAlertReadState(body)});
  if(moduleName==='kpi'&&op==='delete_report'){
