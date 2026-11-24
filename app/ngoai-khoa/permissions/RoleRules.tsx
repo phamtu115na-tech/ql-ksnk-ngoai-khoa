@@ -4,7 +4,7 @@ type Scope='none'|'self'|'team'|'hospital'
 type Action='view'|'create'|'edit'|'delete'|'approve'|'history'|'export'
 type Matrix=Record<string,Partial<Record<Action,Scope>>>
 type Role='staff'|'team'|'chief'
-type RoleEntry={role:Role;grants:Matrix;version:string|null}
+type RoleEntry={role:Role;grants:Matrix;version:string|null;baseline:Matrix}
 const roles:{id:Role;label:string;description:string}[]=[
  {id:'staff',label:'Nhân viên',description:'Mặc định cá nhân; quản trị viên có thể ủy quyền theo từng nghiệp vụ'},
  {id:'team',label:'Tổ trưởng',description:'Mặc định trong bộ phận phụ trách'},
@@ -19,17 +19,6 @@ const groups=[
 ]
 const order:Scope[]=['none','self','team','hospital']
 const scopeText:Record<Scope,string>={none:'Không cho phép',self:'Cá nhân',team:'Toàn tổ',hospital:'Toàn khoa'}
-function inherit(personRole:Role,feature:string,action:Action):Scope{
- const base:Scope=personRole==='chief'?'hospital':personRole==='team'?'team':'self'
- if(action==='view'||action==='history')return feature==='checklistTemplates'&&personRole==='staff'?'none':base
- if(action==='approve')return 'none'
- if(feature==='reports'&&action==='export')return personRole==='staff'?'none':base
- if(feature==='staff')return personRole==='chief'?'hospital':'none'
- if(feature==='checklists'||feature==='checklistTemplates')return personRole==='staff'?'none':base
- if((feature==='plans'||feature==='issues')&&personRole==='staff'&&(action==='create'||action==='edit'))return 'self'
- if((feature==='tasks'||feature==='reminders')&&action==='edit'&&personRole==='staff')return 'self'
- return personRole==='staff'?'none':base
-}
 export default function RoleRules(){
  const [role,setRole]=useState<Role>('staff')
  const [entries,setEntries]=useState<RoleEntry[]>([])
@@ -38,7 +27,8 @@ export default function RoleRules(){
  const [featureNames,setFeatureNames]=useState<Record<string,string>>({})
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[loaded,setLoaded]=useState(false)
  const entry=entries.find(x=>x.role===role)
- const effective=(feature:string,action:Action)=>grants[feature]?.[action]??inherit(role,feature,action)
+ const baseline=(feature:string,action:Action):Scope=>entry?.baseline?.[feature]?.[action]??'none'
+ const effective=(feature:string,action:Action)=>grants[feature]?.[action]??baseline(feature,action)
  const count=useMemo(()=>Object.keys(grants).reduce((sum,feature)=>sum+Object.keys(grants[feature]||{}).length,0),[grants])
  async function load(selected:Role=role){
   const [rulesRes,matrixRes]=await Promise.all([fetch('/api/settings/role-permissions',{cache:'no-store'}),fetch('/api/settings/feature-permissions',{cache:'no-store'})])
@@ -55,20 +45,26 @@ export default function RoleRules(){
   if(value==='inherit')delete next[feature][action]
   else next[feature][action]=value as Scope
   if(action==='view'){
-   const read=value==='inherit'?inherit(role,feature,'view'):value as Scope
+   const read=value==='inherit'?baseline(feature,'view'):value as Scope
    for(const other of features[feature]||[]){
     if(other==='view')continue
-    const current=next[feature][other]??inherit(role,feature,other)
+    const current=next[feature][other]??baseline(feature,other)
     if(order.indexOf(current)>order.indexOf(read))next[feature][other]=read
    }
   }else if(value!=='inherit'&&value!=='none'){
-   const read=next[feature].view??inherit(role,feature,'view')
+   const read=next[feature].view??baseline(feature,'view')
    if(order.indexOf(value as Scope)>order.indexOf(read))next[feature].view=value as Scope
   }
   if(!Object.keys(next[feature]).length)delete next[feature]
   setGrants(next)
  }
  async function save(){
+  const broad=Object.entries(grants).flatMap(([feature,row])=>Object.entries(row||{})
+   .filter(([action,scope])=>scope==='hospital'&&action!=='view').map(([action])=>feature+' · '+labels[action as Action]))
+  if(role==='staff'&&broad.length&&!window.confirm(
+   'Quy tắc này cấp quyền toàn khoa cho TẤT CẢ nhân viên, gồm quyền thay đổi dữ liệu ở: '+broad.join(', ')+
+   '. Nếu chỉ cần một vài nhân viên, hãy cấp tại tab "Cấp quyền từng nhân viên". Vẫn lưu cho toàn bộ chức vụ?'
+  ))return
   setBusy(true);setError('')
   try{
    const r=await fetch('/api/settings/role-permissions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role,grants,version:entry?.version||null})})
@@ -91,7 +87,7 @@ export default function RoleRules(){
       const override=grants[f]?.[a]
       return <td key={a}><label className="state">{effective(f,a)==='none'?'Không cho phép':'Cho phép'}</label>
        <select aria-label={(featureNames[f]||f)+' '+labels[a]} value={override??'inherit'} onChange={e=>change(f,a,e.target.value)}>
-        <option value="inherit">Mặc định · {scopeText[inherit(role,f,a)]}</option>
+        <option value="inherit">Mặc định · {scopeText[baseline(f,a)]}</option>
         {order.map(scope=><option value={scope} key={scope}>{scope==='none'?'Không cho phép':'Cho phép · '+scopeText[scope]}</option>)}
        </select></td>
     })}</tr>)}</tbody></table></div></details>)}
