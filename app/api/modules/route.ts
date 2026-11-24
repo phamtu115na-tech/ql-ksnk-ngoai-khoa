@@ -658,15 +658,17 @@ async function getWorkEditRights(user:NonNullable<Awaited<ReturnType<typeof acto
  const row=await readRow(sheet,rowNo);
  if(!row)return null;
  const old=row.data||{};
- const manager=Boolean(user.admin||(user.legacy_operator&&user.work_view&&user.work_edit));
+ const granted=await featureScope(user,moduleName,'edit');
  const staff=getStaff(await readSheet(S.staff,true));
  const names=text(moduleName==='tasks'?pick(old,['Người thực hiện','Người chịu trách nhiệm']):pick(old,['NGƯỜI LIÊN QUAN','Người liên quan']))
   .split(/[,;|]/).map(value=>value.trim()).filter(Boolean);
  const sender=pick(old,moduleName==='tasks'?['Người giao việc','Người giao','Người tạo']:['NGƯỜI NHẮC','Người nhắc']);
  const dept=text(pick(old,['Bộ phận','Thuộc bộ phận']));
  const teamDept=text(user.team_department||user.department);
+ const manager=granted==='hospital';
+ const delegatedTeam=granted==='team'&&Boolean(teamDept&&dept&&same(teamDept,dept));
  const allInTeam=names.length>0&&names.every(name=>staff.some(person=>same(person.name,name)&&same(person.department,teamDept)));
- const teamLead=Boolean(user.team_lead&&user.work_view&&user.work_edit&&teamDept&&allInTeam&&(!dept||same(dept,teamDept)));
+ const teamLead=delegatedTeam&&allInTeam||Boolean(user.team_lead&&user.work_view&&user.work_edit&&granted==='team'&&teamDept&&allInTeam&&(!dept||same(dept,teamDept)));
  const threadQuery=await db().from('cx_threads').select('owner_id,performers,units')
   .eq('source_row',row.id).eq('kind',moduleName==='tasks'?'task':'reminder').limit(1).maybeSingle();
  if(threadQuery.error)throw threadQuery.error;
@@ -679,7 +681,7 @@ async function getWorkEditRights(user:NonNullable<Awaited<ReturnType<typeof acto
    (()=>{const matched=staff.filter(person=>same(person.name,user.name)&&same(person.department,user.department));return matched.length===1?matched[0]:undefined})();
   if(identity){owner=same(sender,identity.name);performer=names.some(name=>same(name,identity.name));}
  }
- return {row,manager,teamLead,owner,performer,canSave:manager||teamLead||owner||performer};
+ return {row,manager,teamLead,owner,performer,canSave:granted!=='none'&&(manager||teamLead||owner||performer)};
 }
 
 export async function POST(req:Request){const user=await actor();if(!user)return NextResponse.json({ok:false,error:'Chưa đăng nhập'},{status:401});try{const body=(await req.json()) as AnyRecord;const moduleName=text(body.module);const op=text(body.op)||'save';
