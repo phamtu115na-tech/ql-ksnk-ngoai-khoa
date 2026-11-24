@@ -16,6 +16,21 @@ const [empty]=aggregate([mark('N/A',1)],'staff')
 assert.equal(empty.passRate,null)
 assert.equal(severity(empty,'rate',defaults),-1)
 assert.equal(validScale({...defaults,count:[0,2,2,7]}),false)
+const {briefingGraphs}=require('../lib/briefing-charts.ts')
+const vsmRows=[
+ ['VSMT-P02','Trang phục và phương tiện phòng hộ cá nhân',80,80,0,0,100,0,''],
+ ['VSMT-P02','Xe vệ sinh, hóa chất',76,76,0,0,100,0,''],
+ ['VSMT-P02','Nhà vệ sinh và chất thải',73,73,0,0,100,0,''],
+ ['VSMT-P02','Thùng chất thải hành lang',70,70,0,0,100,0,''],
+ ['VSMT-P02','Rác tại khu vực',68,68,0,0,100,0,''],
+ ['KHAC','Tiêu chí khác',0,0,0,0,null,null,'']
+]
+const [graph]=briefingGraphs(vsmRows)
+assert.equal(graph.formCode,'VSMT-P02')
+assert.equal(graph.labels.length,5)
+assert.equal(graph.total,367)
+assert.deepEqual(graph.pass,[100,100,100,100,100])
+assert.deepEqual(graph.fail,[0,0,0,0,0])
 const {excel,powerpoint}=require('../lib/export-matrix.ts')
 ;(async()=>{
  const data={title:'Kiểm thử',department:'Tổ A',period:'Tháng 11',columns:['Tiêu chí','Tỷ lệ'],rows:Array.from({length:140},(_,i)=>['Tiêu chí '+i,85])}
