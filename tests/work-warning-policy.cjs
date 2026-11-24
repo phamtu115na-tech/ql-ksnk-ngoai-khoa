@@ -6,7 +6,7 @@ const moduleExports={}
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('lib/work-warning-policy.ts','utf8'),{
  compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}
 }).outputText,{exports:moduleExports,require,console})
-const {workWarningReasons:reasons}=moduleExports
+const reasons=(...args)=>Array.from(moduleExports.workWarningReasons(...args))
 const today='2026-11-24',who='00000000-0000-0000-0000-000000000001',other='00000000-0000-0000-0000-000000000002'
 const make=(extra={},unread=0)=>({item:{id:'t',kind:'task',title:'Kiểm tra vệ sinh',status:'Mới',
  due:'2026-11-30',owner_id:other,performers:[who,other],received_by:[],...extra},unread})
