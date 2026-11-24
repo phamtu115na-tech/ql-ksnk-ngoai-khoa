@@ -521,7 +521,7 @@ export async function GET(req:Request){const viewer=await actor();if(!viewer)ret
  const viewFeature=({checklists:'checklists',reports:'reports',violations:'violations',plans:'plans',staff:'staff',tasks:'tasks',reminders:'reminders',alerts:'alerts',kpi:'kpi'} as Record<string,'checklists'|'reports'|'violations'|'plans'|'staff'|'tasks'|'reminders'|'alerts'|'kpi'>)[moduleName];
  const viewScope=viewFeature?await featureScope(viewer,viewFeature,'view'):null;
  if(viewFeature&&viewScope==='none')return NextResponse.json({ok:false,error:'Chưa được cấp quyền xem phân hệ.'},{status:403});
- const fullAccess=viewer.admin||(viewer.legacy_operator&&viewer.work_view);
+ const fullAccess=viewer.admin||(viewer.legacy_operator&&viewer.work_view)||viewScope==='hospital';
  if(!fullAccess){
   const allowed=['tasks','reminders','violations','plans','checklists','reports','staff','alerts','kpi'];
   if(!allowed.includes(moduleName))return NextResponse.json({ok:false,error:'Phân hệ ngoài phạm vi tài khoản.'},{status:403});
@@ -531,7 +531,7 @@ export async function GET(req:Request){const viewer=await actor();if(!viewer)ret
   const identity=allStaff.find(x=>text(viewer.staff_code)&&same(x.id,viewer.staff_code))||allStaff.find(x=>same(x.name,viewer.name)&&same(x.department,department));
   if(!identity&&!viewer.team_lead)return NextResponse.json({ok:false,error:'Tài khoản chưa liên kết hồ sơ nhân viên.'},{status:403});
   const ownName=identity?.name||viewer.name;
-  const teamScope=Boolean(viewer.team_lead&&viewer.work_view&&viewScope!=='self');
+  const teamScope=viewScope==='team'||Boolean(viewer.team_lead&&viewer.work_view&&viewScope!=='self'&&viewScope!==null);
   const member=(name:unknown)=>allStaff.some(x=>same(x.name,name)&&same(x.department,department));
   const f=parseFilters(url);
   if(teamScope&&f.person&&!member(f.person))return NextResponse.json({ok:false,error:'Nhân viên ngoài phạm vi tổ phụ trách.'},{status:403});
@@ -772,10 +772,13 @@ export async function POST(req:Request){const user=await actor();if(!user)return
   return NextResponse.json({ok:false,error:'Không có quyền sửa: tài khoản không phải người giao, người thực hiện hoặc tổ trưởng phụ trách.'},{status:403});
  if(workRights&&norm(pick(workRights.row.data,['Trạng thái phê duyệt','Trạng thái xin ý kiến']))==='da phe duyet')
   return NextResponse.json({ok:false,error:'Công việc đã phê duyệt; phải mở lại trước khi sửa.'},{status:409});
- if(!(user.admin||(user.legacy_operator&&user.work_view&&user.work_edit)||workRights?.canSave)){
+ const broadFeature=moduleName==='checklists'?'checklists':editFeature;
+ const broadAction=op==='delete'?'delete':Number(body.row_no)>0?'edit':'create';
+ const delegatedScope=broadFeature?await featureScope(user,broadFeature,broadAction):'none';
+ if(!(user.admin||(user.legacy_operator&&user.work_view&&user.work_edit)||workRights?.canSave||delegatedScope==='hospital')){
   const actionScope=moduleName==='checklists'?await featureScope(user,'checklists',op==='delete'?'delete':Number(body.row_no)>0?'edit':'create'):
    editFeature?await featureScope(user,editFeature,op==='delete'?'delete':Number(body.row_no)>0?'edit':'create'):'none';
-  const team=Boolean(user.team_lead&&user.work_view&&(user.work_edit||actionScope==='team'));
+  const team=actionScope==='team'||Boolean(user.team_lead&&user.work_view&&user.work_edit);
   const department=text(user.team_lead?(user.team_department||user.department):user.department);
   if(!department)return NextResponse.json({ok:false,error:'Tài khoản chưa xác định bộ phận.'},{status:403});
   if(moduleName==='alerts'&&['read','unread'].includes(op))
