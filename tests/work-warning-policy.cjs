@@ -24,4 +24,9 @@ assert.deepEqual(reasons(make({status:'Đang thực hiện',due:null,daily:true,
 assert.deepEqual(reasons(make({status:'Hoàn thành',due:null,daily:true,kind:'reminder',daily_done_today:false}),who,false,today),[])
 assert.deepEqual(reasons(make({status:'Đang thực hiện',due:'2026-11-25',daily:true,kind:'reminder'}),who,false,today),[])
 assert.deepEqual(reasons(make({status:'Đang thực hiện',due:'2026-11-20',daily:true,kind:'reminder'}),who,false,today),['Nhắc hằng ngày'])
+const supervisor='00000000-0000-0000-0000-000000000099'
+assert.deepEqual(reasons(make({status:'Đang thực hiện',kind:'reminder',due:null,daily:true,
+ daily_done_today:false,daily_done_all_today:false,owner_id:supervisor}),supervisor,true,today),['Nhắc hằng ngày'])
+assert.deepEqual(reasons(make({status:'Đang thực hiện',kind:'reminder',due:null,daily:true,
+ daily_done_today:false,daily_done_all_today:true,owner_id:supervisor}),supervisor,true,today),[])
 console.log('PASS independent work warnings: received, due, overdue, unread, recurring and completed')
