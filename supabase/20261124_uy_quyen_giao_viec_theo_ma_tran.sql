@@ -148,6 +148,5 @@ AS $function$
   or exists(select from cx_work_people w join cx_staff_catalog s on s.unit=w.unit and s.code=w.staff_code and s.copies=1
  where w.source_id=r.id and w.unit=p.unit and w.staff_code=p.staff_code))
  order by r.row_no desc limit 80 offset greatest(skip_rows,0)
-$function$
-
+$function$;
 commit;
