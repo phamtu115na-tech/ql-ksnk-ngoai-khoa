@@ -3,7 +3,7 @@ import {createContext,useContext,useEffect,useState} from 'react';
 import {workWarningReasons,type WorkWarningType} from '../lib/work-warning-policy';
 
 type Kind='task'|'reminder';
-type Item={id:string;source_row:number;kind:Kind;title:string;note?:string;status:string;due:string;latest_message:string;mentioned:boolean;message_time:string;message_sender:string;owner_id:string;performers:string[];observers:string[];received_by?:string[];daily?:boolean;daily_done_today?:boolean};
+type Item={id:string;source_row:number;kind:Kind;title:string;note?:string;status:string;due:string;latest_message:string;mentioned:boolean;message_time:string;message_sender:string;owner_id:string;performers:string[];observers:string[];received_by?:string[];daily?:boolean;daily_done_today?:boolean;daily_done_all_today?:boolean};
 type Row={item:Item;unread:number};
 export function useWorkFeed(){return useContext(Feed);}
 const labels={task:'Giao việc',reminder:'Nhắc việc'};
