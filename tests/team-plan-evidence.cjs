@@ -39,11 +39,11 @@ const mocks={
    scope==='self'&&normalize(user.name)===normalize(owner)
  }
 }
-const exports={}
+const routeExports={}
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('app/api/evidence/route.ts','utf8'),{
  compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}
-}).outputText,{exports,require:name=>mocks[name]||require(name),URL,Response,Request,Blob,process,Buffer,console})
-const {GET}=exports
+}).outputText,{exports:routeExports,require:name=>mocks[name]||require(name),URL,Response,Request,Blob,process,Buffer,console})
+const {GET}=routeExports
 ;(async()=>{
  for(let i=0;i<people.length;i++){
   signedIn=people[i]
