@@ -21,9 +21,10 @@ await pg.exec(fs.readFileSync('supabase/20261124_canh_bao_da_nhan_va_nhac_hang_n
 const staff='00000000-0000-0000-0000-000000000001'
 const other='00000000-0000-0000-0000-000000000002'
 const manager='00000000-0000-0000-0000-000000000003'
+const outsider='00000000-0000-0000-0000-000000000004'
 const task='00000000-0000-0000-0000-000000000011'
 const reminder='00000000-0000-0000-0000-000000000012'
-await pg.query("insert into cx_people values($1,true,'surgery'),($2,true,'surgery'),($3,true,'surgery')",[staff,other,manager])
+await pg.query("insert into cx_people values($1,true,'surgery'),($2,true,'surgery'),($3,true,'surgery'),($4,true,'surgery')",[staff,other,manager,outsider])
 await pg.query("insert into nk_legacy_rows values(10,'{}'),(11,$1)",[JSON.stringify({'NHẮC HÀNG NGÀY':'có'})])
 await pg.query("insert into cx_threads(id,source_row,owner_id,performers,kind,units,status) values($1,10,$3,array[$4,$5]::uuid[],'task',array['surgery'],'Mới'),($2,11,$3,array[$4]::uuid[],'reminder',array['surgery'],'Đang thực hiện')",[task,reminder,manager,staff,other])
 const receive=async(who,id)=>(await pg.query('select nk_receive_work($1,$2) ok',[id,who])).rows[0].ok
@@ -39,7 +40,7 @@ assert.equal(await receive(staff,task),true)
 assert.equal(await receive(staff,task),true,'receipt operation must be idempotent')
 assert.equal((await pg.query('select count(*)::int n from cx_messages')).rows[0].n,1)
 assert.deepEqual((await meta(staff,[task]))[0].received_by,[staff])
-assert.deepEqual(await meta(manager,[task]),[],'scope prevents exposing to unrelated viewer')
+assert.deepEqual(await meta(outsider,[task]),[],'scope prevents exposing to unrelated viewer')
 assert.equal((await meta(staff,[reminder]))[0].daily,true)
 assert.equal((await meta(staff,[reminder]))[0].daily_done_today,false)
 const daily=async(who,id)=>(await pg.query('select nk_daily_work_done($1,$2) ok',[who,id])).rows[0].ok
