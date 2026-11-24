@@ -6,7 +6,7 @@
 export type WorkAlertItem={
  id:string;kind:'task'|'reminder';title:string;status:string;due:string|null;
  owner_id:string;performers:string[];received_by?:string[];
- daily?:boolean;daily_done_today?:boolean
+ daily?:boolean;daily_done_today?:boolean;daily_done_all_today?:boolean
 }
 export type WorkAlertRow={item:WorkAlertItem;unread:number}
 export type WorkWarningType='Mới giao'|'Đến hạn hôm nay'|'Quá hạn'|'Tin chưa đọc'|'Nhắc hằng ngày'
@@ -27,6 +27,7 @@ export function workWarningReasons(row:WorkAlertRow,who:string,supervisor:boolea
  if(!done&&!daily&&due===today)types.push('Đến hạn hôm nay')
  if(!done&&!daily&&due&&due<today)types.push('Quá hạn')
  if(Number(row.unread)>0)types.push('Tin chưa đọc')
- if(daily&&!item.daily_done_today&&(!due||due<=today))types.push('Nhắc hằng ngày')
+ const dailyDone=own?item.daily_done_today:(supervisor||item.owner_id===who)?item.daily_done_all_today:item.daily_done_today
+ if(daily&&!dailyDone&&(!due||due<=today))types.push('Nhắc hằng ngày')
  return types
 }
