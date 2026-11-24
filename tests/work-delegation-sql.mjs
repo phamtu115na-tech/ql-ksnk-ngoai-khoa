@@ -16,7 +16,8 @@ create table public.cx_work_people(source_id bigint,role text,token text,unit te
 create table public.cx_staff_catalog(unit text,code text,copies integer,name text);
 create table public.cx_messages(thread uuid,sender uuid,request_id uuid);
 create table public.nk_personal_work_notes(thread uuid,person uuid,note text,primary key(thread,person));
-create function public.cx_key(text) returns text language sql immutable as $$select lower(trim(coalesce($1,'')))$$;
+create function public.cx_key(text) returns text language sql immutable as $select lower(trim(coalesce($1,'')))$;
+create function public.cx_source_unit(jsonb) returns text language sql immutable as $select coalesce($1->>'unitId','surgery')$;
 create function public.cx_append(uuid,uuid,text,jsonb,uuid) returns boolean language sql as $$select true$$;
 `)
 for(const name of ['20261123_ma_tran_cap_quyen_dong','20261124_quy_tac_quyen_theo_chuc_vu','20261124_uy_quyen_giao_viec_theo_ma_tran'])
