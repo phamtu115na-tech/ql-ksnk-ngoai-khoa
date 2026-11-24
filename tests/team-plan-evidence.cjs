@@ -22,7 +22,7 @@ const mocks={
    if(table==='ksnk_evidence')return {
     list:uploads,select(){return this},
     eq(key,value){const earlier=this.list;this.list=this.list.filter(item=>String(item[key])===String(value));if(!this.list.length)console.log('EMPTY evidence mock filter',key,JSON.stringify(value),earlier.map(item=>({module:item.module,legacy_id:item.legacy_id})));return this},
-    order:async()=>({data:this.list,error:null}),
+    order:async()=>{console.log('ORDER entries',this.list.length,this.list.map(x=>x.legacy_id));return {data:this.list,error:null}},
     limit:async()=>({data:this.list,error:null})
    }
    throw Error('Unexpected table '+table)
@@ -52,7 +52,7 @@ const {GET}=routeExports
    const response=await GET(new Request(url))
    assert.equal(response.status,i===j?200:403,people[i].name+' may only view own-team plan evidence')
    if(i===j){
-    const files=(await response.json()).files
+    const body=await response.json();console.log('RESPONSE',body);const files=body.files
     assert.equal(files.length,1)
     const opened=await GET(new Request('https://test.local'+files[0].url))
     assert.equal(opened.status,200,'same team may open real file')
