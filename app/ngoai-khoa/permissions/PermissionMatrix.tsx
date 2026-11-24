@@ -4,7 +4,7 @@ import {useEffect,useMemo,useState} from 'react'
 type Scope='none'|'self'|'team'|'hospital'
 type Action='view'|'create'|'edit'|'delete'|'approve'|'history'|'export'
 type Grants=Record<string,Partial<Record<Action,Scope>>>
-type Person={id:string;name:string;username:string;department:string;staff_code:string|null;team_department:string|null;team_lead:boolean;legacy_operator:boolean;work_view:boolean;work_edit:boolean;can_approve_work?:boolean;version:string|null;overrides:Grants;effective:Grants;defaults:Grants}
+type Person={id:string;name:string;username:string;department:string;staff_code:string|null;team_department:string|null;team_lead:boolean;work_role_reviewed:boolean;legacy_operator:boolean;work_view:boolean;work_edit:boolean;can_approve_work?:boolean;version:string|null;overrides:Grants;effective:Grants;defaults:Grants}
 type Payload={people:Person[];features:Record<string,Action[]>;featureLabels:Record<string,string>;actionLabels:Record<Action,string>;history:Array<{changed_at:string;changed_by:string}>}
 const captions:Record<Scope,string>={none:'— Không',self:'Cá nhân',team:'Toàn tổ',hospital:'Toàn khoa'}
 const rank:Record<Scope,number>={none:0,self:1,team:2,hospital:3}
@@ -15,7 +15,7 @@ export default function PermissionMatrix(){
  const [overrides,setOverrides]=useState<Grants>({}),[saving,setSaving]=useState(false),[message,setMessage]=useState('')
  const [history,setHistory]=useState<Payload['history']>([]),[resetting,setResetting]=useState(false)
  const selected=data?.people.find(p=>p.id===person)
- const ceiling:Scope=selected?.legacy_operator&&selected.work_view?'hospital':selected?.team_lead&&selected.work_view?'team':'self'
+ const ceiling:Scope=selected?.legacy_operator&&selected.work_view?'hospital':selected?.team_lead&&selected.work_role_reviewed&&selected.work_view?'team':'self'
  const filtered=useMemo(()=>data?.people.filter(p=>tidy([p.name,p.username,p.department,p.staff_code||''].join(' ')).includes(tidy(search)))||[],[data,search])
  async function refresh(target?:string){
   const response=await fetch('/api/settings/feature-permissions'+(target?'?person='+encodeURIComponent(target):''),{cache:'no-store'})
