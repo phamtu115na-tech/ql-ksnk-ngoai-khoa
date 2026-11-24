@@ -199,7 +199,7 @@ async function dispatch(req:Request){
   const source=checked(await client.from('nk_legacy_rows').select('data').eq('id',t.source_row).maybeSingle());
   must(source?.data?.['Trạng thái phê duyệt']!=='ĐÃ PHÊ DUYỆT','Hãy mở lại tác vụ trước khi sửa.',409);
  }
- if(['edit','detailSave','send','status','receive'].includes(b.action))must(writable,'Tài khoản chỉ có quyền xem.',403);
+ if(['edit','detailSave','send','status'].includes(b.action))must(writable,'Tài khoản chỉ có quyền xem.',403);
  if(b.action==='decision'){
   must(writable&&t.kind!=='chat'&&uuid(b.requestId)&&['request','approve','supplement','reject','reopen'].includes(b.operation));
   if(b.operation!=='request'){
