@@ -574,11 +574,16 @@ export async function GET(req:Request){const viewer=await actor();if(!viewer)ret
     safe.feedback=(result.feedback||[]).filter((x:AnyRecord)=>same(x.data?.['Bộ phận']||x.department,department)&&(teamScope||same(x.data?.['Nhân viên']||x.person,ownName)));
   }
   if(moduleName==='checklists'){
+    safe.canViewChecklistHistory=(await featureScope(viewer,'checklists','history'))!=='none';
     const add=await featureScope(viewer,'checklists','create'),edit=await featureScope(viewer,'checklists','edit'),del=await featureScope(viewer,'checklists','delete');
     safe.canScore=add!=='none'||edit!=='none';
+    safe.canManageTemplates=(await featureScope(viewer,'checklistTemplates','edit'))!=='none';
+    safe.canCreateTemplate=(await featureScope(viewer,'checklistTemplates','create'))!=='none';
+    safe.canDeleteTemplate=(await featureScope(viewer,'checklistTemplates','delete'))!=='none';
     safe.canCreateChecklist=add!=='none';safe.canEditChecklist=edit!=='none';safe.canDeleteChecklist=del!=='none';
     safe.teamChecklist=viewer.team_lead&&!viewer.legacy_operator&&(await featureScope(viewer,'checklistTemplates','edit'))==='none';
     safe.rows=(result.rows||[]).filter((row:AnyRecord)=>teamScope||same(row.person,ownName));
+    if(!safe.canViewChecklistHistory){safe.rows=[];safe.details=[];safe.total=0;}
     safe.total=safe.rows.length;
     const visibleIds=new Set(safe.rows.map((row:AnyRecord)=>String(row.id)));
     safe.details=(result.details||[]).filter((row:AnyRecord)=>visibleIds.has(String(row.formId)));
@@ -632,6 +637,11 @@ export async function GET(req:Request){const viewer=await actor();if(!viewer)ret
   }
  }
  if(moduleName==='checklists'){
+  result.canViewChecklistHistory=(await featureScope(viewer,'checklists','history'))!=='none';
+  result.canManageTemplates=(await featureScope(viewer,'checklistTemplates','edit'))!=='none';
+  result.canCreateTemplate=(await featureScope(viewer,'checklistTemplates','create'))!=='none';
+  result.canDeleteTemplate=(await featureScope(viewer,'checklistTemplates','delete'))!=='none';
+  if(!result.canViewChecklistHistory){result.rows=[];result.details=[];result.total=0;}
   result.canCreateChecklist=(await featureScope(viewer,'checklists','create'))!=='none';
   result.canEditChecklist=(await featureScope(viewer,'checklists','edit'))!=='none';
   result.canDeleteChecklist=(await featureScope(viewer,'checklists','delete'))!=='none';
@@ -712,12 +722,14 @@ export async function POST(req:Request){const user=await actor();if(!user)return
   const oldDept=original&&text(original['Bộ phận']||original['Thuộc bộ phận']||original.department);
   const requestedDept=text(input.department||input['Bộ phận']||input['Thuộc bộ phận']);
   let dept=oldDept||requestedDept;
-  if(moduleName==='checklistConfig'){
+  if(['checklistCriterion','checklistConfig'].includes(moduleName)){
    const formCode=text(input.formCode||input['Mã phiếu']||original?.['Mã phiếu']);
    const master=(await readSheet(S.checklistForms,true)).map(formMaster).find(x=>same(x.code,formCode));
    if(!master)return NextResponse.json({ok:false,error:'Không tìm thấy mẫu phiếu cần cấu hình.'},{status:404});
    dept=text(master.department);
   }
+  if(moduleName==='checklistForm'&&original&&requestedDept&&!same(oldDept,requestedDept))
+   return NextResponse.json({ok:false,error:'Không được chuyển mẫu phiếu sang bộ phận khác.'},{status:403});
   const staffId=original?text(original['Mã NV']):text(input.staffId||input['Mã NV']);
   const person=original?text(original['Họ tên']||original['Họ và tên']||original['Người phụ trách']||original['Người thực hiện']):text(input.person||input.staffName||input.owner||input['Người phụ trách']||input['Họ tên']);
   if(!inFeatureScope(user,granted,dept,staffId,person))
@@ -792,8 +804,14 @@ export async function POST(req:Request){const user=await actor();if(!user)return
     return NextResponse.json({ok:false,error:'Mẫu phiếu ngoài phạm vi.'},{status:403});
    return NextResponse.json({ok:true,...await saveChecklistParity({...data,department,supervisor:user.name})});
   }
-  if(['checklistForm','checklistCriterion'].includes(moduleName)&&op==='delete')
-   return NextResponse.json({ok:false,error:'Chỉ quản trị được xóa mẫu phiếu.'},{status:403});
+  if(moduleName==='checklistForm'&&op==='delete'){
+   const formCode=text(existing?.data?.['Mã phiếu']);
+   if(!formCode)return NextResponse.json({ok:false,error:'Không tìm thấy mẫu phiếu.'},{status:404});
+   const [history,criteria]=await Promise.all([readSheet(S.checklists,true),readSheet(S.checklistCriteria,true)]);
+   if(history.some(row=>same(pick(row.data,['Mã mẫu phiếu','Mã phiếu']),formCode))||
+      criteria.some(row=>same(pick(row.data,['Mã phiếu']),formCode)))
+    return NextResponse.json({ok:false,error:'Mẫu phiếu đã có tiêu chí hoặc lịch sử chấm. Hãy tạm ngưng thay vì xóa để bảo toàn dữ liệu.'},{status:409});
+  }
  }
  if(moduleName==='alerts'&&['read','unread'].includes(op))return NextResponse.json({ok:true,...await saveAlertReadState(body)});
  if(moduleName==='kpi'&&op==='delete_report'){
