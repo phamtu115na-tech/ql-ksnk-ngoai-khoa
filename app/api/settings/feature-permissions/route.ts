@@ -44,15 +44,13 @@ export async function POST(req:Request){
  const person=(await db().from('cx_people').select('id,unit,active,admin,legacy_operator,team_lead,work_role_reviewed,work_view,work_edit,can_approve_work').eq('id',body.person).maybeSingle())
  if(person.error||!person.data||person.data.unit!=='surgery'||!person.data.active||person.data.admin)
   return Response.json({error:'Tài khoản không được phép cấp quyền.'},{status:403})
- // Never grant a broader scope than the person's verified management boundary.
- const ceiling=person.data.legacy_operator&&person.data.work_view?'hospital':
-   person.data.team_lead&&person.data.work_role_reviewed&&person.data.work_view?'team':'self'
- const rank={none:0,self:1,team:2,hospital:3}
+ // A named administrator may explicitly delegate a specific capability to a staff member.
+ // Approval remains tied to an eligible, assigned reviewer; it cannot be delegated by scope alone.
  for(const [feature,row] of Object.entries(validated)){
   for(const [action,scope] of Object.entries(row||{})){
-   if(rank[scope as keyof typeof rank]>rank[ceiling])return Response.json({error:'Phạm vi vượt quá chức danh đã xác minh.'},{status:403})
-   if(feature==='tasks'&&action==='approve'&&scope!=='none'&&!(person.data.can_approve_work&&person.data.work_edit&&(ceiling==='team'||ceiling==='hospital')))
-    return Response.json({error:'Chỉ tài khoản quản lý có quyền duyệt được chỉ định mới nhận quyền phê duyệt.'},{status:400})
+   if(feature==='tasks'&&action==='approve'&&scope!=='none'&&!(person.data.can_approve_work&&person.data.work_edit&&
+     (person.data.legacy_operator||person.data.team_lead&&person.data.work_role_reviewed)))
+    return Response.json({error:'Phê duyệt chỉ dành cho người được chỉ định và đủ điều kiện quản lý.'},{status:400})
   }
  }
  const result=await db().rpc('nk_set_feature_permissions',{who:admin.id,target_person:body.person,new_grants:validated,previous_version:body.version||null})
