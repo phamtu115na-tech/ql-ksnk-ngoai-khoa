@@ -647,32 +647,135 @@ function IndependentReminderPanel({refreshToken,onCreate,onEdit,onRemove,onToggl
  return <>{error&&<div className="error-box">{error}</div>}{loading&&<p role="status">Đang tải nhắc việc...</p>}<ReminderPanel from={dates.from} to={dates.to} onDates={(from,to)=>setDates({from,to})} rows={data.rows||[]} staff={data.staff||[]} statuses={data.options?.statuses||['CHƯA THỰC HIỆN','ĐANG THỰC HIỆN','ĐÃ XONG']} onCreate={onCreate} onEdit={row=>onEdit({...row,__module:'reminders'})} onRemove={row=>onRemove({...row,__module:'reminders'})} onToggleDaily={onToggleDaily}/></>;
 }
 
-function ReminderPanel({from,to,onDates,rows,onCreate,onEdit,onRemove,onToggleDaily,staff,statuses}:{from:string;to:string;onDates:(from:string,to:string)=>void;rows:AnyRecord[];onCreate:()=>void;onEdit:(row:AnyRecord)=>void;onRemove:(row:AnyRecord)=>void;onToggleDaily:(row:AnyRecord,daily:boolean)=>void;staff:AnyRecord[];statuses:string[]}){const[reminderLayout,setReminderLayout]=useState<'list'|'board'>('list');const[query,setQuery]=useState('');const[person,setPerson]=useState('');const[status,setStatus]=useState('');const[detail,setDetail]=useState<AnyRecord|null>(null);const feed=useWorkFeed();function showDetail(row:AnyRecord){setDetail(null);onEdit({...row,__module:'reminders'});}const visible=rows.filter(row=>{const hay=normalize([row.title,row.note].filter(Boolean).join(' '));return(!query||hay.includes(normalize(query)))&&(!person||sameValue(row.person,person))&&(!status||sameValue(row.status,status));});useEffect(()=>{if(!detail)return;const current=visible.find(row=>row.row_no===detail.row_no);if(!current)setDetail(null);else if(current!==detail)setDetail(current);},[rows,query,person,status,detail]);return <div className="panel-card reminder-list-panel"><div className="toolbar-line"><h3>NHẮC VIỆC / GHI CHÚ (không tính KPI)</h3><div className="task-layout-switch" role="group" aria-label="Kiểu xem nhắc việc"><button type="button" aria-pressed={reminderLayout==='list'} onClick={()=>setReminderLayout('list')}>☷ Danh sách</button><button type="button" aria-pressed={reminderLayout==='board'} onClick={()=>setReminderLayout('board')}>▥ Bảng thời hạn</button></div><button className="edit-btn" onClick={onCreate}>+ THÊM NHẮC VIỆC</button></div><div className="reminder-filter-bar" aria-label="Tìm kiếm nhắc việc"><label>Từ ngày<input type="date" value={from} max={to||undefined} onChange={e=>onDates(e.target.value,to)}/></label><label>Đến ngày<input type="date" value={to} min={from||undefined} onChange={e=>onDates(from,e.target.value)}/></label><button type="button" className="filter-reset" onClick={()=>{const month=monthBounds();onDates(month.from,month.to);}}>THÁNG NÀY</button><label>Tìm tiêu đề / ghi chú<input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Gõ từ khóa để lọc..." /></label><label>Người liên quan<SmartStaffPicker staff={staff} value={person} onChange={setPerson} placeholder="Gõ tên → lọc → chọn" showPosition/></label><label>Trạng thái<SmartOptionPicker options={statuses} value={status} onChange={setStatus} placeholder="Gõ trạng thái → chọn"/></label>{(query||person||status)&&<button type="button" className="filter-reset" onClick={()=>{setQuery('');setPerson('');setStatus('')}}>XÓA LỌC</button>}<span className="reminder-result-count">{visible.length}/{rows.length} mục</span></div>{detail&&<section className="panel-card reminder-detail-panel reminder-compact-detail" data-native-actions aria-labelledby="reminder-detail-title">
- <div className="task-head reminder-compact-head">
-  <div><span className="eyebrow">{detail.person||'Chưa chọn người liên quan'}</span><small className="task-assignment">Người nhắc: {detail.assigner||'—'}</small>
-   <h3 id="reminder-detail-title">{detail.title||'Chưa có tiêu đề'}</h3><WorkMessage kind="reminder" source={detail.sourceId}/></div>
-  <div className="badge-stack"><Badge value={detail.status}/>{enabledFlag(detail.daily||detail.remindDaily)&&<span className="task-work-type-badge">↻ NHẮC HÀNG NGÀY</span>}</div>
- </div>
- <div className="task-description"><b>Nội dung / Ghi chú</b><p>{detail.note||'—'}</p></div>
- <div className="task-meta reminder-compact-meta">
-  <span><b>Ngày nhắc</b>{formatDate(detail.date)}</span>
-  <span><b>Người liên quan</b>{detail.person||'—'}</span>
-  <span><b>Chế độ nhắc</b>{enabledFlag(detail.daily||detail.remindDaily)?'Nhắc hàng ngày':'Nhắc theo ngày'}</span>
- </div>
- <details className="reminder-evidence-collapse">
-  <summary>Ảnh và tài liệu minh chứng</summary>
-  <div className="reminder-detail-evidence">
-   <div><b>Ảnh minh chứng</b><EvidenceLinks module="reminders" legacyId={detail.id||detail.legacy_id||detail.row_no} kind="image"/></div>
-   <div><b>Tài liệu minh chứng</b><EvidenceLinks module="reminders" legacyId={detail.id||detail.legacy_id||detail.row_no} kind="document"/></div>
+function ReminderPanel({from,to,onDates,rows,onCreate,onEdit,onRemove,onToggleDaily,staff,statuses}:{from:string;to:string;onDates:(from:string,to:string)=>void;rows:AnyRecord[];onCreate:()=>void;onEdit:(row:AnyRecord)=>void;onRemove:(row:AnyRecord)=>void;onToggleDaily:(row:AnyRecord,daily:boolean)=>void;staff:AnyRecord[];statuses:string[]}){
+ const [layout,setLayout]=useState<'list'|'board'>('list');
+ const [search,setSearch]=useState(''),[person,setPerson]=useState(''),[status,setStatus]=useState('');
+ const [quick,setQuick]=useState<'all'|'overdue'|'today'|'daily'|'done'>('all');
+ const current=today();
+ const daily=(row:AnyRecord)=>enabledFlag(row.daily||row.remindDaily);
+ const completed=(row:AnyRecord)=>{
+  const value=normalize(row.status||'');
+  return value.includes('da xong')||value.includes('hoan thanh')||value.includes('hoan tat');
+ };
+ const priority=(row:AnyRecord)=>{
+  if(completed(row))return 'done';
+  if(daily(row))return 'daily';
+  if(row.date&&row.date<current)return 'overdue';
+  if(row.date===current)return 'today';
+  return 'upcoming';
+ };
+ const filtered=rows.filter(row=>{
+  const hay=normalize([row.title,row.note,row.person,row.assigner].filter(Boolean).join(' '));
+  return (!search||hay.includes(normalize(search)))&&(!person||sameValue(row.person,person))&&(!status||sameValue(row.status,status));
+ });
+ const counts={
+  all:filtered.length,
+  overdue:filtered.filter(row=>priority(row)==='overdue').length,
+  today:filtered.filter(row=>priority(row)==='today').length,
+  daily:filtered.filter(row=>priority(row)==='daily').length,
+  done:filtered.filter(completed).length
+ };
+ const order:Record<string,number>={overdue:0,today:1,daily:2,upcoming:3,done:4};
+ const visible=filtered.filter(row=>quick==='all'||(quick==='done'?completed(row):priority(row)===quick))
+  .sort((a,b)=>order[priority(a)]-order[priority(b)]||
+   String(a.date||'9999-12-31').localeCompare(String(b.date||'9999-12-31'))||
+   String(a.title||'').localeCompare(String(b.title||''),'vi'));
+ function clearFilters(){
+  const dates=monthBounds();onDates(dates.from,dates.to);
+  setSearch('');setPerson('');setStatus('');setQuick('all');
+ }
+ const openDetail=(row:AnyRecord)=>onEdit({...row,__module:'reminders'});
+ return <section className="panel-card reminder-workspace" aria-label="Nhắc việc và ghi chú">
+  <header className="reminder-workspace-head">
+   <div className="reminder-workspace-title"><span>QUẢN LÝ CÔNG VIỆC</span>
+    <h3>NHẮC VIỆC &amp; GHI CHÚ</h3>
+    <p>Ưu tiên việc cần xử lý trước. Dữ liệu nhắc việc không tính KPI.</p>
+   </div>
+   <div className="reminder-workspace-actions">
+    <div className="task-layout-switch" role="group" aria-label="Kiểu xem nhắc việc">
+     <button type="button" aria-pressed={layout==='list'} onClick={()=>setLayout('list')}>☷ Danh sách</button>
+     <button type="button" aria-pressed={layout==='board'} onClick={()=>setLayout('board')}>▥ Theo thời hạn</button>
+    </div>
+    <button type="button" className="add-btn reminder-add-button" onClick={onCreate}>+ THÊM NHẮC VIỆC</button>
+   </div>
+  </header>
+  <div className="reminder-summary" role="group" aria-label="Bộ lọc nhanh theo ưu tiên">
+   {([
+    ['all','Tất cả'],['overdue','Quá hạn'],['today','Hôm nay'],
+    ['daily','Nhắc hằng ngày'],['done','Hoàn thành']
+   ] as const).map(([value,label])=><button key={value} type="button"
+    aria-pressed={quick===value} className={'reminder-summary-item reminder-summary-'+value}
+    onClick={()=>setQuick(value)}><span>{label}</span><strong>{counts[value]}</strong></button>)}
   </div>
- </details>
- <div className="card-actions reminder-compact-actions">
-  <button type="button" className="edit-btn" onClick={()=>{setDetail(null);onEdit({...detail,__module:'reminders'});}}>SỬA / BỔ SUNG</button>
-  <button type="button" className="edit-btn" onClick={()=>onToggleDaily(detail,!enabledFlag(detail.daily||detail.remindDaily))}>{enabledFlag(detail.daily||detail.remindDaily)?'TẮT NHẮC HÀNG NGÀY':'BẬT NHẮC HÀNG NGÀY'}</button>
-  <button type="button" className="danger reminder-delete-button" onClick={()=>onRemove({...detail,__module:'reminders'})}>XÓA</button>
-  <button type="button" className="filter-reset" data-dialog-close onClick={()=>setDetail(null)}>✕ ĐÓNG</button>
- </div>
-</section>}{reminderLayout==='board'?<TaskDeadlineBoard onCreate={onCreate} variant="reminders" rows={visible.map(row=>({...row,endDate:row.date,assignee:row.person,description:row.note,workType:enabledFlag(row.daily||row.remindDaily)?'↻ NHẮC HÀNG NGÀY':''}))} onEdit={row=>{const selected=visible.find(item=>item.row_no===row.row_no);if(selected)showDetail(selected);}}/>:<DataTable rows={visible.map(x=>({...x,__module:'reminders'}))} columns={['date','title','note','person','status']} headers={['Ngày nhắc','Tiêu đề','Nội dung / Ghi chú','Người liên quan','Trạng thái']} actionRender={row=><><WorkMessage kind="reminder" source={row.sourceId}/><button type="button" className="danger reminder-delete-button" aria-label={`Xóa nhắc việc: ${row.title||'Không có tiêu đề'}`} onClick={()=>onRemove({...row,__module:'reminders'})}>XÓA NHẮC VIỆC</button><button type="button" className="edit-btn" onClick={()=>showDetail(row)}>XEM CHI TIẾT</button><button type="button" className="edit-btn" onClick={()=>onToggleDaily(row,!enabledFlag(row.daily||row.remindDaily))}>{enabledFlag(row.daily||row.remindDaily)?'TẮT NHẮC HÀNG NGÀY':'BẬT NHẮC HÀNG NGÀY'}</button></>} onEdit={onEdit}/>}</div>;}
+  <div className="reminder-workspace-filters">
+   <label className="reminder-search">Tìm nhắc việc
+    <input type="search" value={search} onChange={e=>setSearch(e.target.value)}
+     placeholder="Tiêu đề, nội dung, người liên quan..." />
+   </label>
+   <label>Từ ngày<input type="date" value={from} max={to||undefined} onChange={e=>onDates(e.target.value,to)}/></label>
+   <label>Đến ngày<input type="date" value={to} min={from||undefined} onChange={e=>onDates(from,e.target.value)}/></label>
+   <label>Người liên quan<SmartStaffPicker staff={staff} value={person} onChange={setPerson}
+    placeholder="Tất cả nhân viên" showPosition/></label>
+   <label>Trạng thái<SmartOptionPicker options={statuses} value={status} onChange={setStatus}
+    placeholder="Tất cả trạng thái"/></label>
+   <button type="button" className="filter-reset reminder-clear-filters" onClick={clearFilters}>ĐẶT LẠI</button>
+  </div>
+  <div className="reminder-workspace-counter">
+   <span><b>{visible.length}</b> / {rows.length} nhắc việc trong kỳ</span>
+   <span>Sắp xếp: Quá hạn → Hôm nay → Hằng ngày → Sắp tới → Hoàn thành</span>
+  </div>
+  {layout==='board'?<TaskDeadlineBoard onCreate={onCreate} variant="reminders"
+   rows={visible.map(row=>({...row,endDate:row.date,assignee:row.person,description:row.note,
+    workType:daily(row)?'↻ NHẮC HÀNG NGÀY':''}))}
+   onEdit={row=>{const original=visible.find(item=>item.row_no===row.row_no);if(original)openDetail(original);}}/>:
+   <div className="reminder-table-scroll">
+    <table className="reminder-table">
+     <thead><tr><th>Ngày nhắc</th><th>Nhắc việc / Nội dung</th><th>Người liên quan</th>
+      <th>Trạng thái</th><th>Thao tác</th></tr></thead>
+     <tbody>{visible.length?visible.map((row,index)=>{
+      const p=priority(row);
+      const key=row.id||row.row_no||index;
+      return <tr key={key} className={'reminder-row reminder-row-'+p}>
+       <td data-label="Ngày nhắc" className="reminder-date-cell">
+        <b>{formatDate(row.date)}</b>
+        {p==='overdue'&&<span className="reminder-urgency">Quá hạn</span>}
+        {p==='today'&&<span className="reminder-urgency">Hôm nay</span>}
+       </td>
+       <td data-label="Nhắc việc / Nội dung" className="reminder-content-cell">
+        <button type="button" className="reminder-item-title" onClick={()=>openDetail(row)}>
+         {row.title||'Chưa có tiêu đề'}
+        </button>
+        {row.note&&<p className="reminder-item-note">{row.note}</p>}
+        <div className="reminder-inline-details">
+         {daily(row)&&<span className="reminder-daily-tag">↻ Nhắc hằng ngày</span>}
+         <WorkMessage kind="reminder" source={row.sourceId} compact/>
+        </div>
+       </td>
+       <td data-label="Người liên quan" className="reminder-person-cell">
+        <b>{row.person||'Chưa phân công'}</b>
+        {row.assigner&&<small>Người nhắc: {row.assigner}</small>}
+       </td>
+       <td data-label="Trạng thái"><Badge value={row.status||'CHƯA THỰC HIỆN'}/></td>
+       <td data-label="Thao tác" className="reminder-controls-cell">
+        <div className="reminder-row-actions">
+         <button type="button" className="edit-btn reminder-open-detail" onClick={()=>openDetail(row)}>XEM / SỬA</button>
+         <details className="reminder-more-menu">
+          <summary aria-label={'Thao tác khác với nhắc việc '+(row.title||'')}>Tùy chọn ⋯</summary>
+          <div className="reminder-more-actions">
+           <button type="button" onClick={()=>onToggleDaily(row,!daily(row))}>
+            {daily(row)?'Tắt nhắc hằng ngày':'Bật nhắc hằng ngày'}
+           </button>
+           <button type="button" className="reminder-remove" onClick={()=>onRemove({...row,__module:'reminders'})}>Xóa nhắc việc</button>
+          </div>
+         </details>
+        </div>
+       </td>
+      </tr>;
+     }):<tr><td colSpan={5} className="reminder-no-results">Không có nhắc việc phù hợp với bộ lọc đã chọn.</td></tr>}</tbody>
+    </table>
+   </div>}
+ </section>;
+}
  function Performance({rows}:{rows:AnyRecord[]}){return <div className="panel-card"><h3>📊 TỔNG HỢP HIỆU SUẤT NHÂN SỰ — MỐC 100 ĐIỂM</h3><DataTable rows={rows} columns={['name','totalTasks','completed','overdue','excellent','good','fair','poor','bad','total','rank']} headers={['Nhân viên','Tổng CV','Hoàn thành','Quá hạn','Xuất sắc','Tốt','Khá','Chưa đạt','Kém','Tổng điểm','Xếp loại']}/></div>;}
 
 function reportModuleForKind(kind:any){const value=normalize(kind);if(value==='task')return 'tasks';if(value==='issue')return 'issues';return 'plans';}
