@@ -416,3 +416,41 @@
  .reminder-row-actions{width:100%}
  .reminder-row-actions .reminder-open-detail{flex:1}
 }
+
+
+/* Container-aware tablet behavior: a desktop browser may have a narrow app pane.
+   Respond to the actual reminder workspace width, not only the viewport size. */
+.reminder-workspace{container-type:inline-size}
+@supports (container-type:inline-size){
+ @container (max-width:980px){
+  .reminder-table-scroll{width:100%;min-width:0;max-width:100%;overflow-x:hidden!important;overflow-y:visible!important}
+  .reminder-table,.reminder-table tbody,.reminder-table tr,.reminder-table td{display:block;width:100%;max-width:100%;min-width:0!important;box-sizing:border-box}
+  .reminder-table{table-layout:auto;border-spacing:0;min-width:0!important}
+  .reminder-table thead{display:none}
+  .reminder-table tbody{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:12px}
+  .reminder-table tr.reminder-row{display:flex;flex-direction:column;gap:4px;min-width:0;border:1px solid #dbe6f0;border-radius:12px;padding:14px;background:#fff;box-shadow:0 3px 12px #163d6012}
+  .reminder-table td{display:block;flex:none;border:0!important;box-shadow:none!important;padding:4px 0!important;overflow-wrap:anywhere}
+  .reminder-table td::before{content:attr(data-label);display:block;font-size:10px;color:#718398;font-weight:700;margin-bottom:3px}
+  .reminder-table td.reminder-content-cell{padding:10px 0!important;border-top:1px solid #e9eef5!important;border-bottom:1px solid #e9eef5!important}
+  .reminder-table td.reminder-content-cell::before{display:none}
+  .reminder-workspace-filters{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px 14px}
+  .reminder-workspace-filters .reminder-search{grid-column:span 2}
+  .reminder-summary{grid-template-columns:repeat(3,minmax(0,1fr));padding:0 14px 14px}
+  .reminder-workspace-fullscreen .reminder-table{min-width:0!important}
+ }
+ @container (max-width:700px){
+  .reminder-table tbody{grid-template-columns:minmax(0,1fr);padding:10px}
+  .reminder-table tr.reminder-row{padding:12px}
+  .reminder-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .reminder-workspace-head{padding:14px}
+  .reminder-workspace-actions{width:100%}
+  .reminder-workspace-counter{padding:10px 14px}
+ }
+ @container (max-width:450px){
+  .reminder-workspace-filters{grid-template-columns:minmax(0,1fr)}
+  .reminder-workspace-filters .reminder-search,
+  .reminder-workspace-filters label:nth-of-type(n+4){grid-column:auto}
+  .reminder-row-actions{width:100%}
+  .reminder-row-actions .reminder-open-detail{flex:1}
+ }
+}
