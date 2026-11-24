@@ -3,6 +3,7 @@ import {featureScope,inFeatureScope} from '../../../../lib/feature-permissions'
 import {GET as reports} from '../../modules/route'
 import {aggregate,colors,defaults,levels,severity} from '../../../../lib/matrix'
 import {sectionTitles,type Section,type SectionKey} from '../../../../lib/briefing-sections'
+import {briefingGraphs} from '../../../../lib/briefing-charts'
 export const runtime='nodejs'
 type Row=Record<string,any>
 function sections(data:Row,keys:SectionKey[],scale:typeof defaults){
@@ -23,6 +24,22 @@ function sections(data:Row,keys:SectionKey[],scale:typeof defaults){
   }
  }
  return result
+}
+function addBriefingChartSlides(deck:any,section:Section,scope:string,period:string,accent:string){
+ const graphs=briefingGraphs(section.rows,10)
+ for(const graph of graphs){
+  const slide=deck.addSlide()
+  slide.addText(section.title+' · '+graph.formCode,{x:.62,y:.32,w:12.05,h:.57,fontSize:23,color:accent,bold:true,fit:'shrink'})
+  slide.addText('Thanh chồng 100%  ·  Top 10  ·  Tỷ lệ đạt / không đạt',{x:.65,y:1.02,w:11.7,h:.28,fontSize:12,color:'5A6980'})
+  slide.addChart(deck.ChartType.bar,[
+   {name:'Đạt',labels:graph.labels,values:graph.pass},
+   {name:'Không đạt và Kém',labels:graph.labels,values:graph.fail}
+  ],{x:.68,y:1.55,w:11.95,h:5.26,
+    barDir:'bar',barGrouping:'stacked',showLegend:true,showTitle:false,
+    chartColors:['197446','C64235'],catAxisLabelFontSize:11,valAxisLabelFontSize:10,
+    valAxisMinVal:0,valAxisMaxVal:100,showValue:false})
+  slide.addText(scope+' · '+period,{x:.7,y:7.06,w:11.9,h:.18,fontSize:9,color:'64748B',fit:'shrink'})
+ }
 }
 export async function POST(req:Request){
  const user=await actor()
@@ -73,6 +90,8 @@ export async function POST(req:Request){
    cover.addText(g.title,{x:.6,y:1.2,w:12,h:1.4,fontSize:34,color:g.accent,fit:'shrink'})
    cover.addText([g.name,period,g.slogan].join('\n'),{x:.65,y:3,w:12,h:2.2,fontSize:21,fit:'shrink'})
    for(const sec of g.sections){
+    if(sec.title===sectionTitles.content||sec.title===sectionTitles.staff)
+     addBriefingChartSlides(deck,sec,g.name,period,g.accent)
     const slide=deck.addSlide()
     slide.addText(sec.title,{x:.5,y:.25,w:12,h:.55,fontSize:22,color:g.accent,fit:'shrink'})
     if(!sec.rows.length){slide.addText('Chưa có dữ liệu trong kỳ',{x:.55,y:1.1,w:12,h:.6,fontSize:16});continue}
