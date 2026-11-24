@@ -31,6 +31,8 @@ function sameName(a:unknown,b:unknown){
 function assignedNames(value:unknown){return String(value??'').split(/[,;|]/).map(name=>name.trim()).filter(Boolean);}
 async function workEvidenceAllowed(user:Person,module:'tasks'|'reminders',reference:string,editing:boolean){
  if(!reference||reference.length>160)return false;
+ const scope=await featureScope(user,module,editing?'edit':'view');
+ if(scope==='none')return false;
  const client=supabaseAdmin();if(!client)return false;
  const sheet=module==='tasks'?'GIAO VIỆC':'NHAC_VIEC_GHI_CHU';
  // Evidence records historically point to a legacy ID, a task code, or ROW<number>.
@@ -52,6 +54,13 @@ async function workEvidenceAllowed(user:Person,module:'tasks'|'reminders',refere
  if(threadError)throw threadError;
  if((linked||[]).length>1)return false;
  const thread=linked?.[0];
+ if(thread&&!Array.isArray(thread.units))return false;
+ if(thread&&!thread.units.includes('surgery'))return false;
+ // A report-scoped delegation is based on the original source's team,
+ // never on an arbitrary evidence filename or a client-supplied team filter.
+ const teamDept=String(user.team_department||user.department||'').trim();
+ if(scope==='hospital')return true;
+ if(scope==='team'&&teamDept&&department&&sameName(department,teamDept))return true;
  if(thread){
   if(!Array.isArray(thread.units)||!thread.units.includes('surgery'))return false;
   if(thread.owner_id===user.id||Array.isArray(thread.performers)&&thread.performers.includes(user.id))return true;
@@ -68,11 +77,9 @@ async function workEvidenceAllowed(user:Person,module:'tasks'|'reminders',refere
   const identity=userStaff[0]['Họ và tên']??userStaff[0]['Họ tên'];
   if(sameName(sender,identity)||names.some(name=>sameName(name,identity)))return true;
  }
- const teamDept=String(user.team_department||user.department||'').trim();
  const teamStaff=names.length>0&&names.every(name=>directory.some(person=>
   sameName(person['Họ và tên']??person['Họ tên'],name)&&sameName(person['Bộ phận'],teamDept)));
- return Boolean(user.team_lead&&user.work_view&&(!editing||user.work_edit)&&teamDept&&
-  (!department||sameName(department,teamDept))&&teamStaff);
+ return Boolean(scope==='team'&&teamDept&&!department&&teamStaff);
 }
 /**
  * Read the original plan/violation/issue row before resolving its evidence.
