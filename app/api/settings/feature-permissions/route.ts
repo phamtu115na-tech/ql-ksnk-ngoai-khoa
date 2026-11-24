@@ -19,7 +19,8 @@ export async function GET(req:Request){
   const legacy=legacyMap.get(person.id)
   return {...person,version:grant?.version||null,
    overrides:(grant?.grants||{}) as GrantMatrix,
-   effective:effectiveMatrix(person,grant?.grants as GrantMatrix|undefined,legacy as {scope:Scope;can_export:boolean}|undefined)}
+   effective:effectiveMatrix(person,grant?.grants as GrantMatrix|undefined,legacy as {scope:Scope;can_export:boolean}|undefined),
+   defaults:effectiveMatrix(person,{},legacy as {scope:Scope;can_export:boolean}|undefined)}
  })
  const personId=new URL(req.url).searchParams.get('person')
  let history:unknown[]=[]
