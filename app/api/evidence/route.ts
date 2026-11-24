@@ -2,6 +2,7 @@ import {NextResponse} from 'next/server';
 import {supabaseAdmin,effectiveSupabaseUrl} from '../../../lib/supabase';
 import {evidenceStoragePath} from '../../../lib/evidence-url';
 import {actor,type Person} from '../../../lib/auth';
+import {featureScope,inFeatureScope} from '../../../lib/feature-permissions';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -73,10 +74,42 @@ async function workEvidenceAllowed(user:Person,module:'tasks'|'reminders',refere
  return Boolean(user.team_lead&&user.work_view&&(!editing||user.work_edit)&&teamDept&&
   (!department||sameName(department,teamDept))&&teamStaff);
 }
+/**
+ * Read the original plan/violation/issue row before resolving its evidence.
+ * A team leader may access only files belonging to that team; report filtering
+ * and user-supplied evidence IDs never authorize access by themselves.
+ */
+async function scopedRecordEvidenceAllowed(user:Person,module:'plans'|'violations'|'issues',reference:string,editing:boolean){
+ if(!reference||reference.length>160)return false;
+ const scope=await featureScope(user,module,editing?'edit':'view');
+ if(scope==='none')return false;
+ const client=supabaseAdmin();if(!client)return false;
+ const sheets={plans:['KE_HOACH_TUAN','KE_HOACH_THANG'],
+  violations:['THEODOI_VIPHAM'],issues:['TON_TAI_KIEN_NGHI']};
+ const {data,error}=await client.from('nk_legacy_rows')
+  .select('row_no,legacy_id,data').in('sheet_name',sheets[module]);
+ if(error)throw error;
+ const matched=(data||[]).filter(row=>{
+  const detail=row.data as Record<string,unknown>||{};
+  return [row.legacy_id,detail['ID'],detail['Mã KH'],detail['Mã kế hoạch'],
+   detail['Mã vi phạm'],'ROW'+row.row_no].some(id=>id!=null&&String(id)===reference);
+ });
+ if(matched.length!==1)return false; // Never guess a cross-team file owner.
+ const detail=matched[0].data as Record<string,unknown>||{};
+ const unit=String(detail['unitId']||detail['Đơn vị']||detail['Bệnh viện']||'').trim();
+ if(unit&&!['surgery','ngoai khoa','benh vien ngoai khoa 115 nghe an'].some(x=>sameName(unit,x)))return false;
+ const department=detail['Bộ phận']||detail['Thuộc bộ phận']||detail['department'];
+ const owner=detail['Người phụ trách']||detail['Người thực hiện']||
+  detail['Họ tên']||detail['Nhân viên']||detail['Người bị ghi nhận'];
+ const staffId=detail['Mã NV']||detail['Mã nhân viên'];
+ return inFeatureScope(user,scope,department,staffId,owner);
+}
 async function evidenceAllowed(user:Person,module:string,reference:string,editing=false){
  if(user.admin||user.legacy_operator&&user.work_view&&(!editing||user.work_edit))return true;
  if((module==='tasks'||module==='reminders')&&reference)
   return workEvidenceAllowed(user,module,reference,editing);
+ if((module==='plans'||module==='violations'||module==='issues')&&reference)
+  return scopedRecordEvidenceAllowed(user,module,reference,editing);
  if(module!=='checklists'||!reference||!user.team_lead)return false;
  const response=await supabaseAdmin()?.rpc('nk_checklist_evidence_access',{who:user.id,ref:reference,editing});
  return response?.data===true;
