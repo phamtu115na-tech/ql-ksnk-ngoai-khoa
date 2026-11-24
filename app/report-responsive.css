@@ -819,3 +819,30 @@ th,td{padding:10px 11px;line-height:1.4}
  .report-screen .report-violation-table th:nth-child(7){width:300px}
  .report-screen .report-violation-evidence-stack .report-evidence-gallery{grid-template-columns:minmax(0,1fr)}
 }
+
+/* Section 7: give actual violation evidence priority over narrow metadata columns. */
+.report-screen .report-violation-table{min-width:1310px}
+.report-screen .report-violation-table th:nth-child(3){width:195px}
+.report-screen .report-violation-table th:nth-child(6){width:130px}
+.report-screen .report-violation-table th:nth-child(7){width:405px}
+.report-screen .report-violation-evidence-stack .report-evidence-gallery{
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+ max-height:660px;overflow-x:hidden;overflow-y:auto;
+}
+.report-screen .report-violation-evidence-stack .evidence-item{
+ max-width:100%;width:100%;min-width:0;
+}
+.report-screen .report-violation-evidence-stack .report-image-preview img{
+ width:100%;height:210px;object-fit:contain;background:#eaf2f9;
+}
+.report-screen .report-violation-evidence-stack .report-image-preview small{
+ white-space:normal;overflow-wrap:anywhere;text-overflow:unset;
+}
+.report-screen .report-violation-evidence-documents .evidence-item{
+ display:flex;flex-direction:row;align-items:center;
+}
+@media(max-width:950px){
+ .report-screen .report-violation-table{min-width:1180px}
+ .report-screen .report-violation-table th:nth-child(7){width:340px}
+ .report-screen .report-violation-evidence-stack .report-image-preview img{height:180px}
+}
