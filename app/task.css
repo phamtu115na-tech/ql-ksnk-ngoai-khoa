@@ -375,3 +375,44 @@
  .work-detail-mobile-tabs button{min-height:35px}
  .work-detail-layout .work-dialog-close{min-height:35px;top:5px}
 }
+
+
+/* Adaptive reminder list: automatic viewport layout, never requires a device switch.
+   Tablet portrait/landscape and phones become readable cards rather than a clipped 1000px table. */
+.reminder-workspace,.reminder-table-scroll{min-width:0;max-width:100%;box-sizing:border-box}
+.reminder-table-scroll{width:100%}
+.reminder-table tr.reminder-row{height:auto!important;min-height:0!important}
+.reminder-table td{height:auto!important;min-height:0!important}
+.reminder-item-title,.reminder-item-note{overflow-wrap:anywhere}
+@media(max-width:1100px){
+ .reminder-workspace{width:100%;max-width:100%;min-width:0}
+ .reminder-table-scroll{overflow-x:hidden!important;overflow-y:visible!important}
+ .reminder-table,.reminder-table tbody,.reminder-table tr,.reminder-table td{display:block;width:100%;min-width:0!important;max-width:100%;box-sizing:border-box}
+ .reminder-table{table-layout:auto;border-spacing:0}
+ .reminder-table thead{display:none}
+ .reminder-table tbody{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:12px}
+ .reminder-table tr.reminder-row{display:flex;flex-direction:column;gap:4px;border:1px solid #dbe6f0;border-radius:12px;padding:14px;background:#fff;box-shadow:0 3px 12px #163d6012;overflow:visible}
+ .reminder-table td{display:block;flex:none;border:0!important;box-shadow:none!important;padding:4px 0!important;vertical-align:initial}
+ .reminder-table td::before{content:attr(data-label);display:block;font-size:10px;color:#718398;font-weight:700;margin-bottom:3px}
+ .reminder-table td.reminder-content-cell{padding:10px 0!important;border-top:1px solid #e9eef5!important;border-bottom:1px solid #e9eef5!important}
+ .reminder-table td.reminder-content-cell::before{display:none}
+ .reminder-table .reminder-item-note{-webkit-line-clamp:4}
+ .reminder-table .reminder-more-actions{right:auto;left:0}
+ .reminder-workspace-fullscreen .reminder-table{min-width:0!important}
+ .reminder-workspace-fullscreen .reminder-table-scroll{overflow-x:hidden!important}
+}
+@media(max-width:820px){
+ .reminder-table tbody{grid-template-columns:minmax(0,1fr);padding:10px}
+ .reminder-table tr.reminder-row{padding:12px}
+ .reminder-workspace-head,.reminder-workspace-counter{min-width:0}
+ .reminder-workspace-actions{flex-wrap:wrap}
+ .reminder-workspace-filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:480px){
+ .reminder-workspace-filters{grid-template-columns:minmax(0,1fr)}
+ .reminder-workspace-filters .reminder-search,
+ .reminder-workspace-filters label:nth-of-type(n+4){grid-column:auto}
+ .reminder-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .reminder-row-actions{width:100%}
+ .reminder-row-actions .reminder-open-detail{flex:1}
+}
