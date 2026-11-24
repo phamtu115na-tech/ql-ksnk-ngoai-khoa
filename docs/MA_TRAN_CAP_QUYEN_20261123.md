@@ -22,3 +22,16 @@
 - Dữ liệu quyền đã lưu được tự giới hạn theo chức danh hiện tại và phạm vi xem. Nút ẩn trên giao diện không phải cơ chế bảo mật.
 - Phiếu giám sát và dữ liệu liên quan đến bệnh nhân/nhân viên phải được thử trên dữ liệu giả lập hoặc bản sao.
 - Cần rà soát riêng quyền `Phê duyệt` với danh sách người duyệt được chỉ định; không sử dụng quyền cấp trên ma trận để thay thế cơ chế phê duyệt hiện có.
+
+## Cập nhật giao diện ma trận cấp quyền (24/11/2026)
+- Các ô thao tác hỗ trợ nghiệp vụ cho chọn **Không cho phép** hoặc **Cho phép · Cá nhân/Toàn tổ/Toàn khoa**. `Không cho phép` được lưu dưới phạm vi `none` (thu hồi thực sự), không chỉ ẩn nút.
+- Các ô không có chức năng thực tế ghi **Không áp dụng**, thay vì gạch ngang gây hiểu nhầm.
+- Bảng chia 3 nhóm: **Công việc và nhắc việc**, **Nghiệp vụ KSNK**, **Nhân sự, báo cáo và đánh giá**.
+- Đổi nền tiêu đề tối, chữ trắng rõ; tiêu đề hàng có chữ xanh đậm trên nền nhạt. Có nút mở ma trận **toàn màn hình** và hỗ trợ cuộn ngang trên điện thoại.
+- Quyền **Xuất Excel/PPT** nằm ở **Báo cáo tổng hợp**, phạm vi luôn giới hạn theo quyền Xem. Các nút xuất dữ liệu cụ thể phải kiểm tra API.
+- Quyền **Phê duyệt** được cấp riêng, nhưng chỉ có hiệu lực nếu tài khoản được đánh dấu làm người phê duyệt và được chỉ định duyệt tác vụ.
+- Quyền **Lịch sử** đã hỗ trợ phiếu giám sát, giao việc, nhắc việc; quyền truy cập được kiểm tra tại API. Không áp dụng cho phân hệ chưa có lịch sử riêng.
+- Không cho xóa mẫu phiếu đang được sử dụng trong lịch sử chấm hoặc có tiêu chí liên kết; thay bằng Tạm ngưng.
+- Khôi phục mặc định cập nhật bản xem trước ngay và có thể lưu để xóa quyền ghi đè cũ.
+
+**Lưu ý nghiệm thu:** chạy typecheck/lint/test/build của đúng commit trước khi phát hành. Kiểm tra API bằng tài khoản thật hoặc tài khoản kiểm thử an toàn; không dùng phiếu bệnh viện để thử xóa. Hệ thống Production và Preview chia sẻ cấu hình Supabase, do đó tuyệt đối tránh ghi dữ liệu mẫu vào dữ liệu thật.
