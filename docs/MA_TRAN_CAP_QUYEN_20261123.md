@@ -35,3 +35,14 @@
 - Khôi phục mặc định cập nhật bản xem trước ngay và có thể lưu để xóa quyền ghi đè cũ.
 
 **Lưu ý nghiệm thu:** chạy typecheck/lint/test/build của đúng commit trước khi phát hành. Kiểm tra API bằng tài khoản thật hoặc tài khoản kiểm thử an toàn; không dùng phiếu bệnh viện để thử xóa. Hệ thống Production và Preview chia sẻ cấu hình Supabase, do đó tuyệt đối tránh ghi dữ liệu mẫu vào dữ liệu thật.
+
+## Quy tắc cấp quyền theo chức vụ (24/11/2026)
+- Truy cập Quản trị viên → Ma trận cấp quyền → **Quy tắc quyền theo chức vụ**.
+- Có ba nhóm chức danh: Nhân viên; Tổ trưởng; Trưởng khoa / Điều dưỡng trưởng. Thay đổi từng quyền Xem, Thêm, Sửa, Xóa, Lịch sử, Xuất bằng Không cho phép, Cá nhân, Toàn tổ hoặc Toàn khoa.
+- Quyền mặc định có thể chọn **Mặc định** để kế thừa bộ quy tắc gốc; khi thay đổi chọn phạm vi và **LƯU QUY TẮC CHỨC VỤ**.
+- Quyền cấp riêng cho tài khoản có mức ưu tiên cao hơn quyền mặc định theo chức vụ. Tài khoản Nhân viên có thể được ủy quyền phạm vi Toàn tổ hoặc Toàn khoa *theo đúng chức năng được cấp*, không tự nhận vai trò quản lý toàn hệ thống.
+- Quyền Phê duyệt luôn là ngoại lệ, chỉ dành cho tài khoản quản lý được chỉ định; không có ô phê duyệt mặc định cho cả chức vụ.
+- Các bản ghi quyền và lịch sử thay đổi dùng SQL `20261124_quy_tac_quyen_theo_chuc_vu.sql`; giới hạn báo cáo và luồng giao/nhắc việc được đồng bộ bởi các migration `20261124_bao_cao_quyen_uy_quyen.sql` và `20261124_uy_quyen_giao_viec_theo_ma_tran.sql`.
+- Ma trận cấp quyền mở **một trang ngang cấp Quản trị nhân viên**, không còn nhúng phía cuối danh sách nhân viên.
+
+**Trình tự phát hành:** Áp dụng các migration theo thứ tự trên vào môi trường được kiểm tra, chạy bộ test SQL và kiểm tra Production Vercel ở chính commit đã kiểm thử; tuyệt đối không đổi dữ liệu/chứng từ thật để thử quyền.
