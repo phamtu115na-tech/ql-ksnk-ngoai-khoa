@@ -7,7 +7,7 @@ export async function GET(req:Request){
  if(!admin?.admin)return Response.json({error:'Chỉ quản trị viên được mở bảng phân quyền.'},{status:403})
  const client=db()
  const [people,grants,old]=await Promise.all([
-  client.from('cx_people').select('id,name,username,department,staff_code,team_department,legacy_operator,team_lead,work_role_reviewed,work_view,work_edit,active,unit,admin,pending_login,version').eq('unit','surgery').eq('active',true).eq('admin',false).order('name'),
+  client.from('cx_people').select('id,name,username,department,staff_code,team_department,legacy_operator,team_lead,work_role_reviewed,work_view,work_edit,can_approve_work,active,unit,admin,pending_login,version').eq('unit','surgery').eq('active',true).eq('admin',false).order('name'),
   client.from('nk_feature_permissions').select('person,grants,version'),
   client.from('nk_report_permissions').select('person,scope,can_export')
  ])
@@ -40,7 +40,7 @@ export async function POST(req:Request){
  if(!body.person||!/^[-0-9a-f]{36}$/i.test(body.person))return Response.json({error:'Mã tài khoản không hợp lệ.'},{status:400})
  let validated:GrantMatrix
  try{validated=validateMatrix(body.overrides)}catch(error){return Response.json({error:error instanceof Error?error.message:'Quyền không hợp lệ'},{status:400})}
- const person=(await db().from('cx_people').select('id,unit,active,admin,legacy_operator,team_lead,work_role_reviewed,work_view,work_edit').eq('id',body.person).maybeSingle())
+ const person=(await db().from('cx_people').select('id,unit,active,admin,legacy_operator,team_lead,work_role_reviewed,work_view,work_edit,can_approve_work').eq('id',body.person).maybeSingle())
  if(person.error||!person.data||person.data.unit!=='surgery'||!person.data.active||person.data.admin)
   return Response.json({error:'Tài khoản không được phép cấp quyền.'},{status:403})
  // Never grant a broader scope than the person's verified management boundary.
@@ -50,7 +50,8 @@ export async function POST(req:Request){
  for(const [feature,row] of Object.entries(validated)){
   for(const [action,scope] of Object.entries(row||{})){
    if(rank[scope as keyof typeof rank]>rank[ceiling])return Response.json({error:'Phạm vi vượt quá chức danh đã xác minh.'},{status:403})
-   if(feature==='tasks'&&action==='approve'&&scope!=='none')return Response.json({error:'Quyền phê duyệt thực hiện qua người duyệt được chỉ định.'},{status:400})
+   if(feature==='tasks'&&action==='approve'&&scope!=='none'&&!(person.data.can_approve_work&&person.data.work_edit&&(ceiling==='team'||ceiling==='hospital')))
+    return Response.json({error:'Chỉ tài khoản quản lý có quyền duyệt được chỉ định mới nhận quyền phê duyệt.'},{status:400})
   }
  }
  const result=await db().rpc('nk_set_feature_permissions',{who:admin.id,target_person:body.person,new_grants:validated,previous_version:body.version||null})
