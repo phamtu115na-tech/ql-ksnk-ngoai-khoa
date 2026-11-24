@@ -24,7 +24,12 @@ returns jsonb language sql stable set search_path=public as $function$
      r.data->>'Nhắc hàng ngày',r.data->>'daily','')) in ('có','true','1','x','yes'),false),
   'daily_done_today',exists(select 1 from public.nk_daily_work_confirmations d
     where d.thread=t.id and d.person=who
-      and d.day=(now() at time zone 'Asia/Ho_Chi_Minh')::date)
+      and d.day=(now() at time zone 'Asia/Ho_Chi_Minh')::date),
+  'daily_done_all_today',cardinality(t.performers)>0 and not exists(
+    select 1 from unnest(t.performers) member(id) where not exists(
+      select 1 from public.nk_daily_work_confirmations d
+      where d.thread=t.id and d.person=member.id
+       and d.day=(now() at time zone 'Asia/Ho_Chi_Minh')::date))
   )),'[]'::jsonb)
  from public.cx_threads t
  join public.cx_people a on a.id=who and a.active and a.unit='surgery'
