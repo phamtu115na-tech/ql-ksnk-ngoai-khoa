@@ -1,26 +1,29 @@
 import {actor,db} from '../../../../lib/auth'
-import {effectiveMatrix,featureLabels,actionLabels,FEATURE_ACTIONS,validateMatrix,type GrantMatrix,type Scope} from '../../../../lib/feature-permissions'
+import {effectiveMatrix,featureLabels,actionLabels,FEATURE_ACTIONS,validateMatrix,roleOf,ROLES,roleNames,type Role,type GrantMatrix,type Scope} from '../../../../lib/feature-permissions'
 
 export const dynamic='force-dynamic'
 export async function GET(req:Request){
  const admin=await actor()
  if(!admin?.admin)return Response.json({error:'Chỉ quản trị viên được mở bảng phân quyền.'},{status:403})
  const client=db()
- const [people,grants,old]=await Promise.all([
+ const [people,grants,old,roleDefaults]=await Promise.all([
   client.from('cx_people').select('id,name,username,department,staff_code,team_department,legacy_operator,team_lead,work_role_reviewed,work_view,work_edit,can_approve_work,active,unit,admin,pending_login,version').eq('unit','surgery').eq('active',true).eq('admin',false).order('name'),
   client.from('nk_feature_permissions').select('person,grants,version'),
-  client.from('nk_report_permissions').select('person,scope,can_export')
+  client.from('nk_report_permissions').select('person,scope,can_export'),
+  client.from('nk_role_permission_defaults').select('role,grants,version')
  ])
- if(people.error||grants.error||old.error)return Response.json({error:'Chưa cài migration ma trận phân quyền hoặc chưa truy cập được dữ liệu.'},{status:503})
+ if(people.error||grants.error||old.error||roleDefaults.error)return Response.json({error:'Chưa cài migration ma trận phân quyền hoặc chưa truy cập được dữ liệu.'},{status:503})
  const grantMap=new Map((grants.data||[]).map(g=>[g.person,g]))
  const legacyMap=new Map((old.data||[]).map(g=>[g.person,g]))
+ const roleMap=new Map((roleDefaults.data||[]).map(g=>[g.role,g]))
  const rows=(people.data||[]).map(person=>{
   const grant=grantMap.get(person.id)
   const legacy=legacyMap.get(person.id)
+  const policy=(roleMap.get(roleOf(person))?.grants||{}) as GrantMatrix
   return {...person,version:grant?.version||null,
    overrides:(grant?.grants||{}) as GrantMatrix,
-   effective:effectiveMatrix(person,grant?.grants as GrantMatrix|undefined,legacy as {scope:Scope;can_export:boolean}|undefined),
-   defaults:effectiveMatrix(person,{},legacy as {scope:Scope;can_export:boolean}|undefined)}
+   effective:effectiveMatrix(person,grant?.grants as GrantMatrix|undefined,legacy as {scope:Scope;can_export:boolean}|undefined,policy),
+   defaults:effectiveMatrix(person,{},legacy as {scope:Scope;can_export:boolean}|undefined,policy)}
  })
  const personId=new URL(req.url).searchParams.get('person')
  let history:unknown[]=[]
@@ -30,7 +33,8 @@ export async function GET(req:Request){
   if(h.error)return Response.json({error:'Không đọc được lịch sử cấp quyền.'},{status:503})
   history=h.data||[]
  }
- return Response.json({people:rows,features:FEATURE_ACTIONS,featureLabels,actionLabels,history},{headers:{'Cache-Control':'private,no-store'}})
+ const rolePolicies=ROLES.map(role=>({role,name:roleNames[role],version:roleMap.get(role)?.version||null,overrides:(roleMap.get(role)?.grants||{}) as GrantMatrix}))
+ return Response.json({people:rows,rolePolicies,features:FEATURE_ACTIONS,featureLabels,actionLabels,history},{headers:{'Cache-Control':'private,no-store'}})
 }
 export async function POST(req:Request){
  const admin=await actor()
