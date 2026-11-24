@@ -47,6 +47,7 @@ CREATE OR REPLACE FUNCTION public.nk_work_scope(a cx_people, t cx_threads)
  SET search_path TO 'public'
 AS $function$
 select coalesce(a.active,false) and a.unit='surgery' and t.units=array['surgery'] and
+(t.kind='chat' or public.nk_work_feature_scope(a,case when t.kind='task' then 'tasks' else 'reminders' end,'view')<>'none') and
 case when t.kind='chat'
 then a.id=t.owner_id or a.id=any(coalesce(t.performers,'{}'::uuid[])||coalesce(t.observers,'{}'::uuid[]))
 else
