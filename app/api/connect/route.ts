@@ -141,7 +141,13 @@ async function dispatch(req:Request){
  if(b.action==='counts'){const [badges,latest]=await Promise.all([rpc('cx_badges',{who:a.id,scope}),rpc('cx_notification',{who:a.id})]);return {badges,latest};}
  if(b.action==='workRows'){
  must(['task','reminder'].includes(b.kind)&&Number.isSafeInteger(b.offset)&&b.offset>=0);
- return await rpc('cx_board',{who:a.id,scope,screen:b.kind,skip_rows:b.offset});
+ const page=await rpc('cx_board',{who:a.id,scope,screen:b.kind,skip_rows:b.offset}) as
+  Array<{item:Record<string,unknown>;unread:number}>;
+ if(!page.length)return page;
+ const meta=await rpc('nk_warning_meta',{who:a.id,work_ids:page.map(row=>String(row.item.id))}) as
+  Array<{id:string;received_by:string[];daily:boolean;daily_done_today:boolean}>;
+ const byId=new Map(meta.map(entry=>[entry.id,entry]));
+ return page.map(row=>({...row,item:{...row.item,...(byId.get(String(row.item.id))||{})}}));
  }
  if(b.action==='board'){
  const screen=b.kind||'all';must(screen==='all'||kinds.includes(screen));
@@ -210,6 +216,12 @@ async function dispatch(req:Request){
  return {ok:true};
  }
  if(b.action==='receive'){must(await rpc('nk_receive_work',{t:t.id,who:a.id}),'Bạn không phải người thực hiện.',403);return {ok:true};}
+ if(b.action==='dailyDone'){
+  must(t.kind==='reminder'&&t.performers.includes(a.id),'Chỉ người được nhắc mới được xác nhận ngày này.',403);
+  must(await rpc('nk_daily_work_done',{who:a.id,work_id:t.id}),'Nhắc việc không còn hiệu lực hoặc chưa đến ngày.',409);
+  return {ok:true};
+ }
+
  if(b.action==='thread'){
  const before=Number(b.before)||2147483647;
  const rows=checked(await client.from('cx_messages').select('*').eq('thread',t.id).lt('seq',before).order('seq',{ascending:false}).limit(50))||[];
