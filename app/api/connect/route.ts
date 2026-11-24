@@ -1,5 +1,6 @@
 import {staffPosition,staffEmploymentStatus,roleAllowedByPosition} from '../../../lib/staff-roles';
 import {actor,db,personFields,Person} from '../../../lib/auth';
+import {featureScope} from '../../../lib/feature-permissions';
 import {randomUUID} from 'crypto';
 import {hash} from 'bcryptjs';
 export const dynamic='force-dynamic';
@@ -166,7 +167,11 @@ async function dispatch(req:Request){
  }
  if(b.action==='create'){
  const kind=b.kind;must(kinds.includes(kind)&&uuid(b.id));
- if(kind!=='chat')must(a.admin||(a.work_view&&a.work_edit&&(a.legacy_operator||a.team_lead&&a.work_role_reviewed)),'Chưa có quyền tạo tác vụ.',403);
+ if(kind!=='chat'){
+  const granted=await featureScope(a,kind==='task'?'tasks':'reminders','create');
+  must(granted==='hospital'||granted==='team'&&a.team_lead&&a.work_role_reviewed,
+   'Chưa được cấp quyền tạo tác vụ hoặc vượt phạm vi phân công.',403);
+ }
  const p=ids(b.performers),o=ids(b.observers||[]);must(p.length,'Chọn người thực hiện hoặc người nhận.');
  if(kind==='chat')must(p.length===1&&p[0]!==a.id&&!o.length);
  const selected=(await people()).filter(x=>(x.active||(kind!=='chat'&&x.pending_login))&&(p.includes(x.id)||o.includes(x.id)));
@@ -179,7 +184,10 @@ async function dispatch(req:Request){
  must(uuid(b.id));const t=checked(await client.from('cx_threads').select('*').eq('id',b.id).maybeSingle()) as Thread;
  const access=t&&await rpc('nk_check_work',{who:a.id,work_id:t.id});
  must(access,'Tác vụ ngoài phạm vi tài khoản.',403);
- const writable=t.kind==='chat'||a.admin||a.work_edit||member(t,a); // Người có tên trong tác vụ luôn được dùng biểu mẫu của mình.
+ const editScope=t.kind==='chat'?'none':await featureScope(a,t.kind==='task'?'tasks':'reminders','edit');
+ const writable=t.kind==='chat'||editScope!=='none'&&(a.admin||a.work_edit||member(t,a));
+ // Edits from a participant still pass the existing SQL work-thread authorization.
+
  if(t.source_row&&['status','detailSave','edit'].includes(b.action)){
   const source=checked(await client.from('nk_legacy_rows').select('data').eq('id',t.source_row).maybeSingle());
   must(source?.data?.['Trạng thái phê duyệt']!=='ĐÃ PHÊ DUYỆT','Hãy mở lại tác vụ trước khi sửa.',409);
