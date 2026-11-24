@@ -15,7 +15,7 @@ export default function PermissionMatrix(){
  const [overrides,setOverrides]=useState<Grants>({}),[saving,setSaving]=useState(false),[message,setMessage]=useState('')
  const [history,setHistory]=useState<Payload['history']>([]),[resetting,setResetting]=useState(false)
  const selected=data?.people.find(p=>p.id===person)
- const ceiling:Scope=selected?.legacy_operator&&selected.work_view?'hospital':selected?.team_lead&&selected.work_role_reviewed&&selected.work_view?'team':'self'
+ const ceiling:Scope='hospital' // Administrator may delegate a particular action beyond position defaults
  const filtered=useMemo(()=>data?.people.filter(p=>tidy([p.name,p.username,p.department,p.staff_code||''].join(' ')).includes(tidy(search)))||[],[data,search])
  async function refresh(target?:string){
   const response=await fetch('/api/settings/feature-permissions'+(target?'?person='+encodeURIComponent(target):''),{cache:'no-store'})
@@ -65,7 +65,7 @@ export default function PermissionMatrix(){
  ]
  const scopedOptions=(feature:string,action:Action)=>Object.keys(captions).filter(x=>
   rank[x as Scope]<=rank[ceiling] &&
-  !(feature==='tasks'&&action==='approve'&&x!=='none'&&!(selected?.can_approve_work&&selected?.work_edit))
+  !(feature==='tasks'&&action==='approve'&&x!=='none'&&!(selected?.can_approve_work&&selected?.work_edit&&(selected.legacy_operator||selected.team_lead&&selected.work_role_reviewed)))
  ) as Scope[]
  const canEdit=(feature:string,action:Action)=>selected&&scopedOptions(feature,action).length>0
  const chosen=(feature:string,action:Action)=>
@@ -80,8 +80,8 @@ export default function PermissionMatrix(){
    <label>Chọn nhân viên<select value={person} onChange={e=>choose(e.target.value)}><option value="">— Chọn nhân viên để cấp quyền —</option>{filtered.map(p=><option key={p.id} value={p.id}>{p.name} · {p.username} · {p.department}</option>)}{selected&&!filtered.some(p=>p.id===selected.id)&&<option value={selected.id}>{selected.name} (đang chọn)</option>}</select></label>
   </div>
   {selected&&<>
-   <div className="pmatrix-profile"><span><b>{selected.name}</b> · {selected.department} {selected.team_lead&&'· Tổ '+(selected.team_department||selected.department)}</span><span>Phạm vi tối đa: <b>{captions[ceiling]}</b></span></div>
-   <p className="pmatrix-legend">Mỗi ô chọn <b>Không cho phép</b> hoặc <b>Cho phép trong phạm vi</b>. Các ô xám là chức năng không áp dụng. Xem là quyền nền tảng của các quyền thao tác khác.</p>
+   <div className="pmatrix-profile"><span><b>{selected.name}</b> · {selected.department} {selected.team_lead&&'· Tổ '+(selected.team_department||selected.department)}</span><span>Ủy quyền linh động tối đa: <b>Toàn khoa</b> (riêng từng chức năng)</span></div>
+   <p className="pmatrix-legend">Mỗi ô chọn <b>Không cho phép</b> hoặc <b>Cho phép trong phạm vi</b>. Các ô xám là chức năng chưa có nghiệp vụ tương ứng. Kể cả Nhân viên cũng có thể được quản trị viên ủy quyền Toàn tổ hoặc Toàn khoa theo từng quyền. Xem là quyền nền tảng của các quyền thao tác khác.</p>
    {groups.map(group=><details key={group.name} className="pmatrix-group" open>
     <summary>{group.name}<span>{group.features.length} phân hệ</span></summary>
     <div className="pmatrix-scroller"><table><thead><tr><th>Phân hệ / chức năng</th>{allActions.map(a=><th key={a}>{data?.actionLabels[a]||a}</th>)}</tr></thead>
