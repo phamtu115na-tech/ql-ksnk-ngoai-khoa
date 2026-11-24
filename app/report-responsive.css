@@ -784,3 +784,38 @@ th,td{padding:10px 11px;line-height:1.4}
  .report-screen .report-row-evidence{grid-template-columns:minmax(0,1fr)}
  .report-screen .report-row-evidence>div{padding:8px}
 }
+
+/* Vi phạm đột xuất: một cột minh chứng lớn, ảnh phía trên tài liệu phía dưới. */
+.report-screen .report-violation-wrap{overflow-x:auto;overscroll-behavior-inline:contain;border:1px solid #dbe5f1;border-radius:12px}
+.report-screen .report-violation-table{width:100%;min-width:1220px;border-collapse:separate;border-spacing:0;table-layout:fixed;font-size:13px;line-height:1.5}
+.report-screen .report-violation-table thead th{position:sticky;top:0;z-index:1;padding:13px 12px;background:#153f6c;color:#fff;font-size:13px;text-align:left;border-bottom:2px solid #bcd2e9}
+.report-screen .report-violation-table th:nth-child(1){width:105px}
+.report-screen .report-violation-table th:nth-child(2){width:175px}
+.report-screen .report-violation-table th:nth-child(3){width:175px}
+.report-screen .report-violation-table th:nth-child(4){width:110px}
+.report-screen .report-violation-table th:nth-child(5){width:135px}
+.report-screen .report-violation-table th:nth-child(6){width:145px}
+.report-screen .report-violation-table th:nth-child(7){width:345px}
+.report-screen .report-violation-table tbody tr:nth-child(even){background:#f8fbff}
+.report-screen .report-violation-table td{padding:12px 10px;vertical-align:top;border-bottom:1px solid #e3ecf5;overflow-wrap:anywhere}
+.report-screen .report-violation-table td>b,.report-screen .report-violation-table .report-row-title{font-weight:750;color:#173d66}
+.report-screen .report-violation-sub{display:block;margin-top:6px;font-size:11px;color:#566b85;line-height:1.45}
+.report-screen .report-violation-points{display:inline-block;margin-top:8px;padding:4px 8px;border-radius:6px;background:#fff0ed;color:#af3529;font-weight:750}
+.report-screen .report-violation-date{font-weight:650;white-space:nowrap}
+.report-screen .report-violation-note{color:#364c66}
+.report-screen .report-violation-evidence-stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+.report-screen .report-violation-evidence-stack>section{display:flex;flex-direction:column;gap:7px;min-width:0;padding:10px;background:#fff;border:1px solid #d8e6f4;border-radius:10px}
+.report-screen .report-violation-evidence-stack>section>b{font-size:12px;color:#164678}
+.report-screen .report-violation-evidence-stack .evidence-links{min-width:0;max-width:100%;overflow-wrap:anywhere}
+.report-screen .report-violation-evidence-stack .report-evidence-gallery{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));max-height:510px;gap:9px;overflow-y:auto}
+.report-screen .report-violation-evidence-stack .report-image-preview img{height:148px;object-fit:contain;background:#edf3fa}
+.report-screen .report-violation-evidence-stack .report-image-preview{max-width:none}
+.report-screen .report-violation-evidence-stack .report-evidence-link{display:inline-block;max-width:100%;overflow-wrap:anywhere;font-size:12px}
+.report-screen .report-row-evidence{grid-template-columns:minmax(0,1fr)!important}
+.report-screen .report-inline-table th:nth-child(7){width:190px}
+.report-screen .report-inline-table .report-row-evidence .report-image-preview img{height:168px}
+@media(max-width:950px){
+ .report-screen .report-violation-table{min-width:1080px}
+ .report-screen .report-violation-table th:nth-child(7){width:300px}
+ .report-screen .report-violation-evidence-stack .report-evidence-gallery{grid-template-columns:minmax(0,1fr)}
+}
