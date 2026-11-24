@@ -462,6 +462,7 @@ async function saveTaskApproval(body:AnyRecord){
   appendApprovalHistory(data,{action:'REQUEST_APPROVAL',status:'CHỜ PHÊ DUYỆT',managerName:manager.name,managerId:manager.id||'',request:text(body.approvalRequest),at:now});
  }else if(action==='review'){
   const reviewer=await actor();if(!reviewer)throw Error('Chưa đăng nhập.');
+  if((await featureScope(reviewer,'tasks','approve'))==='none')throw Error('Quyền phê duyệt đã bị thu hồi trong ma trận.');
   if(!same(current.approvalStatus,'CHỜ PHÊ DUYỆT'))throw Error('Tác vụ chưa ở trạng thái chờ phê duyệt.');
   if(!reviewer.admin){const grant=await db().from('cx_people').select('can_approve_work').eq('id',reviewer.id).maybeSingle();
    if(!grant.data?.can_approve_work||(!current.managerId||current.managerId!==reviewer.staff_code))throw Error('Chỉ người được chỉ định và có quyền phê duyệt mới được duyệt.');
