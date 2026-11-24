@@ -24,7 +24,7 @@ function inherit(personRole:Role,feature:string,action:Action):Scope{
  if(action==='view'||action==='history')return feature==='checklistTemplates'&&personRole==='staff'?'none':base
  if(action==='approve')return 'none'
  if(feature==='reports'&&action==='export')return personRole==='staff'?'none':base
- if(feature==='staff'&&action!=='view')return personRole==='chief'?'hospital':'none'
+ if(feature==='staff')return personRole==='chief'?'hospital':'none'
  if(feature==='checklists'||feature==='checklistTemplates')return personRole==='staff'?'none':base
  if((feature==='plans'||feature==='issues')&&personRole==='staff'&&(action==='create'||action==='edit'))return 'self'
  if((feature==='tasks'||feature==='reminders')&&action==='edit'&&personRole==='staff')return 'self'
