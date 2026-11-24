@@ -328,3 +328,50 @@
  .reminder-workspace-fullscreen .reminder-table-scroll{overflow:auto}
  .reminder-workspace-fullscreen .reminder-table{min-width:0}
 }
+
+/* Responsive work modal: landscape tablets and phones use one full-height tab,
+   avoiding clipped 60/40 panes, off-screen actions or nested scrolling. */
+.work-detail-mobile-tabs{display:none}
+.work-detail-layout{min-height:0}
+.work-detail-layout .work-detail-fields,
+.work-detail-layout .work-detail-chat{min-height:0}
+.work-detail-fields .form-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;background:#fff;padding:12px max(8px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) 8px;border-top:1px solid #dfebf5;box-shadow:0 -4px 12px rgba(19,55,87,.06)}
+.work-detail-fields .form-actions button{min-height:42px;max-width:100%;white-space:normal}
+.work-detail-layout .task-form input,.work-detail-layout .task-form textarea,.work-detail-layout .task-form select{max-width:100%;min-width:0;box-sizing:border-box}
+.work-detail-layout .task-form textarea{overflow-wrap:anywhere;resize:vertical}
+@media(max-width:1100px){
+ .work-dialog-backdrop{padding:0!important;overflow:hidden}
+ .work-detail-layout{width:100vw!important;max-width:none!important;height:100dvh!important;max-height:100dvh!important;border:0!important;border-radius:0!important;display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr)!important;overflow:hidden!important}
+ .work-detail-mobile-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 92px 8px 10px;border-bottom:1px solid #d6e4f2;background:#f5f9ff;z-index:31;min-width:0}
+ .work-detail-mobile-tabs button{min-height:42px;padding:8px 7px;border:1px solid #cbdced;border-radius:8px;font-size:12px;font-weight:800;white-space:normal;color:#244c76;background:#fff}
+ .work-detail-mobile-tabs button[aria-pressed=true]{background:#184d84;color:#fff;border-color:#184d84}
+ .work-detail-layout[data-mobile-view="fields"] .work-detail-chat{display:none!important}
+ .work-detail-layout[data-mobile-view="chat"] .work-detail-fields{display:none!important}
+ .work-detail-layout .work-detail-fields,.work-detail-layout .work-detail-chat{width:100%;min-height:0;max-height:none;grid-column:1;grid-row:2;border:0;overflow:hidden}
+ .work-detail-layout .work-detail-fields{overflow-y:auto;overscroll-behavior:contain}
+ .work-detail-layout .work-detail-chat{display:flex;flex-direction:column}
+ .work-detail-layout .work-detail-chat>h3{flex:0 0 auto;min-height:43px;padding:10px 12px}
+ .work-detail-layout .work-detail-chat iframe{height:100%;flex:1;min-height:0;width:100%}
+ .work-detail-layout .work-dialog-close{top:7px;right:9px;min-width:75px;min-height:43px;z-index:35}
+ .work-detail-fields .task-form{padding:14px 14px 8px}
+ .work-detail-fields .form-actions{position:sticky;bottom:0;z-index:12;margin:12px -5px 0}
+}
+@media(max-width:600px){
+ .work-detail-mobile-tabs{padding-left:7px;padding-right:75px;gap:5px}
+ .work-detail-mobile-tabs button{font-size:11px;min-height:43px;padding:7px 4px}
+ .work-detail-layout .work-dialog-close{top:8px;right:5px;min-width:67px;padding:6px 5px;font-size:15px}
+ .work-detail-layout .work-dialog-close span{font-size:10px}
+ .work-detail-layout .work-detail-fields .form-grid,
+ .work-detail-layout .work-detail-fields .task-approval-record-grid,
+ .work-detail-layout .work-detail-fields .task-approval-evaluation-grid,
+ .work-detail-layout .work-detail-fields .task-approval-record-evidence{grid-template-columns:minmax(0,1fr)!important}
+ .work-detail-layout .work-detail-fields .form-grid .wide{grid-column:1!important}
+ .work-detail-layout .task-work-type-picker{min-width:0;width:100%;max-width:none}
+ .work-detail-fields .form-actions{gap:7px}
+ .work-detail-fields .form-actions button{flex:1 1 130px;font-size:12px;padding:10px 7px}
+}
+@media(max-height:530px) and (max-width:1100px){
+ .work-detail-mobile-tabs{padding-top:4px;padding-bottom:4px}
+ .work-detail-mobile-tabs button{min-height:35px}
+ .work-detail-layout .work-dialog-close{min-height:35px;top:5px}
+}
