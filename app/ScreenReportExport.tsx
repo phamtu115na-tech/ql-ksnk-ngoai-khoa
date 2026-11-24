@@ -2,10 +2,11 @@
 
 import {useState,type RefObject} from 'react'
 import {captureVisibleReportCharts,fitChartImage} from '../lib/report-chart-capture'
+import {reportPhotoCandidates,readReportPhoto,type ReportPhoto} from '../lib/report-evidence-export'
 
 type Region={id:string;label:string}
 type ExportMode='summary'|'detailed'
-const BLUE='333892',RED='F20E20',PEACH='E8A17C',INK='273679',GREY='50617C',LIGHT='F1F5FC'
+const BLUE='153E68',RED='CF4554',PEACH='11A18B',INK='1D334C',GREY='62748B',LIGHT='F2F6FC'
 const PAGE_ROWS=6
 
 function shortened(value:unknown,max=150):string{
@@ -110,6 +111,41 @@ function addChartPages(pptx:any,card:HTMLElement,heading:string,scope:string,per
  }
  return snapshots.length
 }
+/**
+ * Evidence slide: original image with source item and responsible department.
+ * Two photographs per page keep the layout legible on 16:9 meeting screens.
+ */
+function addEvidenceSlide(pptx:any,heading:string,scope:string,period:string,
+ images:Array<{photo:ReportPhoto;data:string;ratio:number}>,inc:()=>number){
+ const slide=sectionSlide(pptx,heading+' · ẢNH MINH CHỨNG',scope,period,inc())
+ write(slide,'ẢNH MINH CHỨNG THỰC TẾ',.73,2.27,10.7,.3,16,BLUE,true)
+ images.forEach(({photo,data,ratio},i)=>{
+  const x=.71+i*6.04,boxWidth=5.89,photoHeight=3.40,top=2.74
+  slide.addShape(pptx.ShapeType.roundRect,{x,y:top,w:boxWidth,h:3.85,
+   rectRadius:.09,line:{color:'D5E2F1',width:1},fill:{color:'F8FAFD'}})
+  const fitted=fitChartImage(ratio,boxWidth-.36,photoHeight-.28)
+  slide.addImage({data,x:x+(boxWidth-fitted.w)/2,y:top+.12+(photoHeight-.28-fitted.h)/2,
+   w:fitted.w,h:fitted.h})
+  write(slide,shortened(photo.title,93),x+.18,6.20,boxWidth-.36,.25,11,INK,true)
+  if(photo.context)write(slide,shortened(photo.context,90),x+.18,6.48,boxWidth-.36,.17,9,GREY)
+ })
+}
+async function addEvidencePages(pptx:any,card:HTMLElement,heading:string,scope:string,period:string,
+ maxImages:number,inc:()=>number){
+ const candidates=reportPhotoCandidates(card)
+ const loaded:Array<{photo:ReportPhoto;data:string;ratio:number}>=[]
+ const errors:string[]=[]
+ for(const photo of candidates.slice(0,maxImages)){
+  try{
+   const image=await readReportPhoto(photo.url)
+   loaded.push({photo,...image})
+  }catch(err){
+   errors.push(shortened(photo.title,70)+': '+(err instanceof Error?err.message:'Không tải được'))
+  }
+ }
+ for(let i=0;i<loaded.length;i+=2)addEvidenceSlide(pptx,heading,scope,period,loaded.slice(i,i+2),inc)
+ return {count:loaded.length,skipped:Math.max(0,candidates.length-maxImages),errors}
+}
 function addTablePages(pptx:any,heading:string,scope:string,period:string,table:{columns:string[];rows:string[][]},limit:number,inc:()=>number){
  const headers=table.columns.length?table.columns:table.rows[0]?.map((_,i)=>'Cột '+(i+1))||[]
  const rows=table.rows.slice(0,limit)
@@ -136,7 +172,7 @@ function addTablePages(pptx:any,heading:string,scope:string,period:string,table:
 export default function ScreenReportExport({root,regions,scope,period,canExport}:{
  root:RefObject<HTMLDivElement|null>;regions:Region[];scope:string;period:string;canExport:boolean
 }){
- const [region,setRegion]=useState(''),[mode,setMode]=useState<ExportMode>('summary')
+ const [region,setRegion]=useState(''),[mode,setMode]=useState<ExportMode>('summary'),[includePhotos,setIncludePhotos]=useState(true)
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('')
  const active=regions.some(r=>r.id===region)?region:''
  async function download(){
@@ -152,12 +188,13 @@ export default function ScreenReportExport({root,regions,scope,period,canExport}
    pptx.author='Khoa Kiểm soát nhiễm khuẩn – Bệnh viện Ngoại khoa 115 Nghệ An'
    pptx.subject='Báo cáo theo các mục và bộ lọc đang hiển thị'
    pptx.title='BÁO CÁO CÔNG TÁC KSNK – '+formatPeriod(period)
-   let pages=0,omitted=0,chartCount=0
+   let pages=0,omitted=0,chartCount=0,photoCount=0
+   const photoWarnings:string[]=[]
    const next=()=>++pages
    const cover=pptx.addSlide();next();brand(cover,pptx)
-   write(cover,'BÁO CÁO CÔNG TÁC',1.45,2.55,10.45,.68,40,RED,true,'center')
-   write(cover,'GIÁM SÁT KSNK',1.45,3.32,10.45,.65,39,RED,true,'center')
-   write(cover,'TỪ '+formatPeriod(period).toUpperCase(),1.00,4.13,11.33,.54,30,RED,true,'center')
+   write(cover,'BÁO CÁO CÔNG TÁC',1.45,2.55,10.45,.68,37,BLUE,true,'center')
+   write(cover,'GIÁM SÁT KSNK',1.45,3.32,10.45,.65,35,BLUE,true,'center')
+   write(cover,'TỪ '+formatPeriod(period).toUpperCase(),1.00,4.13,11.33,.54,25,RED,true,'center')
    write(cover,scope.toUpperCase(),1.68,5.05,9.95,.43,20,BLUE,true,'center')
    write(cover,'Dữ liệu theo kỳ, bộ phận và nội dung đã chọn',2.0,5.58,9.34,.29,12,GREY,false,'center')
 
@@ -182,6 +219,13 @@ export default function ScreenReportExport({root,regions,scope,period,canExport}
     const item=regions.find(r=>r.id===card.dataset.reportRegion)
     const heading=item?.label||card.querySelector('h3')?.textContent||'Nội dung giám sát KSNK'
     chartCount+=addChartPages(pptx,card,heading,scope,period,next)
+    if(includePhotos){
+     const photos=await addEvidencePages(pptx,card,heading,scope,period,
+      mode==='summary'?12:30,next)
+     photoCount+=photos.count
+     omitted+=photos.skipped
+     photoWarnings.push(...photos.errors)
+    }
     const tables=getTables(card)
     if(tables.length){
      let budget=limit
@@ -213,7 +257,9 @@ export default function ScreenReportExport({root,regions,scope,period,canExport}
    }
    const fileName='Bao-cao-KSNK-'+fileSafe(period)+'-'+mode+'.pptx'
    await pptx.writeFile({fileName})
-   setNotice('Đã tạo '+pages+' slide, gồm '+chartCount+' biểu đồ đang hiển thị. '+(omitted?'Rút gọn '+omitted+' dòng để bảo đảm dễ trình chiếu.':'Nội dung đã nằm trong giới hạn hiển thị.'))
+   setNotice('Đã tạo '+pages+' slide, '+chartCount+' biểu đồ và '+photoCount+' ảnh minh chứng. '+
+    (omitted?'Đã rút gọn '+omitted+' mục theo chế độ trình chiếu. ':'')+
+    (photoWarnings.length?'Có '+photoWarnings.length+' ảnh không thể xuất (quyền truy cập/tệp không hợp lệ): '+photoWarnings.slice(0,3).join(' | '):'Ảnh đã được kiểm tra quyền trước khi đưa vào báo cáo.'))
   }catch(e){setError(e instanceof Error?'Xuất PowerPoint thất bại: '+e.message:'Không xuất được PowerPoint.')}
   finally{setBusy(false)}
  }
@@ -228,6 +274,7 @@ export default function ScreenReportExport({root,regions,scope,period,canExport}
     <option value="summary">Gọn · 12 dòng/mục</option>
     <option value="detailed">Chi tiết · 60 dòng/mục</option>
    </select></label>
+   <label className="screen-export-photos"><input type="checkbox" checked={includePhotos} onChange={e=>setIncludePhotos(e.target.checked)} disabled={busy}/> Kèm ảnh minh chứng</label>
    <button type="button" className="add-btn" disabled={!canExport||busy||!regions.length} onClick={download}>{busy?'ĐANG TẠO POWERPOINT…':'⇩ XUẤT POWERPOINT (.PPTX)'}</button>
   </div>
   {!canExport&&<p role="status">Chưa được cấp quyền xuất báo cáo. Quản trị viên có thể bật quyền trong Cài đặt → Phân quyền báo cáo.</p>}{error&&<p role="alert">{error}</p>}{notice&&<p role="status">{notice}</p>}
