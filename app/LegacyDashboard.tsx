@@ -651,7 +651,7 @@ function ReminderPanel({from,to,onDates,rows,onCreate,onEdit,onRemove,onToggleDa
  const [layout,setLayout]=useState<'list'|'board'>('list');
  const [search,setSearch]=useState(''),[person,setPerson]=useState(''),[status,setStatus]=useState('');
  const [quick,setQuick]=useState<'all'|'overdue'|'today'|'daily'|'done'>('all');
- const current=today();
+ const current=new Date(Date.now()+7*3600000).toISOString().slice(0,10);
  const daily=(row:AnyRecord)=>enabledFlag(row.daily||row.remindDaily);
  const completed=(row:AnyRecord)=>{
   const value=normalize(row.status||'');
