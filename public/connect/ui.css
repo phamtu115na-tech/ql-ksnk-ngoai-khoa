@@ -80,3 +80,60 @@ html.nk-chat-only #modal .discussion.pane,
 html.nk-chat-only #modal .split[data-view=detail] .discussion.pane{display:flex!important;width:100%;height:100%;min-height:0;padding:10px;flex-direction:column;overflow:hidden;background:white}
 html.nk-chat-only #modal .discussion .stream{flex:1;min-height:90px;height:auto;overflow:auto}
 html.nk-chat-only #modal .discussion #send{flex:none;max-height:44dvh;overflow:auto}
+
+/* Administrator permission matrix and responsive full-screen fallback. */
+.admin-matrix-card{margin-top:16px;padding:16px!important;overflow:hidden}
+.admin-matrix-header{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.admin-matrix-header h3{color:#173a60;margin:0 0 4px}.admin-matrix-header p{font-size:13px;margin:0 0 8px}
+.admin-matrix-frame{display:block;width:100%;height:min(86dvh,1100px);min-height:640px;border:1px solid #cdddea;border-radius:10px;background:#fff}
+.admin-search input{width:min(100%,520px)}
+@media(max-width:760px){.admin-matrix-card{padding:8px!important}.admin-matrix-frame{min-height:700px;height:82dvh}.admin-matrix-header{align-items:flex-start}}
+
+/* Chat inside task/reminder dialog: messages own the remaining viewport height.
+   Attachments are closed by default and send is always at the bottom. */
+html.nk-chat-only,html.nk-chat-only body{height:100%;min-height:0;overflow:hidden}
+html.nk-chat-only #modal,
+html.nk-chat-only #dialogBody,
+html.nk-chat-only #modal .split,
+html.nk-chat-only #modal .discussion.pane{min-width:0;min-height:0;max-width:none}
+html.nk-chat-only #modal .discussion.pane{display:flex!important;flex-direction:column;gap:0!important;overflow:hidden;padding:0!important}
+html.nk-chat-only #modal .discussion.pane>h3{flex:none;padding:11px 13px 4px;margin:0;line-height:1.35;font-size:14px;overflow-wrap:anywhere}
+html.nk-chat-only #modal .discussion.pane>small{flex:none;display:block;padding:0 13px 8px;margin:0;max-height:65px;overflow-y:auto;font-size:11px;overflow-wrap:anywhere}
+html.nk-chat-only #modal .discussion .receipt{flex:none;max-height:64px;overflow:auto;margin:0 10px 7px;padding:7px 10px;font-size:11px}
+html.nk-chat-only #modal .discussion .stream{flex:1 1 auto!important;min-height:70px!important;height:0!important;overflow-y:auto!important;overflow-x:hidden;background:#eef5fb;padding:10px 12px;overscroll-behavior:contain}
+html.nk-chat-only #modal .discussion .stream .msg{max-width:94%;width:fit-content;font-size:13px;line-height:1.55;overflow-wrap:anywhere;white-space:pre-wrap}
+html.nk-chat-only #modal .discussion .stream .msg>div{white-space:pre-wrap;overflow-wrap:anywhere}
+html.nk-chat-only #modal .discussion #send{flex:0 0 auto!important;max-height:min(48dvh,360px)!important;overflow-y:auto!important;overflow-x:hidden;padding:9px 12px calc(9px + env(safe-area-inset-bottom));margin:0;background:#fff;border-top:1px solid #d6e3ee;box-shadow:0 -3px 10px rgba(13,50,86,.08);display:grid;gap:6px}
+html.nk-chat-only #send .chat-input-label{margin:0!important;display:grid;gap:5px;color:#31516f;font-size:11px}
+html.nk-chat-only #send textarea{box-sizing:border-box;width:100%;max-width:100%;height:65px!important;min-height:50px!important;max-height:145px!important;resize:vertical;font-size:16px;line-height:1.45;margin:0!important;padding:9px 11px;border:1px solid #a8bfd6;background:#fbfdff}
+html.nk-chat-only #send #mentions{display:flex;flex-wrap:wrap;gap:5px;max-height:75px;overflow-y:auto}
+html.nk-chat-only #send .chat-attachments{border:1px solid #dfebf4;border-radius:8px;background:#f7faff;padding:0;margin:0;min-width:0}
+html.nk-chat-only #send .chat-attachments>summary{cursor:pointer;list-style:none;padding:7px 10px;font-size:12px;font-weight:700;color:#28577e}
+html.nk-chat-only #send .chat-attachments>summary::-webkit-details-marker{display:none}
+html.nk-chat-only #send .chat-attachments[open]{background:#fff}
+html.nk-chat-only #send .chat-attachments-content{padding:6px 10px 10px;min-width:0}
+html.nk-chat-only #send .chat-attachments-content label{margin:3px 0;display:grid;font-size:12px}
+html.nk-chat-only #send .chat-attachments-content input[type=file]{width:100%;max-width:100%;font-size:11px;padding:6px}
+html.nk-chat-only #send .chat-attachments-content small{font-size:11px}
+html.nk-chat-only #send .chat-submit-row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:42px}
+html.nk-chat-only #send .chat-submit-row small{font-size:10px;color:#718297}
+html.nk-chat-only #send .chat-submit-row button{min-width:118px;min-height:42px;margin:0!important;flex:none;background:#1762a7;color:#fff;box-shadow:0 2px 7px rgba(20,61,111,.12)}
+@media(max-width:1100px){
+ html.nk-chat-only #modal .discussion.pane>h3{padding:8px 11px 4px;font-size:13px}
+ html.nk-chat-only #modal .discussion.pane>small{padding:0 11px 6px}
+ html.nk-chat-only #modal .discussion .stream{padding:8px 9px}
+ html.nk-chat-only #modal .discussion #send{padding:7px 9px calc(8px + env(safe-area-inset-bottom))}
+ html.nk-chat-only #send .chat-submit-row button{min-width:105px}
+}
+@media(max-height:510px){
+ html.nk-chat-only #modal .discussion.pane>small{max-height:36px}
+ html.nk-chat-only #modal .discussion .receipt{max-height:35px}
+ html.nk-chat-only #send textarea{height:52px!important;max-height:80px!important}
+ html.nk-chat-only #modal .discussion #send{max-height:60dvh!important}
+}
+
+/* Brand colours for the login header and the employee login title. */
+body>header{background:#c62828;color:#fff}
+body>header strong,body>header #identity{color:#fff}
+.card.login h1{color:#c62828}
+@media(max-width:800px){body>header{background:#c62828}}

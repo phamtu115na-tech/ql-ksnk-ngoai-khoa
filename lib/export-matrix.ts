@@ -1,11 +1,31 @@
 import {colors,levels} from './matrix'
 export type ExportTable={
  title:string;period:string;department:string;columns:string[];rows:(number|string|null)[][]
- palette?:string[];labels?:string[];accent?:string;kind?:string;slogan?:string;unit?:string;chart?:{labels:string[];pass:(number|null)[];fail:(number|null)[];errors:number[];passed:number[]}
+ palette?:string[];labels?:string[];accent?:string;kind?:string;slogan?:string;unit?:string;chartImage?:string;chartCaption?:string;chart?:{labels:string[];pass:(number|null)[];fail:(number|null)[];errors:number[];passed:number[]}
 }
 export async function excel(data:ExportTable){
  const {Workbook}=await import('exceljs')
- const book=new Workbook(),sheet=book.addWorksheet('Ma trận')
+ const book=new Workbook()
+ if(data.chartImage){
+  const visual=book.addWorksheet('Biểu đồ')
+  visual.mergeCells('A1:M2')
+  visual.getCell('A1').value=data.title
+  visual.getCell('A1').font={name:'Arial',size:19,bold:true,color:{argb:'FF'+(data.accent||'#17416F').replace('#','')}}
+  visual.getCell('A3').value=data.department
+  visual.getCell('A4').value=data.period
+  visual.getCell('A5').value=data.chartCaption||'Kết quả giám sát theo biểu đồ đang hiển thị'
+  visual.getCell('A5').font={name:'Arial',size:12,bold:true}
+  for(let i=1;i<=14;i++)visual.getColumn(i).width=14
+  const raw=Buffer.from(data.chartImage.slice('data:image/png;base64,'.length),'base64')
+  const imageWidth=raw.readUInt32BE(16),imageHeight=raw.readUInt32BE(20)
+  const ratio=imageWidth>0&&imageHeight>0?imageWidth/imageHeight:2.5
+  const width=Math.min(1220,520*ratio),height=width/ratio
+  const imageId=book.addImage({base64:data.chartImage,extension:'png'})
+  visual.addImage(imageId,{tl:{col:.05,row:6},ext:{width,height}})
+  visual.getCell('A34').value='Nguồn: Biểu đồ ma trận được chọn khi xuất. Dữ liệu chi tiết tại trang Ma trận.'
+  visual.getCell('A34').font={italic:true,color:{argb:'FF64748B'}}
+ }
+ const sheet=book.addWorksheet('Ma trận')
  sheet.addRows([[data.title],[data.department,data.period],data.columns,...data.rows])
  sheet.views=[{state:'frozen',ySplit:3}]
  sheet.getRow(3).font={bold:true,color:{argb:'FFFFFFFF'}}

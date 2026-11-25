@@ -750,3 +750,99 @@ th,td{padding:10px 11px;line-height:1.4}
 .report-screen .report-image-failed{display:grid;place-items:center;min-height:90px;padding:5px;color:#9b3d3d;background:#fff2f2;text-align:center;font-size:11px}
 .report-screen .report-error-detail-table td:has(.report-evidence-gallery),.report-screen td:has(.report-evidence-gallery){min-width:170px;vertical-align:top}
 @media(max-width:700px){.report-screen .report-image-preview img{height:80px}.report-screen .report-evidence-gallery{grid-template-columns:repeat(auto-fit,minmax(90px,1fr));max-height:230px}}
+
+/* 2026-11-24: clean, readable reporting workspace and evidence-first layout. */
+.report-screen [data-report-region]{min-width:0;border:1px solid #dce6f2;border-radius:15px;box-shadow:0 5px 20px rgba(17,57,99,.07);overflow:hidden}
+.report-screen [data-report-region]>h3,
+.report-screen [data-report-region]>.toolbar-line h3{color:#173e68;font-size:clamp(17px,1.45vw,22px);font-weight:850;letter-spacing:.012em;line-height:1.35}
+.report-screen [data-report-region]>.table-wrap,
+.report-screen [data-report-region] .report-inline-table{border-radius:9px}
+.report-screen .report-inline-table{min-width:1300px;table-layout:fixed;font-size:13px}
+.report-screen .report-inline-table thead th{background:#163e69;color:white;text-align:left;padding:13px 12px;line-height:1.4}
+.report-screen .report-inline-table thead th:nth-child(1){width:58px}
+.report-screen .report-inline-table thead th:nth-child(2){width:160px}
+.report-screen .report-inline-table thead th:nth-child(3){width:355px}
+.report-screen .report-inline-table thead th:nth-child(4){width:99px}
+.report-screen .report-inline-table thead th:nth-child(5){width:150px}
+.report-screen .report-inline-table thead th:nth-child(6){width:260px}
+.report-screen .report-inline-table tbody tr:nth-child(even){background:#f8fbff}
+.report-screen .report-inline-table td{padding:12px 11px;overflow-wrap:anywhere;vertical-align:top}
+.report-screen .report-row-description{padding:10px 12px;border-left:4px solid #93bdf1;border-radius:7px;background:#f0f6ff;line-height:1.5}
+.report-screen .report-row-evidence{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;align-items:start;margin-top:12px}
+.report-screen .report-row-evidence>div{background:#f8fbff;border:1px solid #dde8f4;border-radius:9px;padding:10px;min-width:0;display:grid;gap:6px}
+.report-screen .report-row-evidence>div>b{font-size:12px;color:#174a80}
+.report-screen .report-row-evidence .evidence-links{min-width:0;overflow-wrap:anywhere;display:flex;flex-wrap:wrap}
+.report-screen .report-image-preview{max-width:100%}
+.report-screen .report-image-preview img{height:122px;object-fit:contain;background:#eaf0f8}
+.report-screen .report-evaluation-cell textarea{min-height:80px;background:#fff}
+.screen-export{border:1px solid #cedced;border-radius:14px;padding:18px 20px;background:linear-gradient(110deg,#f7faff,#fff);box-shadow:0 5px 18px rgba(17,57,99,.075)}
+.screen-export strong{color:#173e68;font-size:17px;letter-spacing:.01em}
+.screen-export-photos{display:flex!important;gap:7px!important;align-items:center!important;white-space:nowrap;font-size:13px;font-weight:750;color:#174a80}
+.screen-export-photos input[type=checkbox]{width:18px;height:18px;accent-color:#174a80}
+@media(max-width:900px){
+ .report-screen .report-inline-table{min-width:1170px}
+ .report-screen .report-row-evidence{grid-template-columns:minmax(0,1fr)}
+ .report-screen .report-row-evidence>div{padding:8px}
+}
+
+/* Vi phạm đột xuất: một cột minh chứng lớn, ảnh phía trên tài liệu phía dưới. */
+.report-screen .report-violation-wrap{overflow-x:auto;overscroll-behavior-inline:contain;border:1px solid #dbe5f1;border-radius:12px}
+.report-screen .report-violation-table{width:100%;min-width:1220px;border-collapse:separate;border-spacing:0;table-layout:fixed;font-size:13px;line-height:1.5}
+.report-screen .report-violation-table thead th{position:sticky;top:0;z-index:1;padding:13px 12px;background:#153f6c;color:#fff;font-size:13px;text-align:left;border-bottom:2px solid #bcd2e9}
+.report-screen .report-violation-table th:nth-child(1){width:105px}
+.report-screen .report-violation-table th:nth-child(2){width:175px}
+.report-screen .report-violation-table th:nth-child(3){width:175px}
+.report-screen .report-violation-table th:nth-child(4){width:110px}
+.report-screen .report-violation-table th:nth-child(5){width:135px}
+.report-screen .report-violation-table th:nth-child(6){width:145px}
+.report-screen .report-violation-table th:nth-child(7){width:345px}
+.report-screen .report-violation-table tbody tr:nth-child(even){background:#f8fbff}
+.report-screen .report-violation-table td{padding:12px 10px;vertical-align:top;border-bottom:1px solid #e3ecf5;overflow-wrap:anywhere}
+.report-screen .report-violation-table td>b,.report-screen .report-violation-table .report-row-title{font-weight:750;color:#173d66}
+.report-screen .report-violation-sub{display:block;margin-top:6px;font-size:11px;color:#566b85;line-height:1.45}
+.report-screen .report-violation-points{display:inline-block;margin-top:8px;padding:4px 8px;border-radius:6px;background:#fff0ed;color:#af3529;font-weight:750}
+.report-screen .report-violation-date{font-weight:650;white-space:nowrap}
+.report-screen .report-violation-note{color:#364c66}
+.report-screen .report-violation-evidence-stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+.report-screen .report-violation-evidence-stack>section{display:flex;flex-direction:column;gap:7px;min-width:0;padding:10px;background:#fff;border:1px solid #d8e6f4;border-radius:10px}
+.report-screen .report-violation-evidence-stack>section>b{font-size:12px;color:#164678}
+.report-screen .report-violation-evidence-stack .evidence-links{min-width:0;max-width:100%;overflow-wrap:anywhere}
+.report-screen .report-violation-evidence-stack .report-evidence-gallery{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));max-height:510px;gap:9px;overflow-y:auto}
+.report-screen .report-violation-evidence-stack .report-image-preview img{height:148px;object-fit:contain;background:#edf3fa}
+.report-screen .report-violation-evidence-stack .report-image-preview{max-width:none}
+.report-screen .report-violation-evidence-stack .report-evidence-link{display:inline-block;max-width:100%;overflow-wrap:anywhere;font-size:12px}
+.report-screen .report-row-evidence{grid-template-columns:minmax(0,1fr)!important}
+.report-screen .report-inline-table th:nth-child(7){width:190px}
+.report-screen .report-inline-table .report-row-evidence .report-image-preview img{height:168px}
+@media(max-width:950px){
+ .report-screen .report-violation-table{min-width:1080px}
+ .report-screen .report-violation-table th:nth-child(7){width:300px}
+ .report-screen .report-violation-evidence-stack .report-evidence-gallery{grid-template-columns:minmax(0,1fr)}
+}
+
+/* Section 7: give actual violation evidence priority over narrow metadata columns. */
+.report-screen .report-violation-table{min-width:1310px}
+.report-screen .report-violation-table th:nth-child(3){width:195px}
+.report-screen .report-violation-table th:nth-child(6){width:130px}
+.report-screen .report-violation-table th:nth-child(7){width:405px}
+.report-screen .report-violation-evidence-stack .report-evidence-gallery{
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+ max-height:660px;overflow-x:hidden;overflow-y:auto;
+}
+.report-screen .report-violation-evidence-stack .evidence-item{
+ max-width:100%;width:100%;min-width:0;
+}
+.report-screen .report-violation-evidence-stack .report-image-preview img{
+ width:100%;height:210px;object-fit:contain;background:#eaf2f9;
+}
+.report-screen .report-violation-evidence-stack .report-image-preview small{
+ white-space:normal;overflow-wrap:anywhere;text-overflow:unset;
+}
+.report-screen .report-violation-evidence-documents .evidence-item{
+ display:flex;flex-direction:row;align-items:center;
+}
+@media(max-width:950px){
+ .report-screen .report-violation-table{min-width:1180px}
+ .report-screen .report-violation-table th:nth-child(7){width:340px}
+ .report-screen .report-violation-evidence-stack .report-image-preview img{height:180px}
+}

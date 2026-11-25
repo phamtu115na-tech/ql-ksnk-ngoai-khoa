@@ -1,10 +1,9 @@
 import {db,type Person} from './auth'
+import {featureMatrix} from './feature-permissions'
 import type {Mark} from './matrix'
 export async function reportAccess(user:Person){
- if(user.admin)return {scope:'hospital',can_export:true}
- const {data,error}=await db().from('nk_report_permissions').select('scope,can_export').eq('person',user.id).maybeSingle()
- if(error&&error.code!=='PGRST205'&&error.code!=='42P01')throw error
- return data??{scope:'none',can_export:false}
+ const access=(await featureMatrix(user)).reports
+ return {scope:access?.view||'none',can_export:access?.export!=='none'}
 }
 export async function scopedReport(user:Person,filters:Record<string,string>,forExport=false){
  const access=await reportAccess(user)

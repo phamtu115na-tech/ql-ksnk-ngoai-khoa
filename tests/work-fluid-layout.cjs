@@ -1,0 +1,14 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const src=fs.readFileSync('app/LegacyDashboard.tsx','utf8');
+const css=fs.readFileSync('app/task.css','utf8');
+assert.match(src,/work-screen-fluid/,'Work modules need fluid layout class');
+assert.match(src,/\['tasks','reminders'\]\.includes\(active\|\|''\)/,'Only work modules should receive fluid class');
+assert.doesNotMatch(src,/reminder-fullscreen-toggle|setExpanded\(/,'Reminder should have no manual fullscreen control');
+assert.match(css,/\.work-screen-fluid \.app-main>main>\.content-shell/,'Work content fills main container');
+assert.match(css,/\.work-screen-fluid \.reminder-workspace\{width:100%/,'Reminder takes available width');
+assert.match(css,/\.work-screen-fluid \.task-list/,'Task list follows available width');
+assert.match(css,/\.work-screen-fluid\.menu-is-open \.app-main/,'Sidebar state is supported on tablets');
+assert.match(css,/\.work-screen-fluid \.app-main>main>\.work-task-area>\.work-task-list>\.content-shell/,'Nested work content shell must stretch full width');
+assert.match(css,/\.work-screen-fluid\.menu-is-closed \.app-main\{margin-left:0\}/,'Sidebar close must restore entire page width');
+console.log('Work module auto fluid width checks passed');
