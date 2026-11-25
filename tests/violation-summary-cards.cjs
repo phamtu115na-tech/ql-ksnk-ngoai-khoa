@@ -1,0 +1,10 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const source=fs.readFileSync('app/LegacyDashboard.tsx','utf8');
+const css=fs.readFileSync('app/task.css','utf8');
+assert.match(source,/function violationOverview\(rows:AnyRecord\[\]\)/);
+for(const label of ['Tổng vi phạm','Đã xử lý','Đang xử lý','Còn tồn'])assert.ok(source.includes(label),'Missing violation card: '+label);
+assert.match(source,/violationOverview\(rows\)\.remaining/);
+assert.match(css,/\.violation-summary-cards\{grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
+assert.match(css,/@media\(max-width:850px\)\{\.violation-summary-cards/);
+console.log('Violation status tiles structural checks passed');
