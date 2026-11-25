@@ -503,3 +503,28 @@
   padding-left:10px;padding-right:10px
  }
 }
+
+/* Home overview: the alerts panel follows sidebar width without a 1450px cap. */
+.home-screen-fluid .app-main,.home-screen-fluid .app-main>main,
+.home-screen-fluid .app-main>main.content-shell,.home-screen-fluid .home-alerts-first{
+ min-width:0;max-width:none;box-sizing:border-box
+}
+.home-screen-fluid .app-main{width:auto}
+.home-screen-fluid .app-main>main.content-shell{
+ width:100%;margin:0;padding-left:clamp(12px,1.4vw,24px);
+ padding-right:clamp(12px,1.4vw,24px)
+}
+.home-screen-fluid .home-alerts-first{
+ width:100%;margin-left:0;margin-right:0
+}
+.home-screen-fluid .home-alerts-first .home-alerts-heading,
+.home-screen-fluid .home-alerts-first .home-alert-filter-bar,
+.home-screen-fluid .home-alerts-first .home-alert-table{
+ min-width:0;max-width:100%
+}
+.home-screen-fluid.menu-is-closed .app-main{margin-left:0}
+@media(max-width:900px){
+ .home-screen-fluid.menu-is-open .app-main,
+ .home-screen-fluid.menu-is-closed .app-main{margin-left:0}
+ .home-screen-fluid .app-main>main.content-shell{padding-left:10px;padding-right:10px}
+}
