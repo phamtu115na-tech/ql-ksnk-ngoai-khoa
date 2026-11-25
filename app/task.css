@@ -208,3 +208,30 @@
 
 /* Cùng một cửa sổ, quản lý đủ quyền chuyển sang chế độ duyệt của tác vụ. */
 .task-approval-review-note{background:#effaf3;border:1px solid #a8d8b5;border-radius:8px;color:#1c6035;padding:10px 12px;font-size:13px;line-height:1.45;margin:5px 0 12px}
+
+
+/* Production-safe visual-only release: allow the homepage and work modules
+   to reclaim the entire available viewport when the sidebar is collapsed. */
+.home-screen-fluid .app-main,.work-screen-fluid .app-main{min-width:0;width:auto;max-width:none}
+.home-screen-fluid.menu-is-closed .app-main,
+.work-screen-fluid.menu-is-closed .app-main{margin-left:0}
+.home-screen-fluid .app-main>main.content-shell,
+.work-screen-fluid .app-main>main{width:100%;max-width:none;min-width:0;box-sizing:border-box}
+.home-screen-fluid .app-main>main.content-shell{margin:0;padding-left:clamp(12px,1.4vw,24px);padding-right:clamp(12px,1.4vw,24px)}
+.home-screen-fluid .home-alerts-first{width:100%;max-width:none;min-width:0;margin-left:0;margin-right:0;box-sizing:border-box}
+.home-screen-fluid .home-alerts-first .home-alerts-heading,
+.home-screen-fluid .home-alerts-first .home-alert-filter-bar{min-width:0;max-width:100%}
+.work-screen-fluid .app-main>main>.module-toolbar,
+.work-screen-fluid .app-main>main>.work-task-area,
+.work-screen-fluid .app-main>main>.work-task-area>.work-task-list,
+.work-screen-fluid .app-main>main>.work-task-area>.work-task-list>.content-shell{
+ width:100%;max-width:none;min-width:0;margin-left:0;margin-right:0;box-sizing:border-box
+}
+.work-screen-fluid .app-main>main>.work-task-area>.work-task-list>.content-shell{
+ padding-left:clamp(12px,1.4vw,24px);padding-right:clamp(12px,1.4vw,24px)
+}
+@media(max-width:900px){
+ .home-screen-fluid.menu-is-open .app-main,.work-screen-fluid.menu-is-open .app-main{margin-left:0}
+ .home-screen-fluid .app-main>main.content-shell,
+ .work-screen-fluid .app-main>main>.work-task-area>.work-task-list>.content-shell{padding-left:10px;padding-right:10px}
+}
