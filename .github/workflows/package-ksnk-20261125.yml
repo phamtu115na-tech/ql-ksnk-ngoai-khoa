@@ -1,0 +1,43 @@
+name: Build KSNK Complete Installation ZIP
+on:
+  push:
+    branches:
+      - package/ksnk-full-setup-20261125
+    paths:
+      - 'BO_CAI_DAT/**'
+      - '.github/workflows/package-ksnk-20261125.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout packaging and instructions
+        uses: actions/checkout@v4
+        with:
+          ref: package/ksnk-full-setup-20261125
+          path: repo-pack
+          persist-credentials: false
+      - name: Checkout pinned Production source
+        uses: actions/checkout@v4
+        with:
+          ref: 512dbcd3fe419e9a74a5eaabfc7bc895bda13849
+          path: repo-prod
+          persist-credentials: false
+      - name: Checkout pinned PR13 source
+        uses: actions/checkout@v4
+        with:
+          ref: 1af195ab7190a1487786835af801f696cba92b4e
+          path: repo-pr13
+          persist-credentials: false
+      - name: Assemble complete source bundle and verify no secrets
+        run: python3 repo-pack/BO_CAI_DAT/CONG_CU/tao_goi.py
+      - name: Publish installation archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: BO_CAI_KSNK_115_HOAN_CHINH_20261125
+          path: dist/BO_CAI_KSNK_NGOAI_KHOA_115_HOAN_CHINH_20261125.zip
+          retention-days: 30
+          if-no-files-found: error
