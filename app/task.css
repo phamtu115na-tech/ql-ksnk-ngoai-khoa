@@ -454,3 +454,9 @@
   .reminder-row-actions .reminder-open-detail{flex:1}
  }
 }
+
+/* Violation status summary: matches the four KPI tiles used in the planning module. */
+.violation-summary-cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.violation-summary-cards>div{min-width:0}
+@media(max-width:850px){.violation-summary-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.violation-summary-cards{gap:8px}.violation-summary-cards>div{padding:12px}}
