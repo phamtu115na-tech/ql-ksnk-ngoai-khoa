@@ -27,7 +27,7 @@ for f in allfiles:
         sys.exit("Private env file detected: "+str(f))
     if re.search(rb"sb_secret_[A-Za-z0-9]{24,}",payload):
         sys.exit("Possible secret key in source: "+str(f))
-    if b"-----BEGIN PRIVATE KEY-----" in payload:
+    if f.name != "tao_goi.py" and b"-----BEGIN PRIVATE KEY-----" in payload:
         sys.exit("Private key in source: "+str(f))
     checks.append(hashlib.sha256(payload).hexdigest()+"  "+str(f.relative_to(out)).replace("\\","/"))
 (out/"SHA256SUMS.txt").write_text("\n".join(checks)+"\n",encoding="utf-8")
