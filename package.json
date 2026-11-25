@@ -11,7 +11,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "lint": "eslint app lib",
-    "test": "node tests/evidence-evaluation.cjs && node tests/team-plan-evidence.cjs && node tests/violation-evidence.cjs && node tests/report-matrix.cjs && node tests/report-chart-capture.cjs && node tests/report-evidence-export.cjs && node tests/report-permissions.mjs && node tests/work-approval.mjs && node tests/team-scope.mjs && node tests/feature-permissions.mjs && node tests/report-matrix-grants.mjs && node tests/role-default-permissions.mjs && node tests/report-delegation-grants.mjs && node tests/work-delegation-sql.mjs && node tests/work-warning-policy.cjs && node tests/work-warning-sql.mjs && node tests/reminder-responsive.cjs && node tests/violation-summary-cards.cjs"
+    "test": "node tests/evidence-evaluation.cjs && node tests/team-plan-evidence.cjs && node tests/violation-evidence.cjs && node tests/report-matrix.cjs && node tests/report-chart-capture.cjs && node tests/report-evidence-export.cjs && node tests/report-permissions.mjs && node tests/work-approval.mjs && node tests/team-scope.mjs && node tests/feature-permissions.mjs && node tests/report-matrix-grants.mjs && node tests/role-default-permissions.mjs && node tests/report-delegation-grants.mjs && node tests/work-delegation-sql.mjs && node tests/work-warning-policy.cjs && node tests/work-warning-sql.mjs && node tests/reminder-responsive.cjs && node tests/violation-summary-cards.cjs && node tests/work-fluid-layout.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.57.4",
