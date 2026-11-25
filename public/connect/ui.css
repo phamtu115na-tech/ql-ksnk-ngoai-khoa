@@ -88,3 +88,9 @@ html.nk-chat-only #modal .discussion #send{flex:none;max-height:44dvh;overflow:a
 .admin-matrix-frame{display:block;width:100%;height:min(86dvh,1100px);min-height:640px;border:1px solid #cdddea;border-radius:10px;background:#fff}
 .admin-search input{width:min(100%,520px)}
 @media(max-width:760px){.admin-matrix-card{padding:8px!important}.admin-matrix-frame{min-height:700px;height:82dvh}.admin-matrix-header{align-items:flex-start}}
+
+/* Requested red login branding; no auth or database changes. */
+body>header{background:#c62828;color:#fff}
+body>header strong,body>header #identity{color:#fff}
+.card.login h1{color:#c62828}
+@media(max-width:800px){body>header{background:#c62828}}
