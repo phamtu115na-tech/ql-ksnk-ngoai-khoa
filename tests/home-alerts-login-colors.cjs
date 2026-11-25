@@ -1,0 +1,12 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const source=fs.readFileSync('app/LegacyDashboard.tsx','utf8');
+const css=fs.readFileSync('app/task.css','utf8');
+const connect=fs.readFileSync('public/connect/ui.css','utf8');
+assert.match(source,/active===null\?' home-screen-fluid'/,'Home must gain layout-specific class');
+assert.match(css,/\.home-screen-fluid \.app-main>main\.content-shell/,'Home content must stretch');
+assert.match(css,/\.home-screen-fluid \.home-alerts-first/,'Alert panel must stretch');
+assert.match(css,/\.home-screen-fluid\.menu-is-closed \.app-main\{margin-left:0\}/,'Closing sidebar must restore page width');
+assert.match(connect,/body>header\{background:#c62828;color:#fff\}/,'Connect header colour');
+assert.match(connect,/\.card\.login h1\{color:#c62828\}/,'Login title colour');
+console.log('Home alerts and connect branding checks passed');
