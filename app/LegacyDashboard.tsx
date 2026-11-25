@@ -654,18 +654,6 @@ function IndependentReminderPanel({refreshToken,onCreate,onEdit,onRemove,onToggl
 
 function ReminderPanel({from,to,onDates,rows,onCreate,onEdit,onRemove,onToggleDaily,staff,statuses}:{from:string;to:string;onDates:(from:string,to:string)=>void;rows:AnyRecord[];onCreate:()=>void;onEdit:(row:AnyRecord)=>void;onRemove:(row:AnyRecord)=>void;onToggleDaily:(row:AnyRecord,daily:boolean)=>void;staff:AnyRecord[];statuses:string[]}){
  const [layout,setLayout]=useState<'list'|'board'>('list');
- const workspaceRef=useRef<HTMLElement|null>(null);
- const [expanded,setExpanded]=useState(false);
- // Use an in-page fullscreen layer so external dialogs and messages stay usable.
- useEffect(()=>{
-  if(!expanded)return;
-  const onKeyDown=(event:KeyboardEvent)=>{
-   if(event.key==='Escape'&&!document.querySelector('[role="dialog"],dialog[open]'))
-    setExpanded(false);
-  };
-  document.addEventListener('keydown',onKeyDown);
-  return()=>document.removeEventListener('keydown',onKeyDown);
- },[expanded]);
  const [search,setSearch]=useState(''),[person,setPerson]=useState(''),[status,setStatus]=useState('');
  const [quick,setQuick]=useState<'all'|'overdue'|'today'|'daily'|'done'>('all');
  const current=new Date(Date.now()+7*3600000).toISOString().slice(0,10);
@@ -702,16 +690,9 @@ function ReminderPanel({from,to,onDates,rows,onCreate,onEdit,onRemove,onToggleDa
   setSearch('');setPerson('');setStatus('');setQuick('all');
  }
  const openDetail=(row:AnyRecord)=>{
-  setExpanded(false);
   onEdit({...row,__module:'reminders'});
  };
- useEffect(()=>{
-  if(!expanded)return;
-  const original=document.body.style.overflow;
-  document.body.style.overflow='hidden';
-  return()=>{document.body.style.overflow=original;};
- },[expanded]);
- return <section ref={workspaceRef} className={"panel-card reminder-workspace"+(expanded?" reminder-workspace-fullscreen":"")} aria-label="Nhắc việc và ghi chú">
+ return <section className="panel-card reminder-workspace" aria-label="Nhắc việc và ghi chú">
   <header className="reminder-workspace-head">
    <div className="reminder-workspace-title"><span>QUẢN LÝ CÔNG VIỆC</span>
     <h3>NHẮC VIỆC &amp; GHI CHÚ</h3>
@@ -722,12 +703,7 @@ function ReminderPanel({from,to,onDates,rows,onCreate,onEdit,onRemove,onToggleDa
      <button type="button" aria-pressed={layout==='list'} onClick={()=>setLayout('list')}>☷ Danh sách</button>
      <button type="button" aria-pressed={layout==='board'} onClick={()=>setLayout('board')}>▥ Theo thời hạn</button>
     </div>
-    <button type="button" className="edit-btn reminder-fullscreen-toggle"
-     aria-pressed={expanded} title={expanded?'Thu nhỏ giao diện (Esc)':'Mở rộng toàn màn hình'}
-     onClick={()=>setExpanded(value=>!value)}>
-     {expanded?'↙ THOÁT TOÀN MÀN HÌNH':'⛶ TOÀN MÀN HÌNH'}
-    </button>
-    <button type="button" className="add-btn reminder-add-button" onClick={()=>{setExpanded(false);onCreate();}}>+ THÊM NHẮC VIỆC</button>
+    <button type="button" className="add-btn reminder-add-button" onClick={onCreate}>+ THÊM NHẮC VIỆC</button>
    </div>
   </header>
   <div className="reminder-summary" role="group" aria-label="Bộ lọc nhanh theo ưu tiên">
