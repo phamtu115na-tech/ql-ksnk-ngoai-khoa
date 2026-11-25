@@ -477,3 +477,29 @@
  .work-screen-fluid.menu-is-open .app-main,.work-screen-fluid.menu-is-closed .app-main{margin-left:0}
  .work-screen-fluid .app-main>main>.content-shell{padding-left:10px;padding-right:10px}
 }
+
+/* Fix actual DOM nesting: main > .work-task-area > .work-task-list > .content-shell.
+   Older direct-child selectors missed this wrapper and left max-width:1450px active. */
+.work-screen-fluid .app-main{min-width:0;max-width:none;width:auto}
+.work-screen-fluid .app-main>main{display:block;width:100%;min-width:0;max-width:none}
+.work-screen-fluid .app-main>main>.work-task-area,
+.work-screen-fluid .app-main>main>.work-task-area>.work-task-list,
+.work-screen-fluid .app-main>main>.work-task-area>.work-task-list>.content-shell{
+ display:block;width:100%;max-width:none;min-width:0;margin-left:0;margin-right:0;
+ box-sizing:border-box
+}
+.work-screen-fluid .app-main>main>.work-task-area>.work-task-list>.content-shell{
+ padding-left:clamp(10px,1.4vw,24px);padding-right:clamp(10px,1.4vw,24px)
+}
+.work-screen-fluid .app-main>main>.work-task-area>.work-task-list>.content-shell>div,
+.work-screen-fluid .app-main>main>.work-task-area>.work-task-list>.content-shell>.module-stack{
+ width:100%;max-width:none;min-width:0
+}
+.work-screen-fluid.menu-is-closed .app-main{margin-left:0}
+@media(max-width:900px){
+ .work-screen-fluid.menu-is-open .app-main,
+ .work-screen-fluid.menu-is-closed .app-main{margin-left:0}
+ .work-screen-fluid .app-main>main>.work-task-area>.work-task-list>.content-shell{
+  padding-left:10px;padding-right:10px
+ }
+}
