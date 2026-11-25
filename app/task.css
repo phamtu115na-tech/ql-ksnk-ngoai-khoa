@@ -460,3 +460,20 @@
 .violation-summary-cards>div{min-width:0}
 @media(max-width:850px){.violation-summary-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){.violation-summary-cards{gap:8px}.violation-summary-cards>div{padding:12px}}
+
+/* Work modules fill the space left by the sidebar automatically. No fullscreen toggle. */
+.app-shell.work-screen-fluid,.work-screen-fluid .app-main,.work-screen-fluid .app-main>main,
+.work-screen-fluid .app-main>main>.content-shell,.work-screen-fluid .app-main>main>.module-toolbar,
+.work-screen-fluid .module-stack,.work-screen-fluid .work-task-area,
+.work-screen-fluid .work-task-list,.work-screen-fluid .panel-card{min-width:0;max-width:100%;box-sizing:border-box}
+.work-screen-fluid .app-main{width:auto;min-width:0}
+.work-screen-fluid .app-main>main>.content-shell,
+.work-screen-fluid .app-main>main>.module-toolbar{width:100%;max-width:none;margin-left:0;margin-right:0}
+.work-screen-fluid .app-main>main>.content-shell{padding-left:clamp(12px,1.4vw,24px);padding-right:clamp(12px,1.4vw,24px)}
+.work-screen-fluid .reminder-workspace{width:100%;max-width:none;margin:0}
+.work-screen-fluid .task-list,.work-screen-fluid .task-toolbar{width:100%;max-width:none}
+.work-screen-fluid .reminder-table-scroll,.work-screen-fluid .table-wrap{max-width:100%}
+@media(max-width:780px){
+ .work-screen-fluid.menu-is-open .app-main,.work-screen-fluid.menu-is-closed .app-main{margin-left:0}
+ .work-screen-fluid .app-main>main>.content-shell{padding-left:10px;padding-right:10px}
+}
