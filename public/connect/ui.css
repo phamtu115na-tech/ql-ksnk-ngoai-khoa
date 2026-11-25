@@ -131,3 +131,9 @@ html.nk-chat-only #send .chat-submit-row button{min-width:118px;min-height:42px;
  html.nk-chat-only #send textarea{height:52px!important;max-height:80px!important}
  html.nk-chat-only #modal .discussion #send{max-height:60dvh!important}
 }
+
+/* Brand colours for the login header and the employee login title. */
+body>header{background:#c62828;color:#fff}
+body>header strong,body>header #identity{color:#fff}
+.card.login h1{color:#c62828}
+@media(max-width:800px){body>header{background:#c62828}}
